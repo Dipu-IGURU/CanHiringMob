@@ -21,19 +21,19 @@ const UserOnboarding = ({ navigation }) => {
       title: 'Find Your Dream Job',
       description: 'Browse thousands of job opportunities from top companies worldwide.',
       icon: 'search',
-      color: '#4CAF50',
+      color: '#3B82F6',
     },
     {
       title: 'Apply with Ease',
       description: 'One-click applications and smart matching to find the perfect fit.',
       icon: 'send',
-      color: '#2196F3',
+      color: '#10B981',
     },
     {
       title: 'Track Your Progress',
       description: 'Monitor your applications and get real-time updates on your job search.',
       icon: 'analytics',
-      color: '#FF9800',
+      color: '#8B5CF6',
     },
   ];
 
@@ -61,7 +61,7 @@ const UserOnboarding = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.container}>
       <LinearGradient
-        colors={['#4CAF50', '#45a049']}
+        colors={['#F6F8FF', '#E8F2FF', '#D6E8FF']}
         style={styles.gradient}
       >
         <View style={styles.content}>
@@ -71,7 +71,7 @@ const UserOnboarding = ({ navigation }) => {
               style={styles.backButton}
               onPress={prevStep}
             >
-              <Ionicons name="arrow-back" size={24} color="#fff" />
+              <Ionicons name="arrow-back" size={24} color="#1F2937" />
             </TouchableOpacity>
             <Text style={styles.headerTitle}>Job Seeker</Text>
             <TouchableOpacity
@@ -90,7 +90,7 @@ const UserOnboarding = ({ navigation }) => {
                 style={[
                   styles.progressDot,
                   {
-                    backgroundColor: index <= currentStep ? '#fff' : 'rgba(255,255,255,0.3)',
+                    backgroundColor: index <= currentStep ? '#3B82F6' : '#E5E7EB',
                   },
                 ]}
               />
@@ -100,11 +100,13 @@ const UserOnboarding = ({ navigation }) => {
           {/* Main Content */}
           <View style={styles.mainContent}>
             <View style={styles.iconContainer}>
-              <Ionicons
-                name={steps[currentStep].icon}
-                size={100}
-                color="#fff"
-              />
+              <View style={[styles.iconWrapper, { backgroundColor: steps[currentStep].color + '20' }]}>
+                <Ionicons
+                  name={steps[currentStep].icon}
+                  size={80}
+                  color={steps[currentStep].color}
+                />
+              </View>
             </View>
 
             <View style={styles.textContainer}>
@@ -115,19 +117,19 @@ const UserOnboarding = ({ navigation }) => {
             {/* Features List */}
             <View style={styles.featuresList}>
               <View style={styles.feature}>
-                <Ionicons name="checkmark-circle" size={20} color="#fff" />
+                <Ionicons name="checkmark-circle" size={20} color="#10B981" />
                 <Text style={styles.featureText}>Personalized job recommendations</Text>
               </View>
               <View style={styles.feature}>
-                <Ionicons name="checkmark-circle" size={20} color="#fff" />
+                <Ionicons name="checkmark-circle" size={20} color="#10B981" />
                 <Text style={styles.featureText}>Resume builder and optimization</Text>
               </View>
               <View style={styles.feature}>
-                <Ionicons name="checkmark-circle" size={20} color="#fff" />
+                <Ionicons name="checkmark-circle" size={20} color="#10B981" />
                 <Text style={styles.featureText}>Interview preparation tools</Text>
               </View>
               <View style={styles.feature}>
-                <Ionicons name="checkmark-circle" size={20} color="#fff" />
+                <Ionicons name="checkmark-circle" size={20} color="#10B981" />
                 <Text style={styles.featureText}>Salary insights and negotiation tips</Text>
               </View>
             </View>
@@ -139,10 +141,15 @@ const UserOnboarding = ({ navigation }) => {
               style={styles.nextButton}
               onPress={nextStep}
             >
-              <Text style={styles.buttonText}>
-                {currentStep === steps.length - 1 ? 'Get Started' : 'Next'}
-              </Text>
-              <Ionicons name="arrow-forward" size={20} color="#4CAF50" />
+              <LinearGradient
+                colors={['#3B82F6', '#1D4ED8']}
+                style={styles.buttonGradient}
+              >
+                <Text style={styles.buttonText}>
+                  {currentStep === steps.length - 1 ? 'Get Started' : 'Next'}
+                </Text>
+                <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
+              </LinearGradient>
             </TouchableOpacity>
           </View>
         </View>
@@ -160,7 +167,7 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    paddingHorizontal: 20,
+    paddingHorizontal: 24,
   },
   header: {
     flexDirection: 'row',
@@ -174,26 +181,27 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#fff',
+    color: '#1F2937',
   },
   skipButton: {
     padding: 8,
   },
   skipText: {
-    color: '#fff',
+    color: '#6B7280',
     fontSize: 16,
+    fontWeight: '500',
   },
   progressContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginVertical: 20,
+    marginVertical: 24,
   },
   progressDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    marginHorizontal: 5,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    marginHorizontal: 6,
   },
   mainContent: {
     flex: 1,
@@ -203,28 +211,55 @@ const styles = StyleSheet.create({
   iconContainer: {
     marginBottom: 40,
   },
+  iconWrapper: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 8,
+  },
   textContainer: {
     alignItems: 'center',
     marginBottom: 40,
+    paddingHorizontal: 16,
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontSize: 32,
+    fontWeight: '800',
+    color: '#1F2937',
     textAlign: 'center',
-    marginBottom: 15,
+    marginBottom: 16,
+    lineHeight: 40,
   },
   description: {
     fontSize: 16,
-    color: '#fff',
+    color: '#6B7280',
     textAlign: 'center',
-    opacity: 0.9,
     lineHeight: 24,
-    paddingHorizontal: 20,
+    maxWidth: 320,
   },
   featuresList: {
     width: '100%',
     paddingHorizontal: 20,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 3,
   },
   feature: {
     flexDirection: 'row',
@@ -232,35 +267,38 @@ const styles = StyleSheet.create({
     marginVertical: 8,
   },
   featureText: {
-    color: '#fff',
+    color: '#1F2937',
     fontSize: 16,
     marginLeft: 12,
-    opacity: 0.9,
+    fontWeight: '500',
   },
   buttonContainer: {
     paddingVertical: 30,
   },
   nextButton: {
-    backgroundColor: '#fff',
+    borderRadius: 16,
+    overflow: 'hidden',
+    shadowColor: '#3B82F6',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  buttonGradient: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 15,
-    borderRadius: 25,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    gap: 8,
   },
   buttonText: {
-    color: '#4CAF50',
+    color: '#FFFFFF',
     fontSize: 18,
-    fontWeight: 'bold',
-    marginRight: 10,
+    fontWeight: '600',
   },
 });
 
