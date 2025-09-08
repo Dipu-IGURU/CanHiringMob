@@ -68,13 +68,13 @@ const JobsScreen = ({ navigation, route }) => {
         console.log('Searching jobs with query:', currentSearchQuery);
         jobsData = await searchJobs(currentSearchQuery, initialLocation);
       } else if (selectedFilter && selectedFilter !== 'all') {
-        // Fetch jobs by category
+        // Fetch jobs by category (limit to 20 jobs)
         console.log('Fetching jobs by category:', selectedFilter);
-        jobsData = await fetchJobsByCategory(selectedFilter);
+        jobsData = await fetchJobsByCategory(selectedFilter, 1, 20);
       } else {
-        // Fetch all jobs
+        // Fetch all jobs (limit to 20 jobs)
         console.log('Fetching all jobs');
-        jobsData = await fetchJobsByCategory('all');
+        jobsData = await fetchJobsByCategory('all', 1, 20);
       }
       
       console.log('Jobs loaded:', jobsData.length, 'jobs');
@@ -86,7 +86,7 @@ const JobsScreen = ({ navigation, route }) => {
       // Set fallback data
       setJobs([
         {
-          id: 1,
+          _id: '1',
           title: 'Senior React Native Developer',
           company: 'TechCorp',
           location: 'Toronto, ON',
@@ -97,7 +97,7 @@ const JobsScreen = ({ navigation, route }) => {
           category: 'Technology'
         },
         {
-          id: 2,
+          _id: '2',
           title: 'UX/UI Designer',
           company: 'DesignStudio',
           location: 'Vancouver, BC',
@@ -108,7 +108,7 @@ const JobsScreen = ({ navigation, route }) => {
           category: 'Design'
         },
         {
-          id: 3,
+          _id: '3',
           title: 'Marketing Manager',
           company: 'GrowthCo',
           location: 'Montreal, QC',
@@ -119,7 +119,7 @@ const JobsScreen = ({ navigation, route }) => {
           category: 'Marketing'
         },
         {
-          id: 4,
+          _id: '4',
           title: 'Data Scientist',
           company: 'DataFlow Inc',
           location: 'Calgary, AB',
@@ -275,7 +275,7 @@ const JobsScreen = ({ navigation, route }) => {
             <FlatList
               data={filteredJobs}
               renderItem={renderJobCard}
-              keyExtractor={(item) => item.id.toString()}
+              keyExtractor={(item) => item?.id?.toString() || item?._id?.toString() || Math.random().toString()}
               scrollEnabled={false}
               contentContainerStyle={styles.jobsList}
             />

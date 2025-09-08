@@ -106,7 +106,7 @@ export const fetchJobCategories = async () => {
 export const fetchJobsByCategory = async (category, page = 1, limit = 10) => {
   try {
     const response = await fetch(
-      `${API_BASE_URL}/api/jobs/public?category=${encodeURIComponent(category)}&page=${page}&limit=${limit}`,
+      `${API_BASE_URL}/api/jobs?category=${encodeURIComponent(category)}&page=${page}&limit=${limit}`,
       {
         method: 'GET',
         headers: {
@@ -161,7 +161,7 @@ export const fetchJobsByCategory = async (category, page = 1, limit = 10) => {
 export const fetchAllJobs = async (page = 1, limit = 20) => {
   try {
     const response = await fetch(
-      `${API_BASE_URL}/api/jobs/public?page=${page}&limit=${limit}`,
+      `${API_BASE_URL}/api/jobs?page=${page}&limit=${limit}`,
       {
         method: 'GET',
         headers: {
