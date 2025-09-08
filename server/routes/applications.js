@@ -526,4 +526,47 @@ router.get('/limits', auth, async (req, res) => {
   }
 });
 
+// Get application details by ID
+router.get('/:id', auth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user._id;
+
+    const application = await Application.findById(id)
+      .populate('jobId', 'title company location type salaryRange description experience requirements')
+      .populate('applicantId', 'firstName lastName email')
+      .lean();
+
+    if (!application) {
+      return res.status(404).json({
+        success: false,
+        message: 'Application not found'
+      });
+    }
+
+    // Check if user is the applicant or the job poster
+    const isApplicant = application.applicantId._id.toString() === userId.toString();
+    const isJobPoster = application.jobId.postedBy && application.jobId.postedBy.toString() === userId.toString();
+
+    if (!isApplicant && !isJobPoster) {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to view this application'
+      });
+    }
+
+    res.json({
+      success: true,
+      application
+    });
+
+  } catch (error) {
+    console.error('Error fetching application details:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while fetching application details'
+    });
+  }
+});
+
 module.exports = router;

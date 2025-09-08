@@ -22,11 +22,16 @@ const ApplicationDetailsModal = ({ isOpen, onClose, applicationId }) => {
   useEffect(() => {
     if (isOpen && applicationId) {
       fetchApplicationDetails();
+    } else if (!isOpen) {
+      // Reset state when modal closes
+      setApplication(null);
+      setLoading(false);
     }
   }, [isOpen, applicationId]);
 
   const fetchApplicationDetails = async () => {
     setLoading(true);
+    setApplication(null); // Reset application state
     try {
       if (!token) {
         Alert.alert('Error', 'Authentication required');
@@ -37,11 +42,12 @@ const ApplicationDetailsModal = ({ isOpen, onClose, applicationId }) => {
       if (response.success) {
         setApplication(response.application);
       } else {
-        Alert.alert('Error', 'Failed to fetch application details');
+        console.error('API Error:', response.message);
+        // Don't show alert, let the error UI handle it
       }
     } catch (error) {
       console.error('Error fetching application details:', error);
-      Alert.alert('Error', 'Failed to fetch application details');
+      // Don't show alert, let the error UI handle it
     } finally {
       setLoading(false);
     }

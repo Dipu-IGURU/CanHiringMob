@@ -126,7 +126,7 @@ const JobApplicationProgress = ({ className, style, refreshTrigger }) => {
             {currentApplications} / {maxApplications}
           </Text>
           {subscription.plan === 'free' && (
-            <Ionicons name="crown" size={16} color="#F59E0B" />
+            <Ionicons name="star" size={16} color="#F59E0B" />
           )}
         </View>
       </View>
