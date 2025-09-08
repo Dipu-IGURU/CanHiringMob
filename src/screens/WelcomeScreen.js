@@ -25,9 +25,7 @@ const WelcomeScreen = ({ navigation }) => {
           <View style={styles.content}>
             {/* Logo at the top */}
             <View style={styles.logoContainer}>
-              <View style={styles.logoWrapper}>
-                <LogoImage size="large" />
-              </View>
+              <LogoImage size="large" />
             </View>
 
             {/* Welcome Text */}
@@ -143,25 +141,12 @@ const styles = StyleSheet.create({
   },
   logoContainer: {
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: 0,
     marginTop: 20,
-  },
-  logoWrapper: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 16,
-    shadowColor: '#3B82F6',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 8,
   },
   textContainer: {
     alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: 0,
     paddingHorizontal: 16,
   },
   title: {

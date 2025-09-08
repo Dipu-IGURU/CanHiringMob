@@ -30,14 +30,6 @@ const UserTypeSelection = ({ navigation }) => {
       color: '#2196F3',
       screen: 'RecruiterOnboarding',
     },
-    {
-      id: 'admin',
-      title: 'Admin',
-      subtitle: 'Manage the platform',
-      icon: 'settings',
-      color: '#FF9800',
-      screen: 'AdminOnboarding',
-    },
   ];
 
   const handleUserTypeSelect = (screen) => {
