@@ -10,29 +10,55 @@ import {
   Image,
   Dimensions,
   FlatList,
+  ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import LogoImage from '../components/LogoImage';
 import AppHeader from '../components/AppHeader';
+import { fetchJobCategories, getTotalJobCount } from '../services/apiService';
 
 const { width, height } = Dimensions.get('window');
 
 const HomeScreen = ({ navigation }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [location, setLocation] = useState('');
+  const [jobCategories, setJobCategories] = useState([]);
+  const [totalJobs, setTotalJobs] = useState(93178);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Job Categories Data
-  const jobCategories = [
-    { id: 1, title: 'Information Technology', icon: 'laptop', color: '#3B82F6', jobs: 1250 },
-    { id: 2, title: 'Healthcare & Medical', icon: 'medical', color: '#EF4444', jobs: 890 },
-    { id: 3, title: 'Finance & Banking', icon: 'card', color: '#10B981', jobs: 650 },
-    { id: 4, title: 'Education & Training', icon: 'school', color: '#F59E0B', jobs: 420 },
-    { id: 5, title: 'Sales & Marketing', icon: 'trending-up', color: '#8B5CF6', jobs: 780 },
-    { id: 6, title: 'Engineering', icon: 'construct', color: '#06B6D4', jobs: 920 },
-    { id: 7, title: 'Customer Service', icon: 'headset', color: '#84CC16', jobs: 340 },
-    { id: 8, title: 'Human Resources', icon: 'people', color: '#F97316', jobs: 280 },
-  ];
+  // Icon mapping for job categories
+  const categoryIcons = {
+    'Information Technology': 'laptop',
+    'Healthcare & Medical': 'medical',
+    'Finance & Banking': 'card',
+    'Education & Training': 'school',
+    'Sales & Marketing': 'trending-up',
+    'Engineering': 'construct',
+    'Customer Service': 'headset',
+    'Human Resources': 'people',
+    'Administrative': 'document-text',
+    'Construction': 'hammer',
+    'Manufacturing': 'build',
+    'Retail': 'storefront',
+  };
+
+  // Color mapping for job categories
+  const categoryColors = {
+    'Information Technology': '#3B82F6',
+    'Healthcare & Medical': '#EF4444',
+    'Finance & Banking': '#10B981',
+    'Education & Training': '#F59E0B',
+    'Sales & Marketing': '#8B5CF6',
+    'Engineering': '#06B6D4',
+    'Customer Service': '#84CC16',
+    'Human Resources': '#F97316',
+    'Administrative': '#6366F1',
+    'Construction': '#F97316',
+    'Manufacturing': '#64748B',
+    'Retail': '#EC4899',
+  };
 
   // Featured Companies Data
   const featuredCompanies = [
@@ -69,18 +95,72 @@ const HomeScreen = ({ navigation }) => {
     }
   ];
 
+  // Fetch job categories and total jobs on component mount
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        // Fetch job categories and total jobs in parallel
+        const [categories, total] = await Promise.all([
+          fetchJobCategories(),
+          getTotalJobCount()
+        ]);
+        
+        // Transform categories data to include icons and colors
+        const transformedCategories = categories.map((category, index) => ({
+          id: index + 1,
+          title: category.title,
+          icon: categoryIcons[category.title] || 'briefcase',
+          color: categoryColors[category.title] || '#64748B',
+          jobs: category.positions
+        }));
+        
+        setJobCategories(transformedCategories);
+        setTotalJobs(total);
+      } catch (err) {
+        console.error('Error loading data:', err);
+        setError('Failed to load job data');
+        
+        // Set fallback data
+        const fallbackCategories = [
+          { id: 1, title: 'Information Technology', icon: 'laptop', color: '#3B82F6', jobs: 1250 },
+          { id: 2, title: 'Healthcare & Medical', icon: 'medical', color: '#EF4444', jobs: 890 },
+          { id: 3, title: 'Finance & Banking', icon: 'card', color: '#10B981', jobs: 650 },
+          { id: 4, title: 'Education & Training', icon: 'school', color: '#F59E0B', jobs: 420 },
+          { id: 5, title: 'Sales & Marketing', icon: 'trending-up', color: '#8B5CF6', jobs: 780 },
+          { id: 6, title: 'Engineering', icon: 'construct', color: '#06B6D4', jobs: 920 },
+          { id: 7, title: 'Customer Service', icon: 'headset', color: '#84CC16', jobs: 340 },
+          { id: 8, title: 'Human Resources', icon: 'people', color: '#F97316', jobs: 280 },
+        ];
+        setJobCategories(fallbackCategories);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, []);
+
   const handleSearch = () => {
-    // TODO: Implement search functionality
-    console.log('Searching for:', searchQuery, 'in', location);
+    // Navigate to Jobs screen with search parameters
+    navigation.navigate('Jobs', { 
+      searchQuery: searchQuery,
+      location: location 
+    });
   };
 
   const renderJobCategory = ({ item }) => (
-    <TouchableOpacity style={styles.categoryCard} onPress={() => console.log('Category pressed:', item.title)}>
+    <TouchableOpacity 
+      style={styles.categoryCard} 
+      onPress={() => navigation.navigate('Jobs', { category: item.title })}
+    >
       <View style={[styles.categoryIcon, { backgroundColor: item.color + '20' }]}>
         <Ionicons name={item.icon} size={24} color={item.color} />
       </View>
       <Text style={styles.categoryTitle} numberOfLines={2}>{item.title}</Text>
-      <Text style={styles.categoryJobs}>{item.jobs} jobs</Text>
+      <Text style={styles.categoryJobs}>{item.jobs.toLocaleString()} jobs</Text>
     </TouchableOpacity>
   );
 
@@ -133,7 +213,7 @@ const HomeScreen = ({ navigation }) => {
           <View style={styles.heroContent}>
             <Text style={styles.heroTitle}>
               There Are{' '}
-              <Text style={styles.heroHighlight}>93,178</Text>{' '}
+              <Text style={styles.heroHighlight}>{totalJobs.toLocaleString()}</Text>{' '}
               Postings Here{'\n'}For you!
             </Text>
             <Text style={styles.heroSubtitle}>
@@ -200,14 +280,60 @@ const HomeScreen = ({ navigation }) => {
             <Text style={styles.sectionSubtitle}>jobs live - added today</Text>
           </View>
           
-          <FlatList
-            data={jobCategories}
-            renderItem={renderJobCategory}
-            keyExtractor={(item) => item.id.toString()}
-            numColumns={2}
-            scrollEnabled={false}
-            contentContainerStyle={styles.categoriesGrid}
-          />
+          {loading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#3B82F6" />
+              <Text style={styles.loadingText}>Loading job categories...</Text>
+            </View>
+          ) : error ? (
+            <View style={styles.errorContainer}>
+              <Ionicons name="alert-circle" size={48} color="#EF4444" />
+              <Text style={styles.errorText}>{error}</Text>
+              <TouchableOpacity 
+                style={styles.retryButton}
+                onPress={() => {
+                  setError(null);
+                  setLoading(true);
+                  // Retry loading data
+                  const loadData = async () => {
+                    try {
+                      const [categories, total] = await Promise.all([
+                        fetchJobCategories(),
+                        getTotalJobCount()
+                      ]);
+                      
+                      const transformedCategories = categories.map((category, index) => ({
+                        id: index + 1,
+                        title: category.title,
+                        icon: categoryIcons[category.title] || 'briefcase',
+                        color: categoryColors[category.title] || '#64748B',
+                        jobs: category.positions
+                      }));
+                      
+                      setJobCategories(transformedCategories);
+                      setTotalJobs(total);
+                    } catch (err) {
+                      setError('Failed to load job data');
+                    } finally {
+                      setLoading(false);
+                    }
+                  };
+                  loadData();
+                }}
+              >
+                <Text style={styles.retryButtonText}>Retry</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <FlatList
+              data={jobCategories}
+              renderItem={renderJobCategory}
+              keyExtractor={(item) => item.id.toString()}
+              numColumns={2}
+              scrollEnabled={false}
+              contentContainerStyle={styles.categoriesGrid}
+            />
+          )}
         </View>
 
         {/* Featured Companies */}
@@ -244,39 +370,6 @@ const HomeScreen = ({ navigation }) => {
           />
         </View>
 
-        {/* Footer */}
-        <View style={styles.footer}>
-          <View style={styles.footerContent}>
-            <LogoImage size="small" />
-            <Text style={styles.footerText}>
-              Canada Office: +1 403 671 4469{'\n'}
-              US Office: +1 825 365 8805
-            </Text>
-            <Text style={styles.footerAddress}>
-              4656 Westwinds Dr NE #601{'\n'}
-              Calgary, AB T3J 0L7, Canada
-            </Text>
-            
-            <View style={styles.footerLinks}>
-              <TouchableOpacity style={styles.footerLink}>
-                <Text style={styles.footerLinkText}>About Us</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.footerLink}>
-                <Text style={styles.footerLinkText}>Contact</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.footerLink}>
-                <Text style={styles.footerLinkText}>Terms</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.footerLink}>
-                <Text style={styles.footerLinkText}>Privacy</Text>
-              </TouchableOpacity>
-            </View>
-            
-            <Text style={styles.footerCopyright}>
-              © 2025 Can Hiring. All Rights Reserved.
-            </Text>
-          </View>
-        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -585,46 +678,38 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 2,
   },
-  footer: {
-    backgroundColor: '#1E293B',
-    paddingHorizontal: 20,
-    paddingVertical: 30,
-  },
-  footerContent: {
+  loadingContainer: {
     alignItems: 'center',
-  },
-  footerText: {
-    fontSize: 14,
-    color: '#FFFFFF',
-    textAlign: 'center',
-    marginVertical: 15,
-    lineHeight: 20,
-  },
-  footerAddress: {
-    fontSize: 12,
-    color: '#94A3B8',
-    textAlign: 'center',
-    marginBottom: 20,
-    lineHeight: 18,
-  },
-  footerLinks: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
     justifyContent: 'center',
-    gap: 20,
+    paddingVertical: 40,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: '#64748B',
+    marginTop: 12,
+  },
+  errorContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+  },
+  errorText: {
+    fontSize: 16,
+    color: '#EF4444',
+    textAlign: 'center',
+    marginTop: 12,
     marginBottom: 20,
   },
-  footerLink: {
-    paddingVertical: 5,
+  retryButton: {
+    backgroundColor: '#3B82F6',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
   },
-  footerLinkText: {
-    fontSize: 14,
-    color: '#94A3B8',
-  },
-  footerCopyright: {
-    fontSize: 12,
-    color: '#64748B',
-    textAlign: 'center',
+  retryButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
 

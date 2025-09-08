@@ -4,9 +4,9 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import LogoImage from './LogoImage';
 
 const AppHeader = ({ 
   title, 
@@ -23,7 +23,19 @@ const AppHeader = ({
             <Ionicons name="arrow-back" size={24} color="#1E293B" />
           </TouchableOpacity>
         ) : showLogo ? (
-          <LogoImage size="small" />
+          <View style={styles.logoContainer}>
+            <View style={styles.logoWrapper}>
+              <Image
+                source={require('../../assets/logowitohutbg.png')}
+                style={styles.logoIcon}
+                resizeMode="contain"
+              />
+              {/* <View style={styles.logoTextContainer}>
+                <Text style={styles.logoMainText}>CANHIRING</Text>
+                <Text style={styles.logoSubText}>SOLUTIONS</Text>
+              </View> */}
+            </View>
+          </View>
         ) : (
           <View style={styles.placeholder} />
         )}
@@ -52,7 +64,7 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: '#FFFFFF',
     paddingHorizontal: 20,
-    paddingVertical: 15,
+    paddingVertical: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#E2E8F0',
   },
@@ -60,9 +72,45 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    minHeight: 48,
   },
   backButton: {
     padding: 8,
+    borderRadius: 20,
+    backgroundColor: '#F8FAFC',
+  },
+  logoContainer: {
+    flex: 1,
+    alignItems: 'flex-start',
+  },
+  logoWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  logoIcon: {
+    width: 56,
+    height: 56,
+    marginRight: 14,
+  },
+  logoTextContainer: {
+    flexDirection: 'column',
+  },
+  logoMainText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#DC2626',
+    letterSpacing: 0.5,
+    lineHeight: 20,
+    fontFamily: 'System',
+  },
+  logoSubText: {
+    fontSize: 11,
+    fontWeight: '500',
+    color: '#6B7280',
+    letterSpacing: 0.3,
+    lineHeight: 13,
+    marginTop: -1,
+    fontFamily: 'System',
   },
   headerTitle: {
     fontSize: 18,
@@ -74,10 +122,16 @@ const styles = StyleSheet.create({
   },
   headerActions: {
     flexDirection: 'row',
-    gap: 15,
+    gap: 12,
   },
   headerButton: {
-    padding: 8,
+    padding: 10,
+    borderRadius: 20,
+    backgroundColor: '#F8FAFC',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 44,
+    minHeight: 44,
   },
   placeholder: {
     width: 40,

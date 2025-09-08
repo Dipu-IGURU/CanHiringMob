@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,65 +9,131 @@ import {
   TextInput,
   FlatList,
   Dimensions,
+  ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import LogoImage from '../components/LogoImage';
 import AppHeader from '../components/AppHeader';
+import { fetchJobsByCategory, searchJobs } from '../services/apiService';
 
 const { width } = Dimensions.get('window');
 
-const JobsScreen = ({ navigation }) => {
+const JobsScreen = ({ navigation, route }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('all');
+  const [jobs, setJobs] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  // Sample job data
-  const jobs = [
-    {
-      id: 1,
-      title: 'Senior React Native Developer',
-      company: 'TechCorp',
-      location: 'Toronto, ON',
-      type: 'Full-time',
-      salary: '$80,000 - $120,000',
-      posted: '2 days ago',
-      description: 'We are looking for an experienced React Native developer to join our team...',
-      category: 'Technology'
-    },
-    {
-      id: 2,
-      title: 'UX/UI Designer',
-      company: 'DesignStudio',
-      location: 'Vancouver, BC',
-      type: 'Full-time',
-      salary: '$60,000 - $90,000',
-      posted: '1 week ago',
-      description: 'Join our creative team as a UX/UI Designer and help shape amazing user experiences...',
-      category: 'Design'
-    },
-    {
-      id: 3,
-      title: 'Marketing Manager',
-      company: 'GrowthCo',
-      location: 'Montreal, QC',
-      type: 'Full-time',
-      salary: '$70,000 - $100,000',
-      posted: '3 days ago',
-      description: 'Lead our marketing initiatives and drive growth for our innovative products...',
-      category: 'Marketing'
-    },
-    {
-      id: 4,
-      title: 'Data Scientist',
-      company: 'DataFlow Inc',
-      location: 'Calgary, AB',
-      type: 'Full-time',
-      salary: '$90,000 - $130,000',
-      posted: '5 days ago',
-      description: 'Analyze complex data sets and build predictive models to drive business insights...',
-      category: 'Technology'
-    },
-  ];
+  // Get navigation parameters
+  const { category, searchQuery: initialSearchQuery, location: initialLocation } = route.params || {};
+
+  // Initialize search query and filter from navigation params
+  useEffect(() => {
+    if (initialSearchQuery) {
+      setSearchQuery(initialSearchQuery);
+    }
+    if (category) {
+      setSelectedFilter(category.toLowerCase());
+    }
+  }, [initialSearchQuery, category]);
+
+  // Load jobs when component mounts
+  useEffect(() => {
+    loadJobs();
+  }, []);
+
+  // Load jobs when filters change
+  useEffect(() => {
+    if (selectedFilter) {
+      loadJobs();
+    }
+  }, [selectedFilter]);
+
+  const loadJobs = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      console.log('Loading jobs with:', { selectedFilter, searchQuery, initialSearchQuery, category });
+      
+      let jobsData = [];
+      
+      // Use the current searchQuery state or initialSearchQuery from navigation
+      const currentSearchQuery = searchQuery || initialSearchQuery || '';
+      
+      if (currentSearchQuery.trim()) {
+        // Search jobs by query
+        console.log('Searching jobs with query:', currentSearchQuery);
+        jobsData = await searchJobs(currentSearchQuery, initialLocation);
+      } else if (selectedFilter && selectedFilter !== 'all') {
+        // Fetch jobs by category
+        console.log('Fetching jobs by category:', selectedFilter);
+        jobsData = await fetchJobsByCategory(selectedFilter);
+      } else {
+        // Fetch all jobs
+        console.log('Fetching all jobs');
+        jobsData = await fetchJobsByCategory('all');
+      }
+      
+      console.log('Jobs loaded:', jobsData.length, 'jobs');
+      setJobs(jobsData);
+    } catch (err) {
+      console.error('Error loading jobs:', err);
+      setError('Failed to load jobs');
+      
+      // Set fallback data
+      setJobs([
+        {
+          id: 1,
+          title: 'Senior React Native Developer',
+          company: 'TechCorp',
+          location: 'Toronto, ON',
+          type: 'Full-time',
+          salary: '$80,000 - $120,000',
+          posted: '2 days ago',
+          description: 'We are looking for an experienced React Native developer to join our team...',
+          category: 'Technology'
+        },
+        {
+          id: 2,
+          title: 'UX/UI Designer',
+          company: 'DesignStudio',
+          location: 'Vancouver, BC',
+          type: 'Full-time',
+          salary: '$60,000 - $90,000',
+          posted: '1 week ago',
+          description: 'Join our creative team as a UX/UI Designer and help shape amazing user experiences...',
+          category: 'Design'
+        },
+        {
+          id: 3,
+          title: 'Marketing Manager',
+          company: 'GrowthCo',
+          location: 'Montreal, QC',
+          type: 'Full-time',
+          salary: '$70,000 - $100,000',
+          posted: '3 days ago',
+          description: 'Lead our marketing initiatives and drive growth for our innovative products...',
+          category: 'Marketing'
+        },
+        {
+          id: 4,
+          title: 'Data Scientist',
+          company: 'DataFlow Inc',
+          location: 'Calgary, AB',
+          type: 'Full-time',
+          salary: '$90,000 - $130,000',
+          posted: '5 days ago',
+          description: 'Analyze complex data sets and build predictive models to drive business insights...',
+          category: 'Technology'
+        }
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filters = [
     { id: 'all', label: 'All Jobs' },
@@ -76,9 +142,13 @@ const JobsScreen = ({ navigation }) => {
     { id: 'marketing', label: 'Marketing' },
   ];
 
+  const handleSearch = () => {
+    loadJobs();
+  };
+
   const filteredJobs = selectedFilter === 'all' 
     ? jobs 
-    : jobs.filter(job => job.category.toLowerCase() === selectedFilter);
+    : jobs.filter(job => job.category && job.category.toLowerCase() === selectedFilter);
 
   const renderJobCard = ({ item }) => (
     <TouchableOpacity style={styles.jobCard} onPress={() => console.log('Job pressed:', item.title)}>
@@ -173,17 +243,43 @@ const JobsScreen = ({ navigation }) => {
               {selectedFilter === 'all' ? 'All Jobs' : `${selectedFilter.charAt(0).toUpperCase() + selectedFilter.slice(1)} Jobs`}
             </Text>
             <Text style={styles.sectionSubtitle}>
-              {filteredJobs.length} jobs found
+              {loading ? 'Loading...' : `${filteredJobs.length} jobs found`}
             </Text>
           </View>
           
-          <FlatList
-            data={filteredJobs}
-            renderItem={renderJobCard}
-            keyExtractor={(item) => item.id.toString()}
-            scrollEnabled={false}
-            contentContainerStyle={styles.jobsList}
-          />
+          {loading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#3B82F6" />
+              <Text style={styles.loadingText}>Loading jobs...</Text>
+            </View>
+          ) : error ? (
+            <View style={styles.errorContainer}>
+              <Ionicons name="alert-circle" size={48} color="#EF4444" />
+              <Text style={styles.errorText}>{error}</Text>
+              <TouchableOpacity 
+                style={styles.retryButton}
+                onPress={loadJobs}
+              >
+                <Text style={styles.retryButtonText}>Retry</Text>
+              </TouchableOpacity>
+            </View>
+          ) : filteredJobs.length === 0 ? (
+            <View style={styles.emptyContainer}>
+              <Ionicons name="briefcase-outline" size={64} color="#CBD5E1" />
+              <Text style={styles.emptyTitle}>No jobs found</Text>
+              <Text style={styles.emptySubtitle}>
+                Try adjusting your search criteria or check back later
+              </Text>
+            </View>
+          ) : (
+            <FlatList
+              data={filteredJobs}
+              renderItem={renderJobCard}
+              keyExtractor={(item) => item.id.toString()}
+              scrollEnabled={false}
+              contentContainerStyle={styles.jobsList}
+            />
+          )}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -342,6 +438,57 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '600',
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: '#64748B',
+    marginTop: 12,
+  },
+  errorContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+  },
+  errorText: {
+    fontSize: 16,
+    color: '#EF4444',
+    textAlign: 'center',
+    marginTop: 12,
+    marginBottom: 20,
+  },
+  retryButton: {
+    backgroundColor: '#3B82F6',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#64748B',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  emptySubtitle: {
+    fontSize: 14,
+    color: '#94A3B8',
+    textAlign: 'center',
+    lineHeight: 20,
   },
 });
 

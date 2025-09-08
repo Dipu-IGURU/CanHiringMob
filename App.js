@@ -11,7 +11,7 @@ import LoginScreen from './src/screens/LoginScreen';
 import SignupScreen from './src/screens/SignupScreen';
 import HomeScreen from './src/screens/HomeScreen';
 import JobsScreen from './src/screens/JobsScreen';
-import DashboardScreen from './src/screens/DashboardScreen';
+import UserDashboardScreen from './src/screens/UserDashboardScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 import UserOnboarding from './src/screens/UserOnboarding';
 import RecruiterOnboarding from './src/screens/RecruiterOnboarding';
@@ -60,7 +60,7 @@ function MainTabNavigator() {
     >
       <Tab.Screen name="Home" component={HomeScreen} />
       <Tab.Screen name="Jobs" component={JobsScreen} />
-      <Tab.Screen name="Dashboard" component={DashboardScreen} />
+      <Tab.Screen name="Dashboard" component={UserDashboardScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
     </Tab.Navigator>
   );
