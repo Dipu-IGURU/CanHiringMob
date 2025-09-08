@@ -41,8 +41,8 @@ const AdminOnboarding = ({ navigation }) => {
     if (currentStep < steps.length - 1) {
       setCurrentStep(currentStep + 1);
     } else {
-      // Navigate to main app or next screen
-      navigation.navigate('Welcome'); // You can change this to your main app screen
+      // Navigate to login screen after onboarding
+      navigation.navigate('LoginScreen');
     }
   };
 
@@ -55,7 +55,7 @@ const AdminOnboarding = ({ navigation }) => {
   };
 
   const skipOnboarding = () => {
-    navigation.navigate('Welcome'); // You can change this to your main app screen
+    navigation.navigate('LoginScreen');
   };
 
   return (

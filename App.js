@@ -5,6 +5,8 @@ import { StatusBar } from 'expo-status-bar';
 
 // Import screens
 import WelcomeScreen from './src/screens/WelcomeScreen';
+import LoginScreen from './src/screens/LoginScreen';
+import SignupScreen from './src/screens/SignupScreen';
 import UserOnboarding from './src/screens/UserOnboarding';
 import RecruiterOnboarding from './src/screens/RecruiterOnboarding';
 import AdminOnboarding from './src/screens/AdminOnboarding';
@@ -38,6 +40,8 @@ export default function App() {
         }}
       >
         <Stack.Screen name="Welcome" component={WelcomeScreen} />
+        <Stack.Screen name="LoginScreen" component={LoginScreen} />
+        <Stack.Screen name="SignupScreen" component={SignupScreen} />
         <Stack.Screen name="UserTypeSelection" component={UserTypeSelection} />
         <Stack.Screen name="UserOnboarding" component={UserOnboarding} />
         <Stack.Screen name="RecruiterOnboarding" component={RecruiterOnboarding} />

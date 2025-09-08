@@ -94,6 +94,7 @@ const UserTypeSelection = ({ navigation }) => {
             ))}
           </View>
 
+
           {/* Footer */}
           <View style={styles.footer}>
             <Text style={styles.footerText}>
