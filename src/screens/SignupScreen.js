@@ -80,11 +80,11 @@ const SignupScreen = ({ navigation }) => {
       
       Alert.alert(
         'Account Created!',
-        'Your account has been created successfully. Please sign in to continue.',
+        'Your account has been created successfully. Welcome to CanHiring!',
         [
           {
             text: 'OK',
-            onPress: () => navigation.navigate('LoginScreen')
+            onPress: () => navigation.navigate('MainTabs')
           }
         ]
       );

@@ -46,12 +46,8 @@ const LoginScreen = ({ navigation }) => {
       // For now, simulate login
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Navigate based on user role
-      if (userRole === 'user') {
-        navigation.navigate('UserOnboarding');
-      } else {
-        navigation.navigate('RecruiterOnboarding');
-      }
+      // Navigate to main app after successful login
+      navigation.navigate('MainTabs');
     } catch (error) {
       Alert.alert('Login Failed', 'Invalid email or password');
     } finally {
@@ -236,19 +232,20 @@ const LoginScreen = ({ navigation }) => {
               
               <View style={styles.authButtonsContainer}>
                 <TouchableOpacity
-                  style={styles.authButton}
-                  onPress={() => navigation.navigate('LoginScreen')}
-                >
-                  <Text style={styles.authButtonText}>Sign In</Text>
-                </TouchableOpacity>
-                
-                <TouchableOpacity
                   style={[styles.authButton, styles.signupButton]}
                   onPress={() => navigation.navigate('SignupScreen')}
                 >
-                  <Text style={[styles.authButtonText, styles.signupButtonText]}>Sign Up</Text>
+                  <Text style={[styles.authButtonText, styles.signupButtonText]}>Create Account</Text>
                 </TouchableOpacity>
               </View>
+              
+              {/* Skip Login Button */}
+              <TouchableOpacity
+                style={styles.skipLoginButton}
+                onPress={() => navigation.navigate('MainTabs')}
+              >
+                <Text style={styles.skipLoginText}>Continue as Guest</Text>
+              </TouchableOpacity>
             </View>
           </ScrollView>
         </KeyboardAvoidingView>
@@ -443,19 +440,17 @@ const styles = StyleSheet.create({
     paddingBottom: 30,
   },
   authButtonsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   authButton: {
     backgroundColor: '#F1F5F9',
-    paddingHorizontal: 20,
+    paddingHorizontal: 40,
     paddingVertical: 12,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    flex: 1,
-    marginHorizontal: 5,
     alignItems: 'center',
+    minWidth: 200,
   },
   signupButton: {
     backgroundColor: '#3B82F6',
@@ -468,6 +463,17 @@ const styles = StyleSheet.create({
   },
   signupButtonText: {
     color: '#FFFFFF',
+  },
+  skipLoginButton: {
+    marginTop: 20,
+    alignItems: 'center',
+    paddingVertical: 12,
+  },
+  skipLoginText: {
+    fontSize: 16,
+    color: '#64748B',
+    fontWeight: '500',
+    textDecorationLine: 'underline',
   },
 });
 
