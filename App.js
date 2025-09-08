@@ -4,6 +4,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
+import { AuthProvider } from './src/contexts/AuthContext';
 
 // Import screens
 import WelcomeScreen from './src/screens/WelcomeScreen';
@@ -68,38 +69,40 @@ function MainTabNavigator() {
 
 export default function App() {
   return (
-    <NavigationContainer>
-      <StatusBar style="auto" />
-      <Stack.Navigator 
-        initialRouteName="Welcome"
-        screenOptions={{
-          headerShown: false,
-          gestureEnabled: true,
-          cardStyleInterpolator: ({ current, layouts }) => {
-            return {
-              cardStyle: {
-                transform: [
-                  {
-                    translateX: current.progress.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [layouts.screen.width, 0],
-                    }),
-                  },
-                ],
-              },
-            };
-          },
-        }}
-      >
-        <Stack.Screen name="Welcome" component={WelcomeScreen} />
-        <Stack.Screen name="LoginScreen" component={LoginScreen} />
-        <Stack.Screen name="SignupScreen" component={SignupScreen} />
-        <Stack.Screen name="UserTypeSelection" component={UserTypeSelection} />
-        <Stack.Screen name="UserOnboarding" component={UserOnboarding} />
-        <Stack.Screen name="RecruiterOnboarding" component={RecruiterOnboarding} />
-        <Stack.Screen name="AdminOnboarding" component={AdminOnboarding} />
-        <Stack.Screen name="MainTabs" component={MainTabNavigator} />
-      </Stack.Navigator>
-    </NavigationContainer>
+    <AuthProvider>
+      <NavigationContainer>
+        <StatusBar style="auto" />
+        <Stack.Navigator 
+          initialRouteName="Welcome"
+          screenOptions={{
+            headerShown: false,
+            gestureEnabled: true,
+            cardStyleInterpolator: ({ current, layouts }) => {
+              return {
+                cardStyle: {
+                  transform: [
+                    {
+                      translateX: current.progress.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [layouts.screen.width, 0],
+                      }),
+                    },
+                  ],
+                },
+              };
+            },
+          }}
+        >
+          <Stack.Screen name="Welcome" component={WelcomeScreen} />
+          <Stack.Screen name="LoginScreen" component={LoginScreen} />
+          <Stack.Screen name="SignupScreen" component={SignupScreen} />
+          <Stack.Screen name="UserTypeSelection" component={UserTypeSelection} />
+          <Stack.Screen name="UserOnboarding" component={UserOnboarding} />
+          <Stack.Screen name="RecruiterOnboarding" component={RecruiterOnboarding} />
+          <Stack.Screen name="AdminOnboarding" component={AdminOnboarding} />
+          <Stack.Screen name="MainTabs" component={MainTabNavigator} />
+        </Stack.Navigator>
+      </NavigationContainer>
+    </AuthProvider>
   );
 }

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,15 +9,67 @@ import {
   Image,
   Switch,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import LogoImage from '../components/LogoImage';
 import AppHeader from '../components/AppHeader';
+import { useAuth } from '../contexts/AuthContext';
+import { getUserApplications, getApplicationStats, getInterviewStats } from '../services/apiService';
 
 const ProfileScreen = ({ navigation }) => {
+  const { user, token, logout } = useAuth();
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [emailNotifications, setEmailNotifications] = useState(true);
+  const [stats, setStats] = useState({
+    applications: 0,
+    savedJobs: 0,
+    interviews: 0
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchUserStats();
+  }, []);
+
+  const fetchUserStats = async () => {
+    if (!token) return;
+    
+    try {
+      setLoading(true);
+      
+      // Fetch application stats
+      const appStatsResponse = await getApplicationStats(token);
+      if (appStatsResponse.success) {
+        setStats(prev => ({
+          ...prev,
+          applications: appStatsResponse.stats.total || 0
+        }));
+      }
+
+      // Fetch interview stats
+      const interviewStatsResponse = await getInterviewStats(token);
+      if (interviewStatsResponse.success) {
+        setStats(prev => ({
+          ...prev,
+          interviews: interviewStatsResponse.stats.totalInterviews || 0
+        }));
+      }
+
+      // For saved jobs, we'll use a placeholder for now
+      // You can implement a saved jobs API endpoint later
+      setStats(prev => ({
+        ...prev,
+        savedJobs: 0 // Placeholder - implement saved jobs API
+      }));
+
+    } catch (error) {
+      console.error('Error fetching user stats:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleLogout = () => {
     Alert.alert(
@@ -28,7 +80,22 @@ const ProfileScreen = ({ navigation }) => {
         { 
           text: 'Logout', 
           style: 'destructive',
-          onPress: () => navigation.navigate('Welcome')
+          onPress: async () => {
+            try {
+              setLoading(true);
+              await logout();
+              // Reset navigation stack to prevent going back
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'Login' }],
+              });
+            } catch (error) {
+              console.error('Logout error:', error);
+              Alert.alert('Error', 'Failed to logout. Please try again.');
+            } finally {
+              setLoading(false);
+            }
+          }
         }
       ]
     );
@@ -39,43 +106,43 @@ const ProfileScreen = ({ navigation }) => {
       id: 1,
       title: 'Edit Profile',
       icon: 'person-outline',
-      onPress: () => console.log('Edit Profile'),
+      onPress: () => Alert.alert('Coming Soon', 'Edit Profile feature will be available soon!'),
     },
     {
       id: 2,
       title: 'My Applications',
       icon: 'document-text-outline',
-      onPress: () => console.log('My Applications'),
+      onPress: () => navigation.navigate('UserDashboard'),
     },
     {
       id: 3,
       title: 'Saved Jobs',
       icon: 'bookmark-outline',
-      onPress: () => console.log('Saved Jobs'),
+      onPress: () => Alert.alert('Coming Soon', 'Saved Jobs feature will be available soon!'),
     },
     {
       id: 4,
       title: 'Job Alerts',
       icon: 'notifications-outline',
-      onPress: () => console.log('Job Alerts'),
+      onPress: () => Alert.alert('Coming Soon', 'Job Alerts feature will be available soon!'),
     },
     {
       id: 5,
       title: 'Privacy Settings',
       icon: 'shield-outline',
-      onPress: () => console.log('Privacy Settings'),
+      onPress: () => Alert.alert('Coming Soon', 'Privacy Settings feature will be available soon!'),
     },
     {
       id: 6,
       title: 'Help & Support',
       icon: 'help-circle-outline',
-      onPress: () => console.log('Help & Support'),
+      onPress: () => Alert.alert('Help & Support', 'For support, please contact us at support@canhiring.com'),
     },
     {
       id: 7,
       title: 'About',
       icon: 'information-circle-outline',
-      onPress: () => console.log('About'),
+      onPress: () => Alert.alert('About CanHiring', 'CanHiring v1.0.0\nYour trusted job search platform.'),
     },
   ];
 
@@ -112,34 +179,54 @@ const ProfileScreen = ({ navigation }) => {
         >
           <View style={styles.profileInfo}>
             <View style={styles.avatarContainer}>
-              <Image
-                source={{ uri: 'https://via.placeholder.com/80x80/3B82F6/FFFFFF?text=JD' }}
-                style={styles.avatar}
-              />
+              <View style={styles.avatarPlaceholder}>
+                <Text style={styles.avatarText}>
+                  {user ? `${user.firstName?.charAt(0) || ''}${user.lastName?.charAt(0) || ''}` : 'U'}
+                </Text>
+              </View>
               <TouchableOpacity style={styles.editAvatarButton}>
                 <Ionicons name="camera" size={16} color="#3B82F6" />
               </TouchableOpacity>
             </View>
-            <Text style={styles.userName}>John Doe</Text>
-            <Text style={styles.userEmail}>john.doe@email.com</Text>
-            <Text style={styles.userRole}>Job Seeker</Text>
+            <Text style={styles.userName}>
+              {user ? `${user.firstName} ${user.lastName}` : 'User'}
+            </Text>
+            <Text style={styles.userEmail}>
+              {user?.email || 'user@example.com'}
+            </Text>
+            <Text style={styles.userRole}>
+              {user?.role === 'recruiter' ? 'Recruiter' : 'Job Seeker'}
+              {user?.company && ` at ${user.company}`}
+            </Text>
           </View>
         </LinearGradient>
 
         {/* Stats */}
         <View style={styles.statsContainer}>
           <View style={styles.statItem}>
-            <Text style={styles.statNumber}>12</Text>
+            {loading ? (
+              <ActivityIndicator size="small" color="#3B82F6" />
+            ) : (
+              <Text style={styles.statNumber}>{stats.applications}</Text>
+            )}
             <Text style={styles.statLabel}>Applications</Text>
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
-            <Text style={styles.statNumber}>8</Text>
+            {loading ? (
+              <ActivityIndicator size="small" color="#3B82F6" />
+            ) : (
+              <Text style={styles.statNumber}>{stats.savedJobs}</Text>
+            )}
             <Text style={styles.statLabel}>Saved Jobs</Text>
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
-            <Text style={styles.statNumber}>3</Text>
+            {loading ? (
+              <ActivityIndicator size="small" color="#3B82F6" />
+            ) : (
+              <Text style={styles.statNumber}>{stats.interviews}</Text>
+            )}
             <Text style={styles.statLabel}>Interviews</Text>
           </View>
         </View>
@@ -181,8 +268,16 @@ const ProfileScreen = ({ navigation }) => {
 
         {/* Logout Button */}
         <View style={styles.logoutSection}>
-          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-            <Ionicons name="log-out-outline" size={20} color="#EF4444" />
+          <TouchableOpacity 
+            style={[styles.logoutButton, loading && styles.logoutButtonDisabled]} 
+            onPress={handleLogout}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator size="small" color="#EF4444" />
+            ) : (
+              <Ionicons name="log-out-outline" size={20} color="#EF4444" />
+            )}
             <Text style={styles.logoutText}>Logout</Text>
           </TouchableOpacity>
         </View>
@@ -219,6 +314,21 @@ const styles = StyleSheet.create({
     borderRadius: 40,
     borderWidth: 3,
     borderColor: '#FFFFFF',
+  },
+  avatarPlaceholder: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    borderWidth: 3,
+    borderColor: '#FFFFFF',
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#3B82F6',
   },
   editAvatarButton: {
     position: 'absolute',
@@ -366,6 +476,9 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     borderWidth: 1,
     borderColor: '#FEE2E2',
+  },
+  logoutButtonDisabled: {
+    opacity: 0.6,
   },
   logoutText: {
     fontSize: 16,

@@ -1,5 +1,7 @@
 // API Configuration
-const API_BASE_URL = 'https://can-hiring.onrender.com';
+export const API_BASE_URL = process.env.NODE_ENV === 'development' 
+  ? 'http://localhost:5001'  // Local development server
+  : 'https://can-hiring.onrender.com';  // Production server
 
 // Helper function to get cached data with expiration
 const getCachedData = (key) => {
@@ -261,5 +263,298 @@ export const getTotalJobCount = async () => {
     const mockTotal = 93178;
     setCachedData('totalJobs', mockTotal);
     return mockTotal;
+  }
+};
+
+// Get application details by ID
+export const getApplicationDetails = async (applicationId, token) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/applications/${applicationId}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching application details:', error);
+    return {
+      success: false,
+      message: 'Failed to fetch application details'
+    };
+  }
+};
+
+// Get user applications
+export const getUserApplications = async (token, page = 1, limit = 10) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/applications/user?page=${page}&limit=${limit}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching user applications:', error);
+    return {
+      success: false,
+      message: 'Failed to fetch user applications',
+      data: []
+    };
+  }
+};
+
+// Get application statistics
+export const getApplicationStats = async (token) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/applications/stats`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching application stats:', error);
+    return {
+      success: false,
+      message: 'Failed to fetch application stats',
+      stats: {
+        total: 0,
+        pending: 0,
+        reviewed: 0,
+        rejected: 0
+      }
+    };
+  }
+};
+
+// Get interview statistics
+export const getInterviewStats = async (token) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/applications/interview-stats`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching interview stats:', error);
+    return {
+      success: false,
+      message: 'Failed to fetch interview stats',
+      stats: {
+        totalInterviews: 0,
+        upcomingInterviews: 0,
+        completedInterviews: 0
+      }
+    };
+  }
+};
+
+// Get profile view statistics
+export const getProfileStats = async (token) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/auth/profile/stats`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching profile stats:', error);
+    return {
+      success: false,
+      message: 'Failed to fetch profile stats',
+      stats: {
+        totalViews: 0,
+        lastMonthViews: 0,
+        percentageChange: 0
+      }
+    };
+  }
+};
+
+// Track profile view
+export const trackProfileView = async (token, viewedUserId) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/auth/profile/view`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ viewedUserId }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error tracking profile view:', error);
+    return {
+      success: false,
+      message: 'Failed to track profile view'
+    };
+  }
+};
+
+// Get recent activities
+export const getRecentActivities = async (token, limit = 10) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/applications/recent-activities?limit=${limit}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching recent activities:', error);
+    return {
+      success: false,
+      message: 'Failed to fetch recent activities',
+      activities: []
+    };
+  }
+};
+
+// Get job offers statistics
+export const getOffersStats = async (token) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/applications/offers-stats`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching offers stats:', error);
+    return {
+      success: false,
+      message: 'Failed to fetch offers stats',
+      stats: {
+        totalOffers: 0,
+        lastMonthOffers: 0
+      }
+    };
+  }
+};
+
+// Get application limits and usage
+export const getApplicationLimits = async (token) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/applications/limits`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching application limits:', error);
+    return {
+      success: false,
+      message: 'Failed to fetch application limits',
+      data: {
+        current: 0,
+        max: 5,
+        remaining: 5,
+        percentage: 0,
+        plan: 'free',
+        planName: 'Free Plan',
+        isLimitReached: false
+      }
+    };
+  }
+};
+
+// Get user's applied jobs (similar to Workly implementation)
+export const getAppliedJobs = async (token) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/auth/applied-jobs`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching applied jobs:', error);
+    return {
+      success: false,
+      message: 'Failed to fetch applied jobs',
+      jobs: []
+    };
   }
 };

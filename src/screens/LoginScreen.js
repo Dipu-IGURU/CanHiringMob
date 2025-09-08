@@ -11,14 +11,17 @@ import {
   Platform,
   ScrollView,
   Dimensions,
+  ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import LogoImage from '../components/LogoImage';
+import { useAuth } from '../contexts/AuthContext';
 
 const { width, height } = Dimensions.get('window');
 
 const LoginScreen = ({ navigation }) => {
+  const { login } = useAuth();
   const [userRole, setUserRole] = useState('user'); // 'user' or 'recruiter'
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -42,14 +45,16 @@ const LoginScreen = ({ navigation }) => {
 
     setLoading(true);
     try {
-      // TODO: Implement actual login API call
-      // For now, simulate login
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const result = await login(formData.email, formData.password);
       
-      // Navigate to main app after successful login
-      navigation.navigate('MainTabs');
+      if (result.success) {
+        // Navigate to main app after successful login
+        navigation.navigate('MainTabs');
+      } else {
+        Alert.alert('Login Failed', result.message || 'Invalid email or password');
+      }
     } catch (error) {
-      Alert.alert('Login Failed', 'Invalid email or password');
+      Alert.alert('Error', 'Network error. Please check your connection and try again.');
     } finally {
       setLoading(false);
     }

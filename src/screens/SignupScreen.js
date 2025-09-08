@@ -11,14 +11,17 @@ import {
   Platform,
   ScrollView,
   Dimensions,
+  ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import LogoImage from '../components/LogoImage';
+import { useAuth } from '../contexts/AuthContext';
 
 const { width, height } = Dimensions.get('window');
 
 const SignupScreen = ({ navigation }) => {
+  const { register } = useAuth();
   const [userRole, setUserRole] = useState('user'); // 'user' or 'recruiter'
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -56,8 +59,8 @@ const SignupScreen = ({ navigation }) => {
       return false;
     }
 
-    if (formData.password.length < 6) {
-      Alert.alert('Error', 'Password must be at least 6 characters long');
+    if (formData.password.length < 8) {
+      Alert.alert('Error', 'Password must be at least 8 characters long');
       return false;
     }
 
@@ -74,22 +77,47 @@ const SignupScreen = ({ navigation }) => {
 
     setLoading(true);
     try {
-      // TODO: Implement actual signup API call
-      // For now, simulate signup
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const userData = {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        password: formData.password,
+        role: userRole,
+        ...(userRole === 'recruiter' && { company: formData.company })
+      };
+
+      const result = await register(userData);
       
-      Alert.alert(
-        'Account Created!',
-        'Your account has been created successfully. Welcome to CanHiring!',
-        [
-          {
-            text: 'OK',
-            onPress: () => navigation.navigate('MainTabs')
-          }
-        ]
-      );
+      if (result.success) {
+        Alert.alert(
+          'Account Created!',
+          'Your account has been created successfully. You are now logged in.',
+          [
+            {
+              text: 'OK',
+              onPress: () => navigation.navigate('MainTabs'),
+            },
+          ]
+        );
+      } else {
+        if (result.errors && result.errors.length > 0) {
+          const errorMessages = result.errors.map(err => err.msg).join('\n');
+          Alert.alert('Signup Failed', errorMessages);
+        } else if (result.message && result.message.includes('already exists')) {
+          Alert.alert(
+            'Email Already Registered', 
+            'An account with this email already exists. Please use a different email or try logging in instead.',
+            [
+              { text: 'Try Different Email', style: 'default' },
+              { text: 'Go to Login', onPress: () => navigation.navigate('Login') }
+            ]
+          );
+        } else {
+          Alert.alert('Signup Failed', result.message || 'Failed to create account. Please try again.');
+        }
+      }
     } catch (error) {
-      Alert.alert('Signup Failed', 'An error occurred while creating your account. Please try again.');
+      Alert.alert('Error', 'Network error. Please check your connection and try again.');
     } finally {
       setLoading(false);
     }

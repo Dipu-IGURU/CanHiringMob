@@ -11,9 +11,11 @@ import {
   Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { API_BASE_URL } from '../services/apiService';
+import { getApplicationDetails } from '../services/apiService';
+import { useAuth } from '../contexts/AuthContext';
 
 const ApplicationDetailsModal = ({ isOpen, onClose, applicationId }) => {
+  const { token } = useAuth();
   const [application, setApplication] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -26,58 +28,17 @@ const ApplicationDetailsModal = ({ isOpen, onClose, applicationId }) => {
   const fetchApplicationDetails = async () => {
     setLoading(true);
     try {
-      // Mock data for now - replace with actual API call
-      const mockApplication = {
-        _id: applicationId,
-        status: 'interview',
-        appliedAt: '2024-01-15T10:30:00Z',
-        updatedAt: '2024-01-16T14:20:00Z',
-        fullName: 'John Doe',
-        email: 'john.doe@example.com',
-        phone: '+1 (555) 123-4567',
-        currentLocation: 'San Francisco, CA',
-        experience: '5+ years',
-        education: 'Bachelor\'s in Computer Science',
-        currentCompany: 'Tech Corp',
-        currentPosition: 'Senior Developer',
-        expectedSalary: '$120,000 - $150,000',
-        noticePeriod: '2 weeks',
-        portfolio: 'https://johndoe.dev',
-        linkedinProfile: 'https://linkedin.com/in/johndoe',
-        resume: 'https://example.com/resume.pdf',
-        coverLetter: 'I am excited to apply for this position...',
-        notes: [
-          {
-            content: 'Strong technical background, good communication skills.',
-            addedBy: 'HR Manager',
-            addedAt: '2024-01-16T14:20:00Z'
-          }
-        ],
-        jobId: {
-          _id: 'job1',
-          title: 'Senior Frontend Developer',
-          company: 'Tech Corp',
-          location: 'San Francisco, CA',
-          type: 'Full-time',
-          category: 'Engineering',
-          description: 'We are looking for a senior frontend developer...',
-          salaryRange: '$120,000 - $150,000',
-          experience: '5+ years',
-          education: 'Bachelor\'s degree',
-          postedBy: 'recruiter1',
-          date: '2024-01-10T09:00:00Z'
-        },
-        applicantId: {
-          _id: 'user1',
-          firstName: 'John',
-          lastName: 'Doe',
-          email: 'john.doe@example.com',
-          role: 'user',
-          profile: {}
-        }
-      };
-      
-      setApplication(mockApplication);
+      if (!token) {
+        Alert.alert('Error', 'Authentication required');
+        return;
+      }
+
+      const response = await getApplicationDetails(applicationId, token);
+      if (response.success) {
+        setApplication(response.application);
+      } else {
+        Alert.alert('Error', 'Failed to fetch application details');
+      }
     } catch (error) {
       console.error('Error fetching application details:', error);
       Alert.alert('Error', 'Failed to fetch application details');

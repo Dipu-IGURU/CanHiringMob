@@ -7,8 +7,11 @@ import {
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '../contexts/AuthContext';
+import { getApplicationLimits } from '../services/apiService';
 
-const JobApplicationProgress = ({ className, style }) => {
+const JobApplicationProgress = ({ className, style, refreshTrigger }) => {
+  const { token } = useAuth();
   const [progressData, setProgressData] = useState({ 
     current: 0, 
     max: 5, 
@@ -16,22 +19,66 @@ const JobApplicationProgress = ({ className, style }) => {
   });
   const [remaining, setRemaining] = useState(5);
   const [subscription, setSubscription] = useState({ plan: 'free' });
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchProgressData();
-  }, []);
+    if (token) {
+      fetchProgressData();
+    }
+  }, [token, refreshTrigger]);
 
   const fetchProgressData = async () => {
     try {
-      // Mock data - replace with actual API calls
-      const progress = { current: 8, max: 10, percentage: 80 };
-      const remainingApps = 2;
+      setLoading(true);
+      const response = await getApplicationLimits(token);
       
-      setProgressData(progress);
-      setRemaining(remainingApps);
+      if (response.success) {
+        const data = response.data;
+        setProgressData({
+          current: data.current,
+          max: data.max,
+          percentage: data.percentage
+        });
+        setRemaining(data.remaining);
+        setSubscription({
+          plan: data.plan,
+          name: data.planName
+        });
+      } else {
+        console.error('Failed to fetch application limits:', response.message);
+        // Set default values on error
+        setProgressData({
+          current: 0,
+          max: 5,
+          percentage: 0
+        });
+        setRemaining(5);
+        setSubscription({
+          plan: 'free',
+          name: 'Free Plan'
+        });
+      }
     } catch (error) {
       console.error('Error fetching progress data:', error);
+      // Set default values on error
+      setProgressData({
+        current: 0,
+        max: 5,
+        percentage: 0
+      });
+      setRemaining(5);
+      setSubscription({
+        plan: 'free',
+        name: 'Free Plan'
+      });
+    } finally {
+      setLoading(false);
     }
+  };
+
+  // Expose refresh function for external use
+  const refresh = () => {
+    fetchProgressData();
   };
 
   const { current: currentApplications, max: maxApplications, percentage: progressPercentage } = progressData;
@@ -52,6 +99,19 @@ const JobApplicationProgress = ({ className, style }) => {
   const handleViewPackages = () => {
     console.log('Navigate to packages page');
   };
+
+  if (loading) {
+    return (
+      <View style={[styles.container, style]}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Job Application Progress</Text>
+        </View>
+        <View style={styles.content}>
+          <Text style={styles.loadingText}>Loading...</Text>
+        </View>
+      </View>
+    );
+  }
 
   if (!subscription) {
     return null;
@@ -101,8 +161,8 @@ const JobApplicationProgress = ({ className, style }) => {
             </Text>
             <Text style={styles.planDescription}>
               {subscription.plan === 'free' 
-                ? 'Limited to 5 job applications per month'
-                : `Up to ${maxApplications} job applications`
+                ? `Limited to ${maxApplications} job applications per month`
+                : `Up to ${maxApplications} job applications per month`
               }
             </Text>
           </View>
@@ -297,6 +357,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
     color: '#FFFFFF',
+  },
+  loadingText: {
+    fontSize: 14,
+    color: '#6B7280',
+    textAlign: 'center',
+    paddingVertical: 20,
   },
 });
 

@@ -13,9 +13,20 @@ import { Ionicons } from '@expo/vector-icons';
 import AppHeader from '../components/AppHeader';
 import JobApplicationProgress from '../components/JobApplicationProgress';
 import ApplicationDetailsModal from '../components/ApplicationDetailsModal';
-import { API_BASE_URL } from '../services/apiService';
+import { useAuth } from '../contexts/AuthContext';
+import { 
+  getUserApplications, 
+  getApplicationStats, 
+  getInterviewStats, 
+  getApplicationDetails,
+  getProfileStats,
+  getRecentActivities,
+  getOffersStats,
+  getAppliedJobs
+} from '../services/apiService';
 
 const UserDashboardScreen = ({ navigation }) => {
+  const { user: authUser, token, refreshUserData } = useAuth();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -32,6 +43,12 @@ const UserDashboardScreen = ({ navigation }) => {
     totalViews: 0,
     percentageChange: 0
   });
+  const [offersStats, setOffersStats] = useState({
+    totalOffers: 0,
+    lastMonthOffers: 0
+  });
+  const [recentActivities, setRecentActivities] = useState([]);
+  const [applicationsLoading, setApplicationsLoading] = useState(false);
 
   // Modal state
   const [isApplicationModalOpen, setIsApplicationModalOpen] = useState(false);
@@ -43,20 +60,13 @@ const UserDashboardScreen = ({ navigation }) => {
 
   const checkAuthAndFetchData = async () => {
     try {
-      // For now, using mock data - in real app, check localStorage/AsyncStorage for token
-      const mockUser = {
-        id: '1',
-        firstName: 'John',
-        lastName: 'Doe',
-        email: 'john.doe@example.com',
-        role: 'user',
-        title: 'Senior UI/UX Designer',
-        location: 'San Francisco, CA',
-        avatar: ''
-      };
-      
-      setUser(mockUser);
-      await fetchAllData();
+      if (authUser) {
+        setUser(authUser);
+        await fetchAllData();
+      } else {
+        Alert.alert('Error', 'Please log in to view your dashboard');
+        navigation.navigate('LoginScreen');
+      }
     } catch (error) {
       console.error('Error checking auth:', error);
       Alert.alert('Error', 'Failed to load dashboard data');
@@ -71,7 +81,9 @@ const UserDashboardScreen = ({ navigation }) => {
         fetchAppliedJobs(),
         fetchApplicationStats(),
         fetchInterviewStats(),
-        fetchProfileStats()
+        fetchProfileStats(),
+        fetchOffersStats(),
+        fetchRecentActivities()
       ]);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
@@ -80,52 +92,41 @@ const UserDashboardScreen = ({ navigation }) => {
 
   const fetchAppliedJobs = async () => {
     try {
-      // Mock data for now - replace with actual API call
-      const mockJobs = [
-        {
-          id: '1',
-          title: 'Senior Frontend Developer',
-          company: 'Tech Corp',
-          location: 'San Francisco, CA',
-          type: 'Full-time',
-          date: '2024-01-15',
-          status: 'applied',
-          applicationId: 'app1'
-        },
-        {
-          id: '2',
-          title: 'UI/UX Designer',
-          company: 'Design Studio',
-          location: 'New York, NY',
-          type: 'Full-time',
-          date: '2024-01-10',
-          status: 'interview',
-          applicationId: 'app2'
-        },
-        {
-          id: '3',
-          title: 'Product Manager',
-          company: 'Startup Inc',
-          location: 'Remote',
-          type: 'Full-time',
-          date: '2024-01-08',
-          status: 'reviewed',
-          applicationId: 'app3'
-        }
-      ];
-      setAppliedJobs(mockJobs);
+      if (!token) return;
+      
+      setApplicationsLoading(true);
+      const response = await getAppliedJobs(token);
+      if (response.success) {
+        const jobs = response.jobs.map(item => ({
+          id: item.job?._id || item._id,
+          title: item.job?.title || 'No Title',
+          company: item.job?.company || 'No Company',
+          location: item.job?.location || 'Location not specified',
+          type: item.job?.type || 'Full-time',
+          status: item.status || 'applied',
+          date: item.appliedAt || new Date().toISOString(),
+          applicationId: item.applicationId
+        }));
+        setAppliedJobs(jobs);
+      }
     } catch (error) {
       console.error('Error fetching applied jobs:', error);
+    } finally {
+      setApplicationsLoading(false);
     }
   };
 
   const fetchApplicationStats = async () => {
     try {
-      // Mock data - replace with actual API call
-      setAppStats({
-        total: 12,
-        changeFromLastWeek: 3
-      });
+      if (!token) return;
+      
+      const response = await getApplicationStats(token);
+      if (response.success) {
+        setAppStats({
+          total: response.stats.total,
+          changeFromLastWeek: response.stats.changeFromLastWeek
+        });
+      }
     } catch (error) {
       console.error('Error fetching application stats:', error);
     }
@@ -133,11 +134,15 @@ const UserDashboardScreen = ({ navigation }) => {
 
   const fetchInterviewStats = async () => {
     try {
-      // Mock data - replace with actual API call
-      setInterviewStats({
-        total: 4,
-        thisWeek: 2
-      });
+      if (!token) return;
+      
+      const response = await getInterviewStats(token);
+      if (response.success) {
+        setInterviewStats({
+          total: response.stats.totalInterviews,
+          thisWeek: response.stats.interviewsThisWeek
+        });
+      }
     } catch (error) {
       console.error('Error fetching interview stats:', error);
     }
@@ -145,13 +150,46 @@ const UserDashboardScreen = ({ navigation }) => {
 
   const fetchProfileStats = async () => {
     try {
-      // Mock data - replace with actual API call
-      setProfileStats({
-        totalViews: 45,
-        percentageChange: 12
-      });
+      if (!token) return;
+      
+      const response = await getProfileStats(token);
+      if (response.success) {
+        setProfileStats({
+          totalViews: response.stats.totalViews,
+          percentageChange: response.stats.percentageChange
+        });
+      }
     } catch (error) {
       console.error('Error fetching profile stats:', error);
+    }
+  };
+
+  const fetchOffersStats = async () => {
+    try {
+      if (!token) return;
+      
+      const response = await getOffersStats(token);
+      if (response.success) {
+        setOffersStats({
+          totalOffers: response.stats.totalOffers,
+          lastMonthOffers: response.stats.lastMonthOffers
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching offers stats:', error);
+    }
+  };
+
+  const fetchRecentActivities = async () => {
+    try {
+      if (!token) return;
+      
+      const response = await getRecentActivities(token, 5);
+      if (response.success) {
+        setRecentActivities(response.activities);
+      }
+    } catch (error) {
+      console.error('Error fetching recent activities:', error);
     }
   };
 
@@ -174,7 +212,7 @@ const UserDashboardScreen = ({ navigation }) => {
   const getStatusBadge = (status) => {
     switch (status) {
       case 'applied':
-        return { color: '#3B82F6', bgColor: '#EFF6FF', text: 'Applied' };
+        return { color: '#6B7280', bgColor: '#F3F4F6', text: 'Applied' };
       case 'interview':
         return { color: '#8B5CF6', bgColor: '#F3F4F6', text: 'Interview' };
       case 'reviewed':
@@ -182,7 +220,7 @@ const UserDashboardScreen = ({ navigation }) => {
       case 'rejected':
         return { color: '#EF4444', bgColor: '#FEF2F2', text: 'Rejected' };
       default:
-        return { color: '#6B7280', bgColor: '#F9FAFB', text: 'Applied' };
+        return { color: '#6B7280', bgColor: '#F3F4F6', text: 'Applied' };
     }
   };
 
@@ -205,12 +243,25 @@ const UserDashboardScreen = ({ navigation }) => {
     </View>
   );
 
-  const JobApplicationCard = ({ job }) => {
+  const JobApplicationCard = ({ job, isLast = false }) => {
     const statusBadge = getStatusBadge(job.status);
+    
+    // Calculate time ago
+    const appliedDate = new Date(job.date);
+    const timeDiff = Date.now() - appliedDate.getTime();
+    const hoursAgo = Math.floor(timeDiff / (1000 * 60 * 60));
+    const daysAgo = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+    
+    let timeText = '';
+    if (hoursAgo < 24) {
+      timeText = `${hoursAgo} ${hoursAgo === 1 ? 'hour' : 'hours'} ago`;
+    } else {
+      timeText = `${daysAgo} ${daysAgo === 1 ? 'day' : 'days'} ago`;
+    }
     
     return (
       <TouchableOpacity 
-        style={styles.jobCard}
+        style={[styles.jobCard, isLast && styles.jobCardLast]}
         onPress={() => handleViewDetails(job.applicationId)}
       >
         <View style={styles.jobCardContent}>
@@ -225,12 +276,6 @@ const UserDashboardScreen = ({ navigation }) => {
                 <Ionicons name="location" size={12} color="#6B7280" />
                 <Text style={styles.jobMetaText}>{job.location}</Text>
               </View>
-              <View style={styles.jobMetaItem}>
-                <Ionicons name="time" size={12} color="#6B7280" />
-                <Text style={styles.jobMetaText}>
-                  {new Date(job.date).toLocaleDateString()}
-                </Text>
-              </View>
             </View>
           </View>
           <View style={styles.jobActions}>
@@ -238,6 +283,10 @@ const UserDashboardScreen = ({ navigation }) => {
               <Text style={[styles.statusText, { color: statusBadge.color }]}>
                 {statusBadge.text}
               </Text>
+            </View>
+            <View style={styles.timeContainer}>
+              <Ionicons name="time" size={12} color="#6B7280" />
+              <Text style={styles.timeText}>{timeText}</Text>
             </View>
             <TouchableOpacity 
               style={styles.viewDetailsButton}
@@ -304,6 +353,14 @@ const UserDashboardScreen = ({ navigation }) => {
           />
           
           <StatCard
+            title="Job Offers"
+            value={offersStats.totalOffers}
+            subtitle={offersStats.lastMonthOffers > 0 ? `${offersStats.lastMonthOffers} this month` : null}
+            icon="trophy"
+            color="#F59E0B"
+          />
+          
+          <StatCard
             title="Profile Views"
             value={profileStats.totalViews}
             subtitle={profileStats.percentageChange > 0 ? `+${profileStats.percentageChange}% from last month` : null}
@@ -314,47 +371,91 @@ const UserDashboardScreen = ({ navigation }) => {
 
         {/* Job Application Progress */}
         <View style={styles.progressSection}>
-          <JobApplicationProgress />
+          <JobApplicationProgress refreshTrigger={refreshing} />
         </View>
 
         {/* Recent Applications */}
         <View style={styles.applicationsSection}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Recent Applications</Text>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={() => navigation.navigate('Jobs')}>
               <Text style={styles.viewAllText}>View All</Text>
             </TouchableOpacity>
           </View>
           
-          {appliedJobs.length === 0 ? (
+          {applicationsLoading ? (
+            <View style={styles.loadingState}>
+              <ActivityIndicator size="small" color="#3B82F6" />
+              <Text style={styles.loadingText}>Loading applications...</Text>
+            </View>
+          ) : appliedJobs.length === 0 ? (
             <View style={styles.emptyState}>
               <Ionicons name="document-outline" size={48} color="#9CA3AF" />
               <Text style={styles.emptyText}>No applications yet</Text>
               <Text style={styles.emptySubtext}>Start applying to jobs to see them here</Text>
+              <TouchableOpacity 
+                style={styles.applyButton}
+                onPress={() => navigation.navigate('Jobs')}
+              >
+                <Text style={styles.applyButtonText}>Browse Jobs</Text>
+              </TouchableOpacity>
             </View>
           ) : (
             <View style={styles.jobsList}>
-              {appliedJobs.map((job) => (
-                <JobApplicationCard key={job.id} job={job} />
+              {appliedJobs.slice(0, 5).map((job, index) => (
+                <JobApplicationCard 
+                  key={job.id} 
+                  job={job} 
+                  isLast={index === Math.min(appliedJobs.length - 1, 4)}
+                />
               ))}
+              {appliedJobs.length > 5 && (
+                <TouchableOpacity 
+                  style={styles.viewMoreButton}
+                  onPress={() => navigation.navigate('Jobs')}
+                >
+                  <Text style={styles.viewMoreText}>
+                    View {appliedJobs.length - 5} more applications
+                  </Text>
+                  <Ionicons name="arrow-forward" size={16} color="#3B82F6" />
+                </TouchableOpacity>
+              )}
             </View>
           )}
         </View>
 
-        {/* Recommended Jobs */}
+        {/* Recent Activities */}
         <View style={styles.recommendedSection}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Recommended Jobs</Text>
+            <Text style={styles.sectionTitle}>Recent Activity</Text>
             <TouchableOpacity>
               <Text style={styles.viewAllText}>View All</Text>
             </TouchableOpacity>
           </View>
           
-          <View style={styles.emptyState}>
-            <Ionicons name="star-outline" size={48} color="#9CA3AF" />
-            <Text style={styles.emptyText}>No recommendations yet</Text>
-            <Text style={styles.emptySubtext}>Complete your profile to get personalized job recommendations</Text>
-          </View>
+          {recentActivities.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Ionicons name="time-outline" size={48} color="#9CA3AF" />
+              <Text style={styles.emptyText}>No recent activity</Text>
+              <Text style={styles.emptySubtext}>Your recent job applications will appear here</Text>
+            </View>
+          ) : (
+            <View style={styles.activitiesList}>
+              {recentActivities.map((activity) => (
+                <View key={activity.id} style={styles.activityItem}>
+                  <View style={[styles.activityIcon, { backgroundColor: activity.color + '20' }]}>
+                    <Ionicons name={activity.icon} size={20} color={activity.color} />
+                  </View>
+                  <View style={styles.activityContent}>
+                    <Text style={styles.activityTitle}>{activity.title}</Text>
+                    <Text style={styles.activityTime}>
+                      {new Date(activity.time).toLocaleDateString()} at {new Date(activity.time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                    </Text>
+                  </View>
+                </View>
+              ))}
+            </View>
+          )}
         </View>
       </ScrollView>
 
@@ -409,6 +510,9 @@ const styles = StyleSheet.create({
   statsContainer: {
     padding: 16,
     gap: 12,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
   },
   statCard: {
     backgroundColor: '#FFFFFF',
@@ -420,6 +524,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 2,
     elevation: 1,
+    width: '48%',
+    marginBottom: 12,
   },
   statContent: {
     flexDirection: 'row',
@@ -477,9 +583,6 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   jobsList: {
-    gap: 12,
-  },
-  jobCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
     shadowColor: '#000',
@@ -488,22 +591,30 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 1,
   },
+  jobCard: {
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+  },
+  jobCardLast: {
+    borderBottomWidth: 0,
+  },
   jobCardContent: {
     flexDirection: 'row',
     padding: 16,
     alignItems: 'flex-start',
   },
   jobIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     backgroundColor: '#F3F4F6',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: 16,
   },
   jobInfo: {
     flex: 1,
+    marginRight: 12,
   },
   jobTitle: {
     fontSize: 16,
@@ -518,7 +629,6 @@ const styles = StyleSheet.create({
   },
   jobMeta: {
     flexDirection: 'row',
-    gap: 16,
   },
   jobMetaItem: {
     flexDirection: 'row',
@@ -532,15 +642,27 @@ const styles = StyleSheet.create({
   jobActions: {
     alignItems: 'flex-end',
     gap: 8,
+    minWidth: 100,
   },
   statusBadge: {
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
+    alignSelf: 'flex-end',
   },
   statusText: {
     fontSize: 12,
     fontWeight: '500',
+  },
+  timeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    alignSelf: 'flex-end',
+  },
+  timeText: {
+    fontSize: 12,
+    color: '#6B7280',
   },
   viewDetailsButton: {
     paddingHorizontal: 12,
@@ -548,6 +670,8 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     borderWidth: 1,
     borderColor: '#E5E7EB',
+    backgroundColor: '#FFFFFF',
+    alignSelf: 'flex-end',
   },
   viewDetailsText: {
     fontSize: 12,
@@ -580,6 +704,76 @@ const styles = StyleSheet.create({
   recommendedSection: {
     paddingHorizontal: 16,
     marginBottom: 24,
+  },
+  activitiesList: {
+    gap: 1,
+  },
+  activityItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+  },
+  activityIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  activityContent: {
+    flex: 1,
+  },
+  activityTitle: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#1F2937',
+    marginBottom: 2,
+  },
+  activityTime: {
+    fontSize: 12,
+    color: '#94A3B8',
+  },
+  applyButton: {
+    backgroundColor: '#3B82F6',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+    marginTop: 16,
+  },
+  applyButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  viewMoreButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: '#F8FAFC',
+    borderRadius: 0,
+    borderBottomLeftRadius: 12,
+    borderBottomRightRadius: 12,
+    gap: 8,
+  },
+  viewMoreText: {
+    fontSize: 14,
+    color: '#3B82F6',
+    fontWeight: '500',
+  },
+  loadingState: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 20,
+    gap: 8,
   },
 });
 
