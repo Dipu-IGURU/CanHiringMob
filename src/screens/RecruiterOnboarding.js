@@ -7,6 +7,8 @@ import {
   SafeAreaView,
   Dimensions,
   ScrollView,
+  Linking,
+  Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -37,12 +39,34 @@ const RecruiterOnboarding = ({ navigation }) => {
     },
   ];
 
+  const redirectToCanHiring = async () => {
+    const url = 'https://canhiring.com/login';
+    try {
+      const supported = await Linking.canOpenURL(url);
+      if (supported) {
+        await Linking.openURL(url);
+      } else {
+        Alert.alert(
+          'Unable to open link',
+          'Please visit https://canhiring.com/login in your browser to continue as a recruiter.',
+          [{ text: 'OK' }]
+        );
+      }
+    } catch (error) {
+      Alert.alert(
+        'Error',
+        'Unable to open the link. Please visit https://canhiring.com/login in your browser.',
+        [{ text: 'OK' }]
+      );
+    }
+  };
+
   const nextStep = () => {
     if (currentStep < steps.length - 1) {
       setCurrentStep(currentStep + 1);
     } else {
-      // Navigate to login screen after onboarding
-      navigation.navigate('LoginScreen');
+      // Redirect to CanHiring website after onboarding
+      redirectToCanHiring();
     }
   };
 
@@ -55,7 +79,7 @@ const RecruiterOnboarding = ({ navigation }) => {
   };
 
   const skipOnboarding = () => {
-    navigation.navigate('LoginScreen');
+    redirectToCanHiring();
   };
 
   return (
@@ -78,7 +102,7 @@ const RecruiterOnboarding = ({ navigation }) => {
               style={styles.skipButton}
               onPress={skipOnboarding}
             >
-              <Text style={styles.skipText}>Skip</Text>
+              <Text style={styles.skipText}>Go to CanHiring</Text>
             </TouchableOpacity>
           </View>
 
@@ -140,7 +164,7 @@ const RecruiterOnboarding = ({ navigation }) => {
               onPress={nextStep}
             >
               <Text style={styles.buttonText}>
-                {currentStep === steps.length - 1 ? 'Get Started' : 'Next'}
+                {currentStep === steps.length - 1 ? 'Continue to CanHiring' : 'Next'}
               </Text>
               <Ionicons name="arrow-forward" size={20} color="#2196F3" />
             </TouchableOpacity>
