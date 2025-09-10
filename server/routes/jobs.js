@@ -20,7 +20,7 @@ router.get('/', async (req, res) => {
     } = req.query;
 
     // Build filter object
-    const filter = { isActive: true };
+    const filter = { $or: [{ isActive: true }, { isActive: { $exists: false } }] };
 
     if (category && category !== 'all') {
       filter.category = new RegExp(category, 'i');
@@ -463,9 +463,9 @@ router.get('/companies', async (req, res) => {
     // Transform the data to match the expected format
     const formattedCompanies = companies.map((company, index) => ({
       id: index + 1,
-      name: company.name,
+      name: company._id,
       jobs: company.jobCount,
-      logo: company.name.substring(0, 2).toUpperCase(),
+      logo: company._id.substring(0, 2).toUpperCase(),
       locations: [],
       jobTypes: [],
       latestJob: null

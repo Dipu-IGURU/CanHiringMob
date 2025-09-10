@@ -122,7 +122,7 @@ export const fetchJobsByCategory = async (category, page = 1, limit = 10) => {
     const data = await response.json();
     
     if (data.success) {
-      return data.jobs || [];
+      return data.data || [];
     } else {
       throw new Error(data.message || 'Failed to fetch jobs');
     }
@@ -177,7 +177,7 @@ export const fetchAllJobs = async (page = 1, limit = 20) => {
     const data = await response.json();
     
     if (data.success) {
-      return data.jobs || [];
+      return data.data || [];
     } else {
       throw new Error(data.message || 'Failed to fetch jobs');
     }
@@ -217,7 +217,7 @@ export const searchJobs = async (query, location = '', page = 1, limit = 20) => 
     const data = await response.json();
     
     if (data.success) {
-      return data.jobs || [];
+      return data.data || [];
     } else {
       throw new Error(data.message || 'Failed to search jobs');
     }
