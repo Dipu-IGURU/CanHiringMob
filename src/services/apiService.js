@@ -558,3 +558,84 @@ export const getAppliedJobs = async (token) => {
     };
   }
 };
+
+// Fetch featured companies from database (Workly approach)
+export const fetchFeaturedCompanies = async (limit = 12) => {
+  try {
+    // First, try the dedicated companies endpoint
+    const companiesResponse = await fetch(`${API_BASE_URL}/api/jobs/companies?limit=${limit}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (companiesResponse.ok) {
+      const companiesData = await companiesResponse.json();
+      if (companiesData.success && companiesData.companies && companiesData.companies.length > 0) {
+        console.log('✅ Using dedicated companies endpoint:', companiesData.companies.length, 'companies');
+        return companiesData.companies;
+      }
+    }
+
+    // Fallback: Fetch jobs and group by company (Workly approach)
+    console.log('📊 No companies from dedicated endpoint, fetching jobs to group by company...');
+    const jobsResponse = await fetch(`${API_BASE_URL}/api/jobs?limit=100`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!jobsResponse.ok) {
+      throw new Error(`HTTP error! status: ${jobsResponse.status}`);
+    }
+
+    const jobsData = await jobsResponse.json();
+    
+    if (jobsData.success && jobsData.data && Array.isArray(jobsData.data)) {
+      // Group jobs by company
+      const companyMap = {};
+      jobsData.data.forEach((job) => {
+        const companyName = job.company || 'Unknown Company';
+        if (!companyMap[companyName]) {
+          companyMap[companyName] = {
+            id: Object.keys(companyMap).length + 1,
+            name: companyName,
+            jobs: 0,
+            logo: companyName.substring(0, 2).toUpperCase(),
+            locations: [],
+            jobTypes: []
+          };
+        }
+        companyMap[companyName].jobs += 1;
+        
+        // Add unique locations
+        if (job.location && !companyMap[companyName].locations.includes(job.location)) {
+          companyMap[companyName].locations.push(job.location);
+        }
+        
+        // Add unique job types
+        if (job.type && !companyMap[companyName].jobTypes.includes(job.type)) {
+          companyMap[companyName].jobTypes.push(job.type);
+        }
+      });
+
+      // Convert to array and sort by job count
+      const companies = Object.values(companyMap)
+        .sort((a, b) => b.jobs - a.jobs)
+        .slice(0, limit);
+
+      console.log('✅ Grouped companies from jobs:', companies.length, 'companies');
+      return companies;
+    } else {
+      throw new Error('No jobs data available');
+    }
+  } catch (error) {
+    console.error('Error fetching featured companies:', error);
+    
+    // Return empty array instead of dummy data to show real state
+    console.log('⚠️  No real company data available - returning empty array');
+    return [];
+  }
+};

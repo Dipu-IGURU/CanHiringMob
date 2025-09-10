@@ -104,45 +104,15 @@ const ProfileScreen = ({ navigation }) => {
   const profileMenuItems = [
     {
       id: 1,
-      title: 'Edit Profile',
-      icon: 'person-outline',
-      onPress: () => Alert.alert('Coming Soon', 'Edit Profile feature will be available soon!'),
+      title: 'Account Settings',
+      icon: 'settings-outline',
+      onPress: () => navigation.navigate('AccountScreen'),
     },
     {
       id: 2,
       title: 'My Applications',
       icon: 'document-text-outline',
       onPress: () => navigation.navigate('UserDashboard'),
-    },
-    {
-      id: 3,
-      title: 'Saved Jobs',
-      icon: 'bookmark-outline',
-      onPress: () => Alert.alert('Coming Soon', 'Saved Jobs feature will be available soon!'),
-    },
-    {
-      id: 4,
-      title: 'Job Alerts',
-      icon: 'notifications-outline',
-      onPress: () => Alert.alert('Coming Soon', 'Job Alerts feature will be available soon!'),
-    },
-    {
-      id: 5,
-      title: 'Privacy Settings',
-      icon: 'shield-outline',
-      onPress: () => Alert.alert('Coming Soon', 'Privacy Settings feature will be available soon!'),
-    },
-    {
-      id: 6,
-      title: 'Help & Support',
-      icon: 'help-circle-outline',
-      onPress: () => Alert.alert('Help & Support', 'For support, please contact us at support@canhiring.com'),
-    },
-    {
-      id: 7,
-      title: 'About',
-      icon: 'information-circle-outline',
-      onPress: () => Alert.alert('About CanHiring', 'CanHiring v1.0.0\nYour trusted job search platform.'),
     },
   ];
 

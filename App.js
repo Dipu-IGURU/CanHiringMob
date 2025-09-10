@@ -18,6 +18,14 @@ import UserOnboarding from './src/screens/UserOnboarding';
 import RecruiterOnboarding from './src/screens/RecruiterOnboarding';
 import AdminOnboarding from './src/screens/AdminOnboarding';
 import UserTypeSelection from './src/screens/UserTypeSelection';
+import AccountScreen from './src/screens/AccountScreen';
+import EditProfileScreen from './src/screens/EditProfileScreen';
+import MyApplicationsScreen from './src/screens/MyApplicationsScreen';
+import SavedJobsScreen from './src/screens/SavedJobsScreen';
+import JobAlertsScreen from './src/screens/JobAlertsScreen';
+import PrivacySettingsScreen from './src/screens/PrivacySettingsScreen';
+import HelpSupportScreen from './src/screens/HelpSupportScreen';
+import AboutScreen from './src/screens/AboutScreen';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -101,6 +109,14 @@ export default function App() {
           <Stack.Screen name="RecruiterOnboarding" component={RecruiterOnboarding} />
           <Stack.Screen name="AdminOnboarding" component={AdminOnboarding} />
           <Stack.Screen name="MainTabs" component={MainTabNavigator} />
+          <Stack.Screen name="AccountScreen" component={AccountScreen} />
+          <Stack.Screen name="EditProfileScreen" component={EditProfileScreen} />
+          <Stack.Screen name="MyApplicationsScreen" component={MyApplicationsScreen} />
+          <Stack.Screen name="SavedJobsScreen" component={SavedJobsScreen} />
+          <Stack.Screen name="JobAlertsScreen" component={JobAlertsScreen} />
+          <Stack.Screen name="PrivacySettingsScreen" component={PrivacySettingsScreen} />
+          <Stack.Screen name="HelpSupportScreen" component={HelpSupportScreen} />
+          <Stack.Screen name="AboutScreen" component={AboutScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </AuthProvider>

@@ -394,4 +394,98 @@ router.delete('/:id', auth, recruiterAuth, async (req, res) => {
   }
 });
 
+// Get featured companies from jobs database
+router.get('/companies', async (req, res) => {
+  try {
+    const { limit = 12 } = req.query;
+
+    console.log('🔍 Fetching companies from jobs database...');
+
+    // First, let's check if there are any jobs at all
+    const totalJobs = await Job.countDocuments();
+    console.log('📊 Total jobs in database:', totalJobs);
+
+    if (totalJobs === 0) {
+      console.log('⚠️  No jobs found in database');
+      return res.json({
+        success: true,
+        companies: [],
+        total: 0
+      });
+    }
+
+    // Get a sample job to see the structure
+    const sampleJob = await Job.findOne();
+    console.log('📊 Sample job structure:', {
+      _id: sampleJob._id,
+      title: sampleJob.title,
+      company: sampleJob.company,
+      isActive: sampleJob.isActive,
+      hasCompany: !!sampleJob.company
+    });
+
+    // Check jobs with company field
+    const jobsWithCompany = await Job.countDocuments({ 
+      company: { $exists: true, $ne: null, $ne: '' } 
+    });
+    console.log('📊 Jobs with company field:', jobsWithCompany);
+
+    // Simple aggregation to get companies
+    const companies = await Job.aggregate([
+      {
+        $match: { 
+          company: { $exists: true, $ne: null, $ne: '' }
+        }
+      },
+      {
+        $group: {
+          _id: '$company',
+          jobCount: { $sum: 1 }
+        }
+      },
+      {
+        $project: {
+          name: '$_id',
+          jobCount: 1,
+          _id: 0
+        }
+      },
+      {
+        $sort: { jobCount: -1 }
+      },
+      {
+        $limit: parseInt(limit)
+      }
+    ]);
+
+    console.log('✅ Raw companies from aggregation:', companies);
+
+    // Transform the data to match the expected format
+    const formattedCompanies = companies.map((company, index) => ({
+      id: index + 1,
+      name: company.name,
+      jobs: company.jobCount,
+      logo: company.name.substring(0, 2).toUpperCase(),
+      locations: [],
+      jobTypes: [],
+      latestJob: null
+    }));
+
+    console.log('✅ Formatted companies:', formattedCompanies);
+
+    res.json({
+      success: true,
+      companies: formattedCompanies,
+      total: formattedCompanies.length
+    });
+
+  } catch (error) {
+    console.error('❌ Error fetching companies:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while fetching companies'
+    });
+  }
+});
+
 module.exports = router;

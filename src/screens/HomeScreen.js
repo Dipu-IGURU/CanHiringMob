@@ -16,7 +16,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import LogoImage from '../components/LogoImage';
 import AppHeader from '../components/AppHeader';
-import { fetchJobCategories, getTotalJobCount } from '../services/apiService';
+import { fetchJobCategories, getTotalJobCount, fetchFeaturedCompanies } from '../services/apiService';
 
 const { width, height } = Dimensions.get('window');
 
@@ -25,6 +25,8 @@ const HomeScreen = ({ navigation }) => {
   const [location, setLocation] = useState('');
   const [jobCategories, setJobCategories] = useState([]);
   const [totalJobs, setTotalJobs] = useState(93178);
+  const [featuredCompanies, setFeaturedCompanies] = useState([]);
+  const [companiesLoading, setCompaniesLoading] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -60,15 +62,21 @@ const HomeScreen = ({ navigation }) => {
     'Retail': '#EC4899',
   };
 
-  // Featured Companies Data
-  const featuredCompanies = [
-    { id: 1, name: 'TechCorp', jobs: 45, logo: 'TC' },
-    { id: 2, name: 'DevSolutions', jobs: 32, logo: 'DS' },
-    { id: 3, name: 'InnovateX', jobs: 28, logo: 'IX' },
-    { id: 4, name: 'DataFlow Inc', jobs: 41, logo: 'DF' },
-    { id: 5, name: 'CloudTech', jobs: 36, logo: 'CT' },
-    { id: 6, name: 'StartupHub', jobs: 23, logo: 'SH' },
-  ];
+  // Fetch featured companies from database
+  const loadFeaturedCompanies = async () => {
+    try {
+      setCompaniesLoading(true);
+      const companies = await fetchFeaturedCompanies(12);
+      setFeaturedCompanies(companies);
+      console.log('📊 Loaded companies:', companies.length);
+    } catch (err) {
+      console.error('Error loading featured companies:', err);
+      // Set empty array to show real state instead of dummy data
+      setFeaturedCompanies([]);
+    } finally {
+      setCompaniesLoading(false);
+    }
+  };
 
   // Testimonials Data
   const testimonials = [
@@ -141,6 +149,7 @@ const HomeScreen = ({ navigation }) => {
     };
 
     loadData();
+    loadFeaturedCompanies();
   }, []);
 
   const handleSearch = () => {
@@ -340,17 +349,45 @@ const HomeScreen = ({ navigation }) => {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Featured Companies</Text>
-            <Text style={styles.sectionSubtitle}>Browse top companies hiring from our database</Text>
+            <Text style={styles.sectionSubtitle}>
+              {companiesLoading 
+                ? 'Loading companies from our database...' 
+                : featuredCompanies.length > 0
+                  ? `Browse top companies hiring from our database (${featuredCompanies.length} companies)`
+                  : 'No companies with active job postings yet'
+              }
+            </Text>
           </View>
           
-          <FlatList
-            data={featuredCompanies}
-            renderItem={renderCompany}
-            keyExtractor={(item) => item.id.toString()}
-            numColumns={3}
-            scrollEnabled={false}
-            contentContainerStyle={styles.companiesGrid}
-          />
+          {companiesLoading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#3B82F6" />
+              <Text style={styles.loadingText}>Loading companies...</Text>
+            </View>
+          ) : featuredCompanies.length > 0 ? (
+            <FlatList
+              data={featuredCompanies}
+              renderItem={renderCompany}
+              keyExtractor={(item) => item.id.toString()}
+              numColumns={3}
+              scrollEnabled={false}
+              contentContainerStyle={styles.companiesGrid}
+            />
+          ) : (
+            <View style={styles.emptyStateContainer}>
+              <Ionicons name="business-outline" size={48} color="#94A3B8" />
+              <Text style={styles.emptyStateTitle}>No Companies Yet</Text>
+              <Text style={styles.emptyStateText}>
+                Companies will appear here once they start posting jobs on our platform.
+              </Text>
+              <TouchableOpacity 
+                style={styles.emptyStateButton}
+                onPress={() => navigation.navigate('Jobs')}
+              >
+                <Text style={styles.emptyStateButtonText}>Browse Available Jobs</Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
 
         {/* Testimonials */}
@@ -707,6 +744,37 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   retryButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  emptyStateContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
+    paddingHorizontal: 20,
+  },
+  emptyStateTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#1F2937',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  emptyStateText: {
+    fontSize: 16,
+    color: '#6B7280',
+    textAlign: 'center',
+    lineHeight: 24,
+    marginBottom: 24,
+  },
+  emptyStateButton: {
+    backgroundColor: '#3B82F6',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  emptyStateButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
