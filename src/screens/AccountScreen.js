@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,14 +7,32 @@ import {
   SafeAreaView,
   ScrollView,
   Dimensions,
+  Alert,
+  ActivityIndicator,
+  Image,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import AppHeader from '../components/AppHeader';
+import { useAuth } from '../contexts/AuthContext';
 
 const { width, height } = Dimensions.get('window');
 
 const AccountScreen = ({ navigation }) => {
+  const { user, logout, loading, isAuthenticated, refreshUserData } = useAuth();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  // Refresh user data when screen comes into focus
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      if (isAuthenticated && user) {
+        refreshUserData();
+      }
+    });
+
+    return unsubscribe;
+  }, [navigation, isAuthenticated, user, refreshUserData]);
+
   const menuItems = [
     {
       id: 'edit-profile',
@@ -76,6 +94,103 @@ const AccountScreen = ({ navigation }) => {
     }
   };
 
+  const handleLogout = async () => {
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to logout?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Logout',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setIsLoggingOut(true);
+              await logout();
+              // Navigation will be handled by the auth state change
+            } catch (error) {
+              console.error('Logout error:', error);
+              Alert.alert('Error', 'Failed to logout. Please try again.');
+            } finally {
+              setIsLoggingOut(false);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const getUserDisplayName = () => {
+    if (!user) return 'Loading...';
+    if (user.firstName && user.lastName) {
+      return `${user.firstName} ${user.lastName}`;
+    }
+    if (user.firstName) {
+      return user.firstName;
+    }
+    return 'User';
+  };
+
+  const getUserEmail = () => {
+    return user?.email || 'Loading...';
+  };
+
+  const getUserRole = () => {
+    if (!user) return 'Loading...';
+    return user.role === 'recruiter' ? 'Recruiter' : 'Job Seeker';
+  };
+
+  const getUserInitials = () => {
+    if (!user) return 'U';
+    const firstName = user.firstName || '';
+    const lastName = user.lastName || '';
+    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase() || 'U';
+  };
+
+  // Show loading screen if auth is still loading
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <LinearGradient
+          colors={['#F6F8FF', '#E8F2FF', '#D6E8FF']}
+          style={styles.gradient}
+        >
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#3B82F6" />
+            <Text style={styles.loadingText}>Loading your account...</Text>
+          </View>
+        </LinearGradient>
+      </SafeAreaView>
+    );
+  }
+
+  // Show error if not authenticated
+  if (!isAuthenticated || !user) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <LinearGradient
+          colors={['#F6F8FF', '#E8F2FF', '#D6E8FF']}
+          style={styles.gradient}
+        >
+          <View style={styles.errorContainer}>
+            <Ionicons name="alert-circle-outline" size={64} color="#EF4444" />
+            <Text style={styles.errorTitle}>Authentication Required</Text>
+            <Text style={styles.errorText}>Please login to view your account</Text>
+            <TouchableOpacity
+              style={styles.loginButton}
+              onPress={() => navigation.navigate('LoginScreen')}
+            >
+              <Text style={styles.loginButtonText}>Go to Login</Text>
+            </TouchableOpacity>
+          </View>
+        </LinearGradient>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <LinearGradient
@@ -93,12 +208,23 @@ const AccountScreen = ({ navigation }) => {
             {/* Profile Section */}
             <View style={styles.profileSection}>
               <View style={styles.profileImageContainer}>
-                <Ionicons name="person" size={40} color="#3B82F6" />
+                {user?.photoURL ? (
+                  <Image 
+                    source={{ uri: user.photoURL }} 
+                    style={styles.profileImage}
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <Text style={styles.profileInitials}>{getUserInitials()}</Text>
+                )}
               </View>
               <View style={styles.profileInfo}>
-                <Text style={styles.profileName}>John Doe</Text>
-                <Text style={styles.profileEmail}>john.doe@example.com</Text>
-                <Text style={styles.profileStatus}>Job Seeker</Text>
+                <Text style={styles.profileName}>{getUserDisplayName()}</Text>
+                <Text style={styles.profileEmail}>{getUserEmail()}</Text>
+                <Text style={styles.profileStatus}>{getUserRole()}</Text>
+                {user?.company && (
+                  <Text style={styles.profileCompany}>{user.company}</Text>
+                )}
               </View>
             </View>
 
@@ -127,15 +253,19 @@ const AccountScreen = ({ navigation }) => {
 
             {/* Logout Button */}
             <TouchableOpacity
-              style={styles.logoutButton}
-              onPress={() => {
-                // Handle logout
-                console.log('Logout pressed');
-              }}
+              style={[styles.logoutButton, isLoggingOut && styles.logoutButtonDisabled]}
+              onPress={handleLogout}
               activeOpacity={0.7}
+              disabled={isLoggingOut}
             >
-              <Ionicons name="log-out-outline" size={20} color="#EF4444" />
-              <Text style={styles.logoutText}>Logout</Text>
+              {isLoggingOut ? (
+                <ActivityIndicator size="small" color="#EF4444" />
+              ) : (
+                <Ionicons name="log-out-outline" size={20} color="#EF4444" />
+              )}
+              <Text style={styles.logoutText}>
+                {isLoggingOut ? 'Logging out...' : 'Logout'}
+              </Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -267,6 +397,65 @@ const styles = StyleSheet.create({
     color: '#EF4444',
     fontWeight: '500',
     marginLeft: 8,
+  },
+  logoutButtonDisabled: {
+    opacity: 0.6,
+  },
+  profileImage: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+  },
+  profileInitials: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#3B82F6',
+  },
+  profileCompany: {
+    fontSize: 12,
+    color: '#6B7280',
+    marginTop: 2,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: '#6B7280',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  errorTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#EF4444',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  errorText: {
+    fontSize: 16,
+    color: '#6B7280',
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  loginButton: {
+    backgroundColor: '#3B82F6',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  loginButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
 

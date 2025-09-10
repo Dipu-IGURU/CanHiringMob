@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,29 +8,113 @@ import {
   ScrollView,
   TextInput,
   Dimensions,
+  Alert,
+  ActivityIndicator,
+  Image,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import AppHeader from '../components/AppHeader';
+import { useAuth } from '../contexts/AuthContext';
+import { API_BASE_URL } from '../services/apiService';
 
 const { width, height } = Dimensions.get('window');
 
 const EditProfileScreen = ({ navigation }) => {
+  const { user, token, refreshUserData } = useAuth();
   const [formData, setFormData] = useState({
-    firstName: 'John',
-    lastName: 'Doe',
-    email: 'john.doe@example.com',
-    phone: '+1 (555) 123-4567',
-    location: 'San Francisco, CA',
-    title: 'Software Engineer',
-    bio: 'Passionate software engineer with 5+ years of experience in React and Node.js',
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    location: '',
+    title: '',
+    bio: '',
   });
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
-  const handleSave = () => {
-    console.log('Profile saved:', formData);
-    // Handle save logic here
-    navigation.goBack();
+  // Load user data when component mounts
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        firstName: user.firstName || '',
+        lastName: user.lastName || '',
+        email: user.email || '',
+        phone: user.profile?.phone || '',
+        location: user.profile?.location || '',
+        title: user.profile?.jobTitle || '',
+        bio: user.profile?.description || '',
+      });
+    }
+  }, [user]);
+
+  const handleSave = async () => {
+    if (!token) {
+      Alert.alert('Error', 'You must be logged in to update your profile');
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+
+      const response = await fetch(`${API_BASE_URL}/api/auth/profile`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          profile: {
+            phone: formData.phone,
+            location: formData.location,
+            jobTitle: formData.title,
+            description: formData.bio,
+          }
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Refresh user data in AuthContext
+        await refreshUserData();
+        Alert.alert('Success', 'Profile updated successfully!');
+        navigation.goBack();
+      } else {
+        Alert.alert('Error', data.message || 'Failed to update profile');
+      }
+    } catch (error) {
+      console.error('Profile update error:', error);
+      Alert.alert('Error', 'Failed to update profile. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
   };
+
+  const getUserInitials = () => {
+    const firstName = formData.firstName || '';
+    const lastName = formData.lastName || '';
+    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase() || 'U';
+  };
+
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <LinearGradient
+          colors={['#F6F8FF', '#E8F2FF', '#D6E8FF']}
+          style={styles.gradient}
+        >
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#3B82F6" />
+            <Text style={styles.loadingText}>Loading profile...</Text>
+          </View>
+        </LinearGradient>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -49,7 +133,15 @@ const EditProfileScreen = ({ navigation }) => {
             {/* Profile Picture Section */}
             <View style={styles.profilePictureSection}>
               <View style={styles.profileImageContainer}>
-                <Ionicons name="person" size={60} color="#3B82F6" />
+                {user?.photoURL ? (
+                  <Image 
+                    source={{ uri: user.photoURL }} 
+                    style={styles.profileImage}
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <Text style={styles.profileInitials}>{getUserInitials()}</Text>
+                )}
               </View>
               <TouchableOpacity style={styles.changePhotoButton}>
                 <Text style={styles.changePhotoText}>Change Photo</Text>
@@ -81,12 +173,13 @@ const EditProfileScreen = ({ navigation }) => {
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>Email</Text>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, styles.disabledInput]}
                   value={formData.email}
-                  onChangeText={(text) => setFormData({...formData, email: text})}
                   placeholder="Enter email"
                   keyboardType="email-address"
+                  editable={false}
                 />
+                <Text style={styles.disabledText}>Email cannot be changed</Text>
               </View>
 
               <View style={styles.inputGroup}>
@@ -134,12 +227,23 @@ const EditProfileScreen = ({ navigation }) => {
             </View>
 
             {/* Save Button */}
-            <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
+            <TouchableOpacity 
+              style={[styles.saveButton, isSaving && styles.saveButtonDisabled]} 
+              onPress={handleSave}
+              disabled={isSaving}
+            >
               <LinearGradient
-                colors={['#3B82F6', '#1D4ED8']}
+                colors={isSaving ? ['#9CA3AF', '#6B7280'] : ['#3B82F6', '#1D4ED8']}
                 style={styles.saveButtonGradient}
               >
-                <Text style={styles.saveButtonText}>Save Changes</Text>
+                {isSaving ? (
+                  <View style={styles.saveButtonContent}>
+                    <ActivityIndicator size="small" color="#FFFFFF" />
+                    <Text style={styles.saveButtonText}>Saving...</Text>
+                  </View>
+                ) : (
+                  <Text style={styles.saveButtonText}>Save Changes</Text>
+                )}
               </LinearGradient>
             </TouchableOpacity>
           </View>
@@ -256,6 +360,43 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
+  },
+  saveButtonDisabled: {
+    opacity: 0.7,
+  },
+  saveButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  profileImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+  },
+  profileInitials: {
+    fontSize: 36,
+    fontWeight: 'bold',
+    color: '#3B82F6',
+  },
+  disabledInput: {
+    backgroundColor: '#F9FAFB',
+    color: '#6B7280',
+  },
+  disabledText: {
+    fontSize: 12,
+    color: '#6B7280',
+    marginTop: 4,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: '#6B7280',
   },
 });
 

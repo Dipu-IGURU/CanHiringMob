@@ -226,6 +226,83 @@ router.get('/profile', auth, async (req, res) => {
   }
 });
 
+// Update user profile endpoint
+router.put('/profile', auth, [
+  body('firstName').optional().trim().notEmpty().withMessage('First name cannot be empty'),
+  body('lastName').optional().trim().notEmpty().withMessage('Last name cannot be empty'),
+  body('profile.phone').optional().trim(),
+  body('profile.location').optional().trim(),
+  body('profile.jobTitle').optional().trim(),
+  body('profile.description').optional().trim(),
+], async (req, res) => {
+  try {
+    // Check validation errors
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation failed',
+        errors: errors.array()
+      });
+    }
+
+    const userId = req.user._id;
+    const { firstName, lastName, profile } = req.body;
+
+    // Prepare update data
+    const updateData = {};
+    
+    if (firstName !== undefined) updateData.firstName = firstName;
+    if (lastName !== undefined) updateData.lastName = lastName;
+    
+    if (profile) {
+      updateData.profile = {
+        ...req.user.profile,
+        ...profile
+      };
+    }
+
+    // Update user
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      updateData,
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Prepare response data
+    const userData = {
+      id: updatedUser._id,
+      firstName: updatedUser.firstName,
+      lastName: updatedUser.lastName,
+      email: updatedUser.email,
+      role: updatedUser.role,
+      company: updatedUser.company,
+      ...updatedUser.profile
+    };
+
+    res.json({
+      success: true,
+      message: 'Profile updated successfully',
+      user: userData
+    });
+
+  } catch (error) {
+    console.error('Error updating profile:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while updating profile',
+      error: error.message
+    });
+  }
+});
+
 // Google Login/Register endpoint
 router.post('/google-login', async (req, res) => {
   try {

@@ -1,14 +1,16 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 // API Configuration
 export const API_BASE_URL = process.env.NODE_ENV === 'development' 
   ? 'http://localhost:5001'  // Local development server
   : 'https://can-hiring.onrender.com';  // Production server
 
 // Helper function to get cached data with expiration
-const getCachedData = (key) => {
-  const cached = localStorage.getItem(key);
-  if (!cached) return null;
-  
+const getCachedData = async (key) => {
   try {
+    const cached = await AsyncStorage.getItem(key);
+    if (!cached) return null;
+    
     const { data, timestamp } = JSON.parse(cached);
     const now = new Date().getTime();
     const fifteenMinutes = 15 * 60 * 1000; // 15 minutes in milliseconds
@@ -23,13 +25,13 @@ const getCachedData = (key) => {
 };
 
 // Helper function to set data in cache
-const setCachedData = (key, data) => {
+const setCachedData = async (key, data) => {
   const cacheData = {
     data,
     timestamp: new Date().getTime()
   };
   try {
-    localStorage.setItem(key, JSON.stringify(cacheData));
+    await AsyncStorage.setItem(key, JSON.stringify(cacheData));
   } catch (e) {
     console.error('Error saving to cache:', e);
   }
@@ -39,7 +41,7 @@ const setCachedData = (key, data) => {
 export const fetchJobCategories = async () => {
   try {
     // Check cache first
-    const cachedCategories = getCachedData('jobCategories');
+    const cachedCategories = await getCachedData('jobCategories');
     if (cachedCategories) {
       return cachedCategories;
     }
@@ -82,7 +84,7 @@ export const fetchJobCategories = async () => {
     const categories = await Promise.all(categoryPromises);
     
     // Cache the results
-    setCachedData('jobCategories', categories);
+    await setCachedData('jobCategories', categories);
     
     return categories;
   } catch (error) {
@@ -231,7 +233,7 @@ export const searchJobs = async (query, location = '', page = 1, limit = 20) => 
 export const getTotalJobCount = async () => {
   try {
     // Check cache first
-    const cachedTotal = getCachedData('totalJobs');
+    const cachedTotal = await getCachedData('totalJobs');
     if (cachedTotal !== null) {
       return cachedTotal;
     }
@@ -251,7 +253,7 @@ export const getTotalJobCount = async () => {
     
     if (data.success) {
       const total = data.count || 0;
-      setCachedData('totalJobs', total);
+      await setCachedData('totalJobs', total);
       return total;
     } else {
       throw new Error(data.message || 'Failed to fetch job count');
@@ -261,7 +263,7 @@ export const getTotalJobCount = async () => {
     
     // Return a mock total count
     const mockTotal = 93178;
-    setCachedData('totalJobs', mockTotal);
+    await setCachedData('totalJobs', mockTotal);
     return mockTotal;
   }
 };
