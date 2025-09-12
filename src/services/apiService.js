@@ -106,7 +106,7 @@ export const fetchJobsByCategory = async (category, page = 1, limit = 10) => {
       page: page,
       num_pages: 10, // Increased to fetch more pages (10 pages = ~100 jobs)
       country: 'US', // Changed to US for better results
-      date_posted: 'all',
+      date_posted: 'week', // Only fetch jobs posted in the last week
       job_type: 'fulltime',
       remote_jobs_only: false
     };
@@ -224,7 +224,7 @@ export const searchJobs = async (query, location = '', page = 1, limit = 20) => 
           page: page,
           num_pages: 5, // Reduced for faster response
           country: 'US',
-          date_posted: 'all',
+          date_posted: 'week', // Only fetch jobs posted in the last week
           job_type: 'fulltime',
           remote_jobs_only: false
         };

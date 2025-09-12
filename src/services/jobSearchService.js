@@ -20,7 +20,7 @@ export const searchJobsFromAPI = async (params) => {
       page = 1,
       num_pages = 10, // Increased to fetch more pages (10 pages = ~100 jobs)
       country = 'US', // Changed to US for better results
-      date_posted = 'all',
+      date_posted = 'week', // Only fetch jobs posted in the last week
       job_type = 'fulltime',
       remote_jobs_only = false,
       employment_types = '',

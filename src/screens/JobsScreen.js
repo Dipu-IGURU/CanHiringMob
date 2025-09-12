@@ -179,8 +179,18 @@ const JobsScreen = ({ navigation, route }) => {
       }
     };
 
+    const handleJobPress = () => {
+      // Navigate to job details screen
+      navigation.navigate('JobDetailsScreen', { jobData: item });
+    };
+
+    const handleApplyPress = () => {
+      // Navigate to job details screen for application
+      navigation.navigate('JobDetailsScreen', { jobData: item });
+    };
+
     return (
-      <TouchableOpacity style={styles.jobCard} onPress={() => console.log('Job pressed:', item.title)}>
+      <TouchableOpacity style={styles.jobCard} onPress={handleJobPress}>
         <View style={styles.jobHeader}>
           <View style={styles.jobInfo}>
             <Text style={styles.jobTitle}>{item.title || 'No Title'}</Text>
@@ -218,14 +228,7 @@ const JobsScreen = ({ navigation, route }) => {
           </Text>
           <TouchableOpacity 
             style={styles.applyButton}
-            onPress={() => {
-              if (item.applyUrl) {
-                // Open external URL
-                console.log('Opening apply URL:', item.applyUrl);
-              } else {
-                console.log('Apply for job:', item.title);
-              }
-            }}
+            onPress={handleApplyPress}
           >
             <Text style={styles.applyButtonText}>Apply Now</Text>
           </TouchableOpacity>

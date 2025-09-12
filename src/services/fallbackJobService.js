@@ -1,5 +1,12 @@
 // Fallback Job Service with sample data when API is not available
 
+// Helper function to generate recent dates
+const getRecentDate = (daysAgo = 0) => {
+  const date = new Date();
+  date.setDate(date.getDate() - daysAgo);
+  return date.toISOString();
+};
+
 // Generate more sample jobs programmatically
 const generateSampleJobs = () => {
   const baseJobs = [
@@ -10,8 +17,10 @@ const generateSampleJobs = () => {
       location: 'New York, NY',
       type: 'Full-time',
       salary: '$80,000 - $120,000',
-      description: 'We are looking for an experienced software developer to join our growing team. You will work on cutting-edge projects and collaborate with talented engineers.',
-      postedDate: '2024-01-15T10:00:00.000Z',
+      description: 'We are looking for an experienced software developer to join our growing team. You will work on cutting-edge projects and collaborate with talented engineers to build scalable web applications and mobile solutions.',
+      requirements: '• Bachelor\'s degree in Computer Science or related field\n• 5+ years of software development experience\n• Proficiency in JavaScript, React, Node.js, and Python\n• Experience with cloud platforms (AWS, Azure, or GCP)\n• Strong problem-solving and communication skills\n• Experience with Agile development methodologies',
+      benefits: '• Competitive salary and performance bonuses\n• Comprehensive health, dental, and vision insurance\n• 401(k) with company matching\n• Flexible work hours and remote work options\n• Professional development budget\n• Stock options and equity participation\n• Generous paid time off and holidays',
+      postedDate: getRecentDate(1),
       category: 'Information Technology',
       applyUrl: 'https://example.com/apply/1',
       remote: false
@@ -23,8 +32,10 @@ const generateSampleJobs = () => {
       location: 'San Francisco, CA',
       type: 'Full-time',
       salary: '$70,000 - $100,000',
-      description: 'Join our frontend team to build beautiful and responsive web applications using React, Vue.js, and modern CSS frameworks.',
-      postedDate: '2024-01-14T14:30:00.000Z',
+      description: 'Join our frontend team to build beautiful and responsive web applications using React, Vue.js, and modern CSS frameworks. You will work closely with designers and backend developers to create seamless user experiences.',
+      requirements: '• 3+ years of frontend development experience\n• Strong proficiency in React, Vue.js, or Angular\n• Experience with HTML5, CSS3, and JavaScript ES6+\n• Knowledge of responsive design principles\n• Experience with version control (Git)\n• Understanding of web performance optimization',
+      benefits: '• Competitive salary with annual reviews\n• Health and dental insurance\n• Flexible remote work policy\n• Learning and development opportunities\n• Modern equipment and tools\n• Team building events and activities',
+      postedDate: getRecentDate(2),
       category: 'Information Technology',
       applyUrl: 'https://example.com/apply/2',
       remote: true
@@ -37,7 +48,7 @@ const generateSampleJobs = () => {
       type: 'Full-time',
       salary: '$60,000 - $85,000',
       description: 'Provide compassionate patient care in our busy medical unit. Experience in medical-surgical nursing preferred.',
-      postedDate: '2024-01-13T09:15:00.000Z',
+      postedDate: getRecentDate(3),
       category: 'Healthcare & Medical',
       applyUrl: 'https://example.com/apply/3',
       remote: false
@@ -50,7 +61,7 @@ const generateSampleJobs = () => {
       type: 'Full-time',
       salary: '$65,000 - $90,000',
       description: 'Analyze financial data and market trends to support investment decisions. Strong Excel and analytical skills required.',
-      postedDate: '2024-01-12T16:45:00.000Z',
+      postedDate: getRecentDate(4),
       category: 'Finance & Banking',
       applyUrl: 'https://example.com/apply/4',
       remote: false
@@ -62,8 +73,10 @@ const generateSampleJobs = () => {
       location: 'Austin, TX',
       type: 'Full-time',
       salary: '$75,000 - $110,000',
-      description: 'Create intuitive user experiences for our mobile and web applications. Portfolio required.',
-      postedDate: '2024-01-11T11:20:00.000Z',
+      description: 'Create intuitive user experiences for our mobile and web applications. You will conduct user research, create wireframes and prototypes, and collaborate with development teams to bring designs to life.',
+      requirements: '• Bachelor\'s degree in Design, HCI, or related field\n• 3+ years of UX/UI design experience\n• Proficiency in Figma, Sketch, or Adobe Creative Suite\n• Experience with user research and usability testing\n• Strong portfolio demonstrating design process\n• Knowledge of design systems and accessibility standards',
+      benefits: '• Competitive salary and performance bonuses\n• Comprehensive health insurance\n• Flexible work schedule and remote options\n• Professional development and conference budget\n• Creative and collaborative work environment\n• Annual design retreat and team events',
+      postedDate: getRecentDate(5),
       category: 'Design',
       applyUrl: 'https://example.com/apply/5',
       remote: true
@@ -76,7 +89,7 @@ const generateSampleJobs = () => {
       type: 'Full-time',
       salary: '$70,000 - $95,000',
       description: 'Lead digital marketing campaigns and manage a team of marketing specialists. Experience with social media and PPC required.',
-      postedDate: '2024-01-10T13:10:00.000Z',
+      postedDate: getRecentDate(6),
       category: 'Sales & Marketing',
       applyUrl: 'https://example.com/apply/6',
       remote: false
@@ -89,7 +102,7 @@ const generateSampleJobs = () => {
       type: 'Full-time',
       salary: '$75,000 - $105,000',
       description: 'Design and develop mechanical systems for automotive applications. CAD experience required.',
-      postedDate: '2024-01-09T08:30:00.000Z',
+      postedDate: getRecentDate(7),
       category: 'Engineering',
       applyUrl: 'https://example.com/apply/7',
       remote: false
@@ -102,7 +115,7 @@ const generateSampleJobs = () => {
       type: 'Full-time',
       salary: '$35,000 - $45,000',
       description: 'Provide excellent customer support via phone, email, and chat. Bilingual preferred.',
-      postedDate: '2024-01-08T15:45:00.000Z',
+      postedDate: getRecentDate(8),
       category: 'Customer Service',
       applyUrl: 'https://example.com/apply/8',
       remote: true
@@ -115,7 +128,7 @@ const generateSampleJobs = () => {
       type: 'Full-time',
       salary: '$50,000 - $70,000',
       description: 'Handle recruitment, employee relations, and HR policies. HR certification preferred.',
-      postedDate: '2024-01-07T12:00:00.000Z',
+      postedDate: getRecentDate(9),
       category: 'Human Resources',
       applyUrl: 'https://example.com/apply/9',
       remote: false
@@ -128,7 +141,7 @@ const generateSampleJobs = () => {
       type: 'Full-time',
       salary: '$90,000 - $130,000',
       description: 'Analyze large datasets and build machine learning models. Python and R experience required.',
-      postedDate: '2024-01-06T10:15:00.000Z',
+      postedDate: getRecentDate(10),
       category: 'Information Technology',
       applyUrl: 'https://example.com/apply/10',
       remote: true
@@ -141,7 +154,7 @@ const generateSampleJobs = () => {
       type: 'Full-time',
       salary: '$80,000 - $110,000',
       description: 'Lead cross-functional teams and manage project timelines. PMP certification preferred.',
-      postedDate: '2024-01-05T14:20:00.000Z',
+      postedDate: getRecentDate(11),
       category: 'Administrative',
       applyUrl: 'https://example.com/apply/11',
       remote: false
@@ -154,7 +167,7 @@ const generateSampleJobs = () => {
       type: 'Full-time',
       salary: '$60,000 - $80,000',
       description: 'Oversee construction projects and manage construction teams. Safety certification required.',
-      postedDate: '2024-01-04T07:30:00.000Z',
+      postedDate: getRecentDate(12),
       category: 'Construction',
       applyUrl: 'https://example.com/apply/12',
       remote: false
@@ -167,7 +180,7 @@ const generateSampleJobs = () => {
       type: 'Full-time',
       salary: '$45,000 - $60,000',
       description: 'Inspect products and ensure quality standards. Manufacturing experience preferred.',
-      postedDate: '2024-01-03T11:45:00.000Z',
+      postedDate: getRecentDate(13),
       category: 'Manufacturing',
       applyUrl: 'https://example.com/apply/13',
       remote: false
@@ -180,7 +193,7 @@ const generateSampleJobs = () => {
       type: 'Full-time',
       salary: '$40,000 - $55,000',
       description: 'Manage daily store operations and lead retail team. Retail management experience required.',
-      postedDate: '2024-01-02T16:10:00.000Z',
+      postedDate: getRecentDate(14),
       category: 'Retail',
       applyUrl: 'https://example.com/apply/14',
       remote: false
@@ -193,7 +206,7 @@ const generateSampleJobs = () => {
       type: 'Full-time',
       salary: '$85,000 - $120,000',
       description: 'Manage cloud infrastructure and CI/CD pipelines. AWS and Docker experience required.',
-      postedDate: '2024-01-01T09:00:00.000Z',
+      postedDate: getRecentDate(15),
       category: 'Information Technology',
       applyUrl: 'https://example.com/apply/15',
       remote: true
@@ -206,7 +219,7 @@ const generateSampleJobs = () => {
       type: 'Full-time',
       salary: '$75,000 - $110,000',
       description: 'Build modern React applications with TypeScript and Next.js. Experience with state management required.',
-      postedDate: '2024-01-16T11:00:00.000Z',
+      postedDate: getRecentDate(16),
       category: 'Information Technology',
       applyUrl: 'https://example.com/apply/16',
       remote: true
@@ -219,7 +232,7 @@ const generateSampleJobs = () => {
       type: 'Full-time',
       salary: '$80,000 - $115,000',
       description: 'Develop backend services using Python, Django, and PostgreSQL. API development experience preferred.',
-      postedDate: '2024-01-17T14:30:00.000Z',
+      postedDate: getRecentDate(17),
       category: 'Information Technology',
       applyUrl: 'https://example.com/apply/17',
       remote: false
@@ -232,7 +245,7 @@ const generateSampleJobs = () => {
       type: 'Full-time',
       salary: '$70,000 - $105,000',
       description: 'Develop iOS and Android apps using React Native. Experience with app store deployment required.',
-      postedDate: '2024-01-18T09:15:00.000Z',
+      postedDate: getRecentDate(18),
       category: 'Information Technology',
       applyUrl: 'https://example.com/apply/18',
       remote: true
@@ -245,7 +258,7 @@ const generateSampleJobs = () => {
       type: 'Full-time',
       salary: '$85,000 - $125,000',
       description: 'Work on both frontend and backend development. Node.js, React, and MongoDB experience required.',
-      postedDate: '2024-01-19T16:45:00.000Z',
+      postedDate: getRecentDate(19),
       category: 'Information Technology',
       applyUrl: 'https://example.com/apply/19',
       remote: false
@@ -258,7 +271,7 @@ const generateSampleJobs = () => {
       type: 'Full-time',
       salary: '$90,000 - $130,000',
       description: 'Join our fast-growing startup. Work on scalable web applications and microservices architecture.',
-      postedDate: '2024-01-20T08:30:00.000Z',
+      postedDate: getRecentDate(20),
       category: 'Information Technology',
       applyUrl: 'https://example.com/apply/20',
       remote: true
@@ -271,7 +284,7 @@ const generateSampleJobs = () => {
       type: 'Full-time',
       salary: '$65,000 - $90,000',
       description: 'Provide patient care in our busy emergency department. BSN required, 3+ years experience preferred.',
-      postedDate: '2024-01-21T12:00:00.000Z',
+      postedDate: getRecentDate(21),
       category: 'Healthcare & Medical',
       applyUrl: 'https://example.com/apply/21',
       remote: false
@@ -284,7 +297,7 @@ const generateSampleJobs = () => {
       type: 'Full-time',
       salary: '$70,000 - $95,000',
       description: 'Help patients recover from injuries and surgeries. DPT degree and state license required.',
-      postedDate: '2024-01-22T10:30:00.000Z',
+      postedDate: getRecentDate(22),
       category: 'Healthcare & Medical',
       applyUrl: 'https://example.com/apply/22',
       remote: false
@@ -297,7 +310,7 @@ const generateSampleJobs = () => {
       type: 'Full-time',
       salary: '$75,000 - $100,000',
       description: 'Analyze investment opportunities and market trends. CFA certification preferred.',
-      postedDate: '2024-01-23T15:20:00.000Z',
+      postedDate: getRecentDate(23),
       category: 'Finance & Banking',
       applyUrl: 'https://example.com/apply/23',
       remote: false
@@ -310,7 +323,7 @@ const generateSampleJobs = () => {
       type: 'Full-time',
       salary: '$50,000 - $70,000',
       description: 'Teach mathematics to high school students. Teaching certification and bachelor degree required.',
-      postedDate: '2024-01-24T13:45:00.000Z',
+      postedDate: getRecentDate(24),
       category: 'Education & Training',
       applyUrl: 'https://example.com/apply/24',
       remote: false
@@ -323,7 +336,7 @@ const generateSampleJobs = () => {
       type: 'Full-time',
       salary: '$55,000 - $80,000',
       description: 'Manage social media campaigns and digital advertising. Google Ads and Facebook Ads experience required.',
-      postedDate: '2024-01-25T11:15:00.000Z',
+      postedDate: getRecentDate(25),
       category: 'Sales & Marketing',
       applyUrl: 'https://example.com/apply/25',
       remote: true
