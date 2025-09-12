@@ -35,7 +35,7 @@ const JobSearchForm = ({ onSearch, loading = false, initialJobTitle = '', initia
       <View style={styles.searchCard}>
         {/* Job Title/Keywords Input */}
         <View style={styles.inputContainer}>
-          <Ionicons name="search" size={20} color="#64748B" style={styles.inputIcon} />
+          <Ionicons name="briefcase" size={20} color="#64748B" style={styles.inputIcon} />
           <TextInput
             style={styles.textInput}
             placeholder="Job title, keywords..."
@@ -51,7 +51,7 @@ const JobSearchForm = ({ onSearch, loading = false, initialJobTitle = '', initia
 
         {/* City/Postcode Input */}
         <View style={styles.inputContainer}>
-          <Ionicons name="location-outline" size={20} color="#64748B" style={styles.inputIcon} />
+          <Ionicons name="location" size={20} color="#64748B" style={styles.inputIcon} />
           <TextInput
             style={styles.textInput}
             placeholder="City or postcode"
@@ -69,6 +69,12 @@ const JobSearchForm = ({ onSearch, loading = false, initialJobTitle = '', initia
           onPress={handleSearch}
           disabled={loading}
         >
+          <Ionicons 
+            name={loading ? "hourglass-outline" : "search"} 
+            size={18} 
+            color="#FFFFFF" 
+            style={styles.buttonIcon} 
+          />
           <Text style={styles.searchButtonText}>
             {loading ? 'Searching...' : 'Find Jobs'}
           </Text>
@@ -119,11 +125,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#3B82F6',
     borderRadius: 8,
     paddingVertical: 14,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
   },
   searchButtonDisabled: {
     backgroundColor: '#94A3B8',
+  },
+  buttonIcon: {
+    marginRight: 8,
   },
   searchButtonText: {
     color: '#FFFFFF',

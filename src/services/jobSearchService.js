@@ -1,5 +1,6 @@
 // Job Search API Service using RapidAPI JSearch
 import { API_CONFIG } from '../config/apiConfig.js';
+import { getFallbackJobs, getFallbackJobsByCategory } from './fallbackJobService.js';
 
 const RAPIDAPI_KEY = API_CONFIG.RAPIDAPI_KEY;
 const RAPIDAPI_HOST = API_CONFIG.RAPIDAPI_HOST;
@@ -17,7 +18,7 @@ export const searchJobsFromAPI = async (params) => {
     const {
       query = '',
       page = 1,
-      num_pages = 1,
+      num_pages = 10, // Increased to fetch more pages (10 pages = ~100 jobs)
       country = 'US', // Changed to US for better results
       date_posted = 'all',
       job_type = 'fulltime',
@@ -99,10 +100,17 @@ export const searchJobsFromAPI = async (params) => {
     }
   } catch (error) {
     console.error('❌ Error fetching jobs from API:', error);
+    console.log('🔄 Falling back to sample job data...');
+    
+    // Use fallback data when API fails
+    const fallbackJobs = getFallbackJobs(params.query, params.location || '', 100);
+    
     return {
-      success: false,
-      message: error.message,
-      jobs: []
+      success: true,
+      jobs: fallbackJobs,
+      total: fallbackJobs.length,
+      page: params.page,
+      message: 'Using sample data - API subscription required for live data'
     };
   }
 };

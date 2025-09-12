@@ -118,11 +118,20 @@ const JobsScreen = ({ navigation, route }) => {
       setLoading(true);
       setError(null);
       
+      console.log('🔍 Searching jobs with query:', searchParams.query, 'location:', searchParams.location);
       const jobsData = await searchJobs(searchParams.query, searchParams.location, 1, 20);
-      console.log('Search results:', jobsData.length, 'jobs');
-      setJobs(jobsData);
+      console.log('🔍 Search results:', jobsData.length, 'jobs');
+      
+      if (jobsData && jobsData.length > 0) {
+        setJobs(jobsData);
+        console.log('✅ Jobs set successfully');
+      } else {
+        console.log('⚠️ No jobs found, setting empty array');
+        setJobs([]);
+        setError('No jobs found for your search');
+      }
     } catch (err) {
-      console.error('Error searching jobs:', err);
+      console.error('❌ Error searching jobs:', err);
       setError('Failed to search jobs');
       setJobs([]);
     } finally {

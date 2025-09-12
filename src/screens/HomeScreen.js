@@ -30,37 +30,6 @@ const HomeScreen = ({ navigation }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Icon mapping for job categories
-  const categoryIcons = {
-    'Information Technology': 'laptop',
-    'Healthcare & Medical': 'medical',
-    'Finance & Banking': 'card',
-    'Education & Training': 'school',
-    'Sales & Marketing': 'trending-up',
-    'Engineering': 'construct',
-    'Customer Service': 'headset',
-    'Human Resources': 'people',
-    'Administrative': 'document-text',
-    'Construction': 'hammer',
-    'Manufacturing': 'build',
-    'Retail': 'storefront',
-  };
-
-  // Color mapping for job categories
-  const categoryColors = {
-    'Information Technology': '#3B82F6',
-    'Healthcare & Medical': '#EF4444',
-    'Finance & Banking': '#10B981',
-    'Education & Training': '#F59E0B',
-    'Sales & Marketing': '#8B5CF6',
-    'Engineering': '#06B6D4',
-    'Customer Service': '#84CC16',
-    'Human Resources': '#F97316',
-    'Administrative': '#6366F1',
-    'Construction': '#F97316',
-    'Manufacturing': '#64748B',
-    'Retail': '#EC4899',
-  };
 
   // Fetch featured companies from database
   const loadFeaturedCompanies = async () => {
@@ -116,13 +85,12 @@ const HomeScreen = ({ navigation }) => {
           getTotalJobCount()
         ]);
         
-        // Transform categories data to include icons and colors
+        // Use categories directly as they already have icons and colors
         const transformedCategories = categories.map((category, index) => ({
           id: index + 1,
           title: category.title,
-          icon: categoryIcons[category.title] || 'briefcase',
-          color: categoryColors[category.title] || '#64748B',
-          jobs: category.positions
+          icon: category.icon,
+          color: category.color
         }));
         
         console.log('📊 Loaded categories:', transformedCategories);
@@ -164,7 +132,6 @@ const HomeScreen = ({ navigation }) => {
         <Ionicons name={item.icon} size={24} color={item.color} />
       </View>
       <Text style={styles.categoryTitle} numberOfLines={2}>{item.title}</Text>
-      <Text style={styles.categoryJobs}>{typeof item.jobs === 'string' ? item.jobs : item.jobs.toLocaleString()} jobs</Text>
     </TouchableOpacity>
   );
 
@@ -309,9 +276,8 @@ const HomeScreen = ({ navigation }) => {
                       const transformedCategories = categories.map((category, index) => ({
                         id: index + 1,
                         title: category.title,
-                        icon: categoryIcons[category.title] || 'briefcase',
-                        color: categoryColors[category.title] || '#64748B',
-                        jobs: category.positions
+                        icon: category.icon,
+                        color: category.color
                       }));
                       
                       setJobCategories(transformedCategories);
@@ -598,10 +564,6 @@ const styles = StyleSheet.create({
     color: '#1E293B',
     textAlign: 'center',
     marginBottom: 4,
-  },
-  categoryJobs: {
-    fontSize: 12,
-    color: '#64748B',
   },
   companiesGrid: {
     gap: 15,
