@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,9 +11,15 @@ import { Ionicons } from '@expo/vector-icons';
 
 const { width } = Dimensions.get('window');
 
-const JobSearchForm = ({ onSearch, loading = false }) => {
-  const [jobTitle, setJobTitle] = useState('');
-  const [location, setLocation] = useState('');
+const JobSearchForm = ({ onSearch, loading = false, initialJobTitle = '', initialLocation = '' }) => {
+  const [jobTitle, setJobTitle] = useState(initialJobTitle);
+  const [location, setLocation] = useState(initialLocation);
+
+  // Update form fields when initial values change
+  useEffect(() => {
+    setJobTitle(initialJobTitle);
+    setLocation(initialLocation);
+  }, [initialJobTitle, initialLocation]);
 
   const handleSearch = () => {
     if (jobTitle.trim() || location.trim()) {

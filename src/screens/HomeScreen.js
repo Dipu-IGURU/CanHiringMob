@@ -153,7 +153,12 @@ const HomeScreen = ({ navigation }) => {
   const renderJobCategory = ({ item }) => (
     <TouchableOpacity 
       style={styles.categoryCard} 
-      onPress={() => navigation.navigate('Jobs', { category: item.title })}
+      onPress={() => navigation.navigate('Jobs', { 
+        searchQuery: item.title,
+        location: '',
+        autoSearch: true,
+        category: item.title
+      })}
     >
       <View style={[styles.categoryIcon, { backgroundColor: item.color + '20' }]}>
         <Ionicons name={item.icon} size={24} color={item.color} />

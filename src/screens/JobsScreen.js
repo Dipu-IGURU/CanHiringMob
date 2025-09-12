@@ -29,11 +29,11 @@ const JobsScreen = ({ navigation, route }) => {
   const [isSearchMode, setIsSearchMode] = useState(false);
 
   // Get navigation parameters
-  const { category, searchQuery: initialSearchQuery, location: initialLocation } = route.params || {};
+  const { category, searchQuery: initialSearchQuery, location: initialLocation, autoSearch } = route.params || {};
 
   // Initialize search query and filter from navigation params
   useEffect(() => {
-    console.log('🔍 JobsScreen useEffect - Navigation params:', { initialSearchQuery, category, initialLocation });
+    console.log('🔍 JobsScreen useEffect - Navigation params:', { initialSearchQuery, category, initialLocation, autoSearch });
     if (initialSearchQuery) {
       setSearchQuery(initialSearchQuery);
       setIsSearchMode(true);
@@ -46,6 +46,17 @@ const JobsScreen = ({ navigation, route }) => {
       setSelectedFilter(category.toLowerCase());
     }
   }, [initialSearchQuery, category, initialLocation]);
+
+  // Auto-search when category is clicked from HomeScreen
+  useEffect(() => {
+    if (autoSearch && initialSearchQuery) {
+      console.log('🔍 Auto-search triggered for:', initialSearchQuery);
+      handleSearch({
+        query: initialSearchQuery,
+        location: initialLocation || ''
+      });
+    }
+  }, [autoSearch, initialSearchQuery, initialLocation]);
 
   // Load jobs when component mounts
   useEffect(() => {
@@ -226,7 +237,12 @@ const JobsScreen = ({ navigation, route }) => {
 
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Job Search Form */}
-        <JobSearchForm onSearch={handleSearch} loading={loading} />
+        <JobSearchForm 
+          onSearch={handleSearch} 
+          loading={loading}
+          initialJobTitle={searchQuery}
+          initialLocation={searchLocation}
+        />
 
         {/* Filter Tabs or Clear Search */}
         <View style={styles.filterSection}>
