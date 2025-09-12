@@ -1,6 +1,8 @@
 // Job Search API Service using RapidAPI JSearch
-const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY || 'your_rapidapi_key_here';
-const RAPIDAPI_HOST = process.env.RAPIDAPI_HOST || 'jsearch.p.rapidapi.com';
+import { API_CONFIG } from '../config/apiConfig.js';
+
+const RAPIDAPI_KEY = API_CONFIG.RAPIDAPI_KEY;
+const RAPIDAPI_HOST = API_CONFIG.RAPIDAPI_HOST;
 
 if (!RAPIDAPI_KEY || RAPIDAPI_KEY === 'your_rapidapi_key_here') {
   console.warn('RAPIDAPI_KEY not configured. Job search will use fallback data.');
@@ -16,7 +18,7 @@ export const searchJobsFromAPI = async (params) => {
       query = '',
       page = 1,
       num_pages = 1,
-      country = 'CA', // Canada
+      country = 'US', // Changed to US for better results
       date_posted = 'all',
       job_type = 'fulltime',
       remote_jobs_only = false,
@@ -40,6 +42,9 @@ export const searchJobsFromAPI = async (params) => {
       url.searchParams.append('job_requirements', job_requirements);
     }
 
+    console.log('🔍 Making JSearch API request to:', url.toString());
+    console.log('🔍 Using API key:', RAPIDAPI_KEY.substring(0, 10) + '...');
+    
     const response = await fetch(url.toString(), {
       method: 'GET',
       headers: {
@@ -47,12 +52,22 @@ export const searchJobsFromAPI = async (params) => {
         'X-RapidAPI-Host': RAPIDAPI_HOST,
       },
     });
+    
+    console.log('🔍 JSearch API response status:', response.status);
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
     const data = await response.json();
+    console.log('🔍 JSearch API response:', { 
+      status: data.status, 
+      dataLength: data.data?.length, 
+      totalJobs: data.total_jobs,
+      jobsPerPage: data.jobs_per_page,
+      page: data.page,
+      data: data.data?.slice(0, 2) // Show only first 2 jobs for debugging
+    });
     
     if (data.status === 'OK' && data.data) {
       return {
@@ -79,10 +94,11 @@ export const searchJobsFromAPI = async (params) => {
         page: page
       };
     } else {
+      console.log('❌ JSearch API failed:', data.message || 'Unknown error');
       throw new Error(data.message || 'Failed to fetch jobs from API');
     }
   } catch (error) {
-    console.error('Error fetching jobs from API:', error);
+    console.error('❌ Error fetching jobs from API:', error);
     return {
       success: false,
       message: error.message,

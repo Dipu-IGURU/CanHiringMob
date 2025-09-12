@@ -24,7 +24,7 @@ const HomeScreen = ({ navigation }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [location, setLocation] = useState('');
   const [jobCategories, setJobCategories] = useState([]);
-  const [totalJobs, setTotalJobs] = useState(93178);
+  const [totalJobs, setTotalJobs] = useState(0);
   const [featuredCompanies, setFeaturedCompanies] = useState([]);
   const [companiesLoading, setCompaniesLoading] = useState(true);
   const [loading, setLoading] = useState(true);
@@ -125,24 +125,14 @@ const HomeScreen = ({ navigation }) => {
           jobs: category.positions
         }));
         
+        console.log('📊 Loaded categories:', transformedCategories);
+        console.log('📊 Total jobs:', total);
         setJobCategories(transformedCategories);
         setTotalJobs(total);
       } catch (err) {
         console.error('Error loading data:', err);
         setError('Failed to load job data');
-        
-        // Set fallback data
-        const fallbackCategories = [
-          { id: 1, title: 'Information Technology', icon: 'laptop', color: '#3B82F6', jobs: 1250 },
-          { id: 2, title: 'Healthcare & Medical', icon: 'medical', color: '#EF4444', jobs: 890 },
-          { id: 3, title: 'Finance & Banking', icon: 'card', color: '#10B981', jobs: 650 },
-          { id: 4, title: 'Education & Training', icon: 'school', color: '#F59E0B', jobs: 420 },
-          { id: 5, title: 'Sales & Marketing', icon: 'trending-up', color: '#8B5CF6', jobs: 780 },
-          { id: 6, title: 'Engineering', icon: 'construct', color: '#06B6D4', jobs: 920 },
-          { id: 7, title: 'Customer Service', icon: 'headset', color: '#84CC16', jobs: 340 },
-          { id: 8, title: 'Human Resources', icon: 'people', color: '#F97316', jobs: 280 },
-        ];
-        setJobCategories(fallbackCategories);
+        setJobCategories([]);
       } finally {
         setLoading(false);
       }
@@ -169,7 +159,7 @@ const HomeScreen = ({ navigation }) => {
         <Ionicons name={item.icon} size={24} color={item.color} />
       </View>
       <Text style={styles.categoryTitle} numberOfLines={2}>{item.title}</Text>
-      <Text style={styles.categoryJobs}>{item.jobs.toLocaleString()} jobs</Text>
+      <Text style={styles.categoryJobs}>{typeof item.jobs === 'string' ? item.jobs : item.jobs.toLocaleString()} jobs</Text>
     </TouchableOpacity>
   );
 

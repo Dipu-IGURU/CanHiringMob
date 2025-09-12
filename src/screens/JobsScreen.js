@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   SafeAreaView,
   ScrollView,
-  TextInput,
   FlatList,
   Dimensions,
   ActivityIndicator,
@@ -15,38 +14,47 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import LogoImage from '../components/LogoImage';
 import AppHeader from '../components/AppHeader';
+import JobSearchForm from '../components/JobSearchForm';
 import { fetchJobsByCategory, searchJobs } from '../services/apiService';
 
 const { width } = Dimensions.get('window');
 
 const JobsScreen = ({ navigation, route }) => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchLocation, setSearchLocation] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('all');
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [isSearchMode, setIsSearchMode] = useState(false);
 
   // Get navigation parameters
   const { category, searchQuery: initialSearchQuery, location: initialLocation } = route.params || {};
 
   // Initialize search query and filter from navigation params
   useEffect(() => {
+    console.log('🔍 JobsScreen useEffect - Navigation params:', { initialSearchQuery, category, initialLocation });
     if (initialSearchQuery) {
       setSearchQuery(initialSearchQuery);
+      setIsSearchMode(true);
+    }
+    if (initialLocation) {
+      setSearchLocation(initialLocation);
     }
     if (category) {
+      console.log('🔍 Setting selected filter to:', category.toLowerCase());
       setSelectedFilter(category.toLowerCase());
     }
-  }, [initialSearchQuery, category]);
+  }, [initialSearchQuery, category, initialLocation]);
 
   // Load jobs when component mounts
   useEffect(() => {
     loadJobs();
   }, []);
 
-  // Load jobs when filters change
+  // Load jobs when filters change (only if not in search mode)
   useEffect(() => {
-    if (selectedFilter) {
+    if (selectedFilter && !isSearchMode) {
       loadJobs();
     }
   }, [selectedFilter]);
@@ -56,25 +64,24 @@ const JobsScreen = ({ navigation, route }) => {
       setLoading(true);
       setError(null);
       
-      console.log('Loading jobs with:', { selectedFilter, searchQuery, initialSearchQuery, category });
+      console.log('🔍 Loading jobs with:', { selectedFilter, searchQuery, searchLocation, isSearchMode });
       
       let jobsData = [];
       
-      // Use the current searchQuery state or initialSearchQuery from navigation
-      const currentSearchQuery = searchQuery || initialSearchQuery || '';
-      
-      if (currentSearchQuery.trim()) {
-        // Search jobs by query
-        console.log('Searching jobs with query:', currentSearchQuery);
-        jobsData = await searchJobs(currentSearchQuery, initialLocation);
+      if (isSearchMode && searchQuery.trim()) {
+        // Search jobs by query and location
+        console.log('Searching jobs with query:', searchQuery, 'location:', searchLocation);
+        jobsData = await searchJobs(searchQuery, searchLocation, 1, 20);
       } else if (selectedFilter && selectedFilter !== 'all') {
         // Fetch jobs by category (limit to 20 jobs)
-        console.log('Fetching jobs by category:', selectedFilter);
+        console.log('🔍 Fetching jobs by category:', selectedFilter);
         jobsData = await fetchJobsByCategory(selectedFilter, 1, 20);
+        console.log('🔍 Jobs data received:', jobsData.length, 'jobs');
       } else {
         // Fetch all jobs (limit to 20 jobs)
-        console.log('Fetching all jobs');
+        console.log('🔍 Fetching all jobs');
         jobsData = await fetchJobsByCategory('all', 1, 20);
+        console.log('🔍 All jobs data received:', jobsData.length, 'jobs');
       }
       
       console.log('Jobs loaded:', jobsData.length, 'jobs');
@@ -82,54 +89,31 @@ const JobsScreen = ({ navigation, route }) => {
     } catch (err) {
       console.error('Error loading jobs:', err);
       setError('Failed to load jobs');
+      setJobs([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSearch = async (searchParams) => {
+    console.log('🔍 Handle search called with:', searchParams);
+    setSearchQuery(searchParams.query);
+    setSearchLocation(searchParams.location);
+    setIsSearchMode(true);
+    setSelectedFilter('all'); // Reset filter when searching
+    
+    // Load jobs with search parameters
+    try {
+      setLoading(true);
+      setError(null);
       
-      // Set fallback data
-      setJobs([
-        {
-          _id: '1',
-          title: 'Senior React Native Developer',
-          company: 'TechCorp',
-          location: 'Toronto, ON',
-          type: 'Full-time',
-          salary: '$80,000 - $120,000',
-          posted: '2 days ago',
-          description: 'We are looking for an experienced React Native developer to join our team...',
-          category: 'Technology'
-        },
-        {
-          _id: '2',
-          title: 'UX/UI Designer',
-          company: 'DesignStudio',
-          location: 'Vancouver, BC',
-          type: 'Full-time',
-          salary: '$60,000 - $90,000',
-          posted: '1 week ago',
-          description: 'Join our creative team as a UX/UI Designer and help shape amazing user experiences...',
-          category: 'Design'
-        },
-        {
-          _id: '3',
-          title: 'Marketing Manager',
-          company: 'GrowthCo',
-          location: 'Montreal, QC',
-          type: 'Full-time',
-          salary: '$70,000 - $100,000',
-          posted: '3 days ago',
-          description: 'Lead our marketing initiatives and drive growth for our innovative products...',
-          category: 'Marketing'
-        },
-        {
-          _id: '4',
-          title: 'Data Scientist',
-          company: 'DataFlow Inc',
-          location: 'Calgary, AB',
-          type: 'Full-time',
-          salary: '$90,000 - $130,000',
-          posted: '5 days ago',
-          description: 'Analyze complex data sets and build predictive models to drive business insights...',
-          category: 'Technology'
-        }
-      ]);
+      const jobsData = await searchJobs(searchParams.query, searchParams.location, 1, 20);
+      console.log('Search results:', jobsData.length, 'jobs');
+      setJobs(jobsData);
+    } catch (err) {
+      console.error('Error searching jobs:', err);
+      setError('Failed to search jobs');
+      setJobs([]);
     } finally {
       setLoading(false);
     }
@@ -142,51 +126,93 @@ const JobsScreen = ({ navigation, route }) => {
     { id: 'marketing', label: 'Marketing' },
   ];
 
-  const handleSearch = () => {
-    loadJobs();
+  const handleFilterChange = (filterId) => {
+    setSelectedFilter(filterId);
+    setIsSearchMode(false); // Exit search mode when using filters
+    setSearchQuery('');
+    setSearchLocation('');
   };
 
-  const filteredJobs = selectedFilter === 'all' 
+  // For search mode, show all jobs. For filter mode, apply category filter
+  const filteredJobs = isSearchMode 
     ? jobs 
-    : jobs.filter(job => job.category && job.category.toLowerCase() === selectedFilter);
+    : (selectedFilter === 'all' 
+        ? jobs 
+        : jobs.filter(job => job.category && job.category.toLowerCase() === selectedFilter));
 
-  const renderJobCard = ({ item }) => (
-    <TouchableOpacity style={styles.jobCard} onPress={() => console.log('Job pressed:', item.title)}>
-      <View style={styles.jobHeader}>
-        <View style={styles.jobInfo}>
-          <Text style={styles.jobTitle}>{item.title}</Text>
-          <Text style={styles.companyName}>{item.company}</Text>
+  const renderJobCard = ({ item }) => {
+    // Format posted date
+    const formatPostedDate = (dateString) => {
+      if (!dateString) return 'Recently posted';
+      try {
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffTime = Math.abs(now - date);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        if (diffDays === 1) return '1 day ago';
+        if (diffDays < 7) return `${diffDays} days ago`;
+        if (diffDays < 30) return `${Math.ceil(diffDays / 7)} weeks ago`;
+        return `${Math.ceil(diffDays / 30)} months ago`;
+      } catch (error) {
+        return 'Recently posted';
+      }
+    };
+
+    return (
+      <TouchableOpacity style={styles.jobCard} onPress={() => console.log('Job pressed:', item.title)}>
+        <View style={styles.jobHeader}>
+          <View style={styles.jobInfo}>
+            <Text style={styles.jobTitle}>{item.title || 'No Title'}</Text>
+            <Text style={styles.companyName}>{item.company || 'No Company'}</Text>
+          </View>
+          <TouchableOpacity style={styles.saveButton}>
+            <Ionicons name="bookmark-outline" size={20} color="#64748B" />
+          </TouchableOpacity>
         </View>
-        <TouchableOpacity style={styles.saveButton}>
-          <Ionicons name="bookmark-outline" size={20} color="#64748B" />
-        </TouchableOpacity>
-      </View>
-      
-      <View style={styles.jobDetails}>
-        <View style={styles.detailItem}>
-          <Ionicons name="location-outline" size={16} color="#64748B" />
-          <Text style={styles.detailText}>{item.location}</Text>
+        
+        <View style={styles.jobDetails}>
+          <View style={styles.detailItem}>
+            <Ionicons name="location-outline" size={16} color="#64748B" />
+            <Text style={styles.detailText}>{item.location || 'Location not specified'}</Text>
+          </View>
+          <View style={styles.detailItem}>
+            <Ionicons name="time-outline" size={16} color="#64748B" />
+            <Text style={styles.detailText}>{item.type || 'Full-time'}</Text>
+          </View>
+          {item.salary && item.salary !== 'Salary not specified' && (
+            <View style={styles.detailItem}>
+              <Ionicons name="cash-outline" size={16} color="#64748B" />
+              <Text style={styles.detailText}>{item.salary}</Text>
+            </View>
+          )}
         </View>
-        <View style={styles.detailItem}>
-          <Ionicons name="time-outline" size={16} color="#64748B" />
-          <Text style={styles.detailText}>{item.type}</Text>
+        
+        <Text style={styles.jobDescription} numberOfLines={3}>
+          {item.description || 'No description available'}
+        </Text>
+        
+        <View style={styles.jobFooter}>
+          <Text style={styles.postedDate}>
+            {formatPostedDate(item.postedDate)}
+          </Text>
+          <TouchableOpacity 
+            style={styles.applyButton}
+            onPress={() => {
+              if (item.applyUrl) {
+                // Open external URL
+                console.log('Opening apply URL:', item.applyUrl);
+              } else {
+                console.log('Apply for job:', item.title);
+              }
+            }}
+          >
+            <Text style={styles.applyButtonText}>Apply Now</Text>
+          </TouchableOpacity>
         </View>
-        <View style={styles.detailItem}>
-          <Ionicons name="cash-outline" size={16} color="#64748B" />
-          <Text style={styles.detailText}>{item.salary}</Text>
-        </View>
-      </View>
-      
-      <Text style={styles.jobDescription} numberOfLines={2}>{item.description}</Text>
-      
-      <View style={styles.jobFooter}>
-        <Text style={styles.postedDate}>Posted {item.posted}</Text>
-        <TouchableOpacity style={styles.applyButton}>
-          <Text style={styles.applyButtonText}>Apply Now</Text>
-        </TouchableOpacity>
-      </View>
-    </TouchableOpacity>
-  );
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -199,48 +225,58 @@ const JobsScreen = ({ navigation, route }) => {
       />
 
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Search Section */}
-        <View style={styles.searchSection}>
-          <View style={styles.searchContainer}>
-            <Ionicons name="search" size={20} color="#64748B" style={styles.searchIcon} />
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Search jobs, companies, keywords..."
-              placeholderTextColor="#94A3B8"
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-            />
-          </View>
-        </View>
+        {/* Job Search Form */}
+        <JobSearchForm onSearch={handleSearch} loading={loading} />
 
-        {/* Filter Tabs */}
+        {/* Filter Tabs or Clear Search */}
         <View style={styles.filterSection}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterContainer}>
-            {filters.map((filter) => (
+          {isSearchMode ? (
+            <View style={styles.searchModeContainer}>
               <TouchableOpacity
-                key={filter.id}
-                style={[
-                  styles.filterTab,
-                  selectedFilter === filter.id && styles.activeFilterTab
-                ]}
-                onPress={() => setSelectedFilter(filter.id)}
+                style={styles.clearSearchButton}
+                onPress={() => {
+                  setIsSearchMode(false);
+                  setSearchQuery('');
+                  setSearchLocation('');
+                  setSelectedFilter('all');
+                  loadJobs();
+                }}
               >
-                <Text style={[
-                  styles.filterTabText,
-                  selectedFilter === filter.id && styles.activeFilterTabText
-                ]}>
-                  {filter.label}
-                </Text>
+                <Ionicons name="close-circle" size={16} color="#64748B" />
+                <Text style={styles.clearSearchText}>Clear Search</Text>
               </TouchableOpacity>
-            ))}
-          </ScrollView>
+            </View>
+          ) : (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterContainer}>
+              {filters.map((filter) => (
+                <TouchableOpacity
+                  key={filter.id}
+                  style={[
+                    styles.filterTab,
+                    selectedFilter === filter.id && styles.activeFilterTab
+                  ]}
+                  onPress={() => handleFilterChange(filter.id)}
+                >
+                  <Text style={[
+                    styles.filterTabText,
+                    selectedFilter === filter.id && styles.activeFilterTabText
+                  ]}>
+                    {filter.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          )}
         </View>
 
         {/* Jobs List */}
         <View style={styles.jobsSection}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>
-              {selectedFilter === 'all' ? 'All Jobs' : `${selectedFilter.charAt(0).toUpperCase() + selectedFilter.slice(1)} Jobs`}
+              {isSearchMode 
+                ? `Search Results${searchQuery ? ` for "${searchQuery}"` : ''}${searchLocation ? ` in ${searchLocation}` : ''}`
+                : (selectedFilter === 'all' ? 'All Jobs' : `${selectedFilter.charAt(0).toUpperCase() + selectedFilter.slice(1)} Jobs`)
+              }
             </Text>
             <Text style={styles.sectionSubtitle}>
               {loading ? 'Loading...' : `${filteredJobs.length} jobs found`}
@@ -291,34 +327,32 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFFFFF',
   },
-  searchSection: {
-    paddingHorizontal: 20,
-    paddingVertical: 20,
-  },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-  searchIcon: {
-    marginRight: 12,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 16,
-    color: '#1E293B',
-  },
   filterSection: {
     paddingHorizontal: 20,
     marginBottom: 20,
   },
   filterContainer: {
     paddingHorizontal: 5,
+  },
+  searchModeContainer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+  },
+  clearSearchButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F1F5F9',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  clearSearchText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#64748B',
+    marginLeft: 6,
   },
   filterTab: {
     paddingHorizontal: 20,
@@ -418,6 +452,7 @@ const styles = StyleSheet.create({
     color: '#374151',
     lineHeight: 20,
     marginBottom: 15,
+    minHeight: 60, // Ensure consistent height for job cards
   },
   jobFooter: {
     flexDirection: 'row',

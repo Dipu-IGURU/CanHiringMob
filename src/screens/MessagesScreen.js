@@ -17,59 +17,8 @@ import AppHeader from '../components/AppHeader';
 const MessagesScreen = ({ navigation }) => {
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Sample messages data
-  const messages = [
-    {
-      id: 1,
-      sender: 'Sarah Johnson',
-      company: 'TechCorp',
-      avatar: 'SJ',
-      lastMessage: 'Thank you for your interest in the Senior Developer position. We would like to schedule an interview...',
-      timestamp: '2 hours ago',
-      unread: true,
-      isOnline: true,
-    },
-    {
-      id: 2,
-      sender: 'Michael Chen',
-      company: 'DevSolutions',
-      avatar: 'MC',
-      lastMessage: 'Your application has been reviewed. We are impressed with your portfolio.',
-      timestamp: '1 day ago',
-      unread: true,
-      isOnline: false,
-    },
-    {
-      id: 3,
-      sender: 'Emily Rodriguez',
-      company: 'InnovateX',
-      avatar: 'ER',
-      lastMessage: 'We have received your resume and would like to discuss the next steps.',
-      timestamp: '2 days ago',
-      unread: false,
-      isOnline: true,
-    },
-    {
-      id: 4,
-      sender: 'David Kim',
-      company: 'StartupHub',
-      avatar: 'DK',
-      lastMessage: 'Unfortunately, we have decided to move forward with another candidate.',
-      timestamp: '3 days ago',
-      unread: false,
-      isOnline: false,
-    },
-    {
-      id: 5,
-      sender: 'Lisa Wang',
-      company: 'DataFlow Inc',
-      avatar: 'LW',
-      lastMessage: 'Congratulations! We are pleased to offer you the position.',
-      timestamp: '1 week ago',
-      unread: false,
-      isOnline: true,
-    },
-  ];
+  // State for messages
+  const [messages, setMessages] = useState([]);
 
   const filteredMessages = messages.filter(message =>
     message.sender.toLowerCase().includes(searchQuery.toLowerCase()) ||

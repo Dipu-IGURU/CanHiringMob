@@ -16,48 +16,7 @@ import AppHeader from '../components/AppHeader';
 const { width, height } = Dimensions.get('window');
 
 const MyApplicationsScreen = ({ navigation }) => {
-  const [applications] = useState([
-    {
-      id: 1,
-      jobTitle: 'Senior React Developer',
-      company: 'TechCorp Solutions',
-      appliedDate: '2024-01-15',
-      status: 'Under Review',
-      statusColor: '#F59E0B',
-      location: 'San Francisco, CA',
-      salary: '$120,000 - $150,000',
-    },
-    {
-      id: 2,
-      jobTitle: 'Full Stack Engineer',
-      company: 'InnovateLab',
-      appliedDate: '2024-01-12',
-      status: 'Interview Scheduled',
-      statusColor: '#10B981',
-      location: 'New York, NY',
-      salary: '$100,000 - $130,000',
-    },
-    {
-      id: 3,
-      jobTitle: 'Data Scientist',
-      company: 'DataFlow Inc',
-      appliedDate: '2024-01-10',
-      status: 'Rejected',
-      statusColor: '#EF4444',
-      location: 'Seattle, WA',
-      salary: '$110,000 - $140,000',
-    },
-    {
-      id: 4,
-      jobTitle: 'Cloud Architect',
-      company: 'CloudTech',
-      appliedDate: '2024-01-08',
-      status: 'Under Review',
-      statusColor: '#F59E0B',
-      location: 'Austin, TX',
-      salary: '$130,000 - $160,000',
-    },
-  ]);
+  const [applications, setApplications] = useState([]);
 
   const getStatusIcon = (status) => {
     switch (status) {

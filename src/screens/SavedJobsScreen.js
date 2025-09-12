@@ -16,52 +16,7 @@ import AppHeader from '../components/AppHeader';
 const { width, height } = Dimensions.get('window');
 
 const SavedJobsScreen = ({ navigation }) => {
-  const [savedJobs] = useState([
-    {
-      id: 1,
-      title: 'Senior React Developer',
-      company: 'TechCorp Solutions',
-      location: 'San Francisco, CA',
-      salary: '$120,000 - $150,000',
-      type: 'Full-time',
-      postedDate: '2 days ago',
-      savedDate: '2024-01-15',
-      logo: 'https://via.placeholder.com/40x40/3B82F6/FFFFFF?text=TC',
-    },
-    {
-      id: 2,
-      title: 'Full Stack Engineer',
-      company: 'InnovateLab',
-      location: 'New York, NY',
-      salary: '$100,000 - $130,000',
-      type: 'Full-time',
-      postedDate: '1 week ago',
-      savedDate: '2024-01-12',
-      logo: 'https://via.placeholder.com/40x40/10B981/FFFFFF?text=IL',
-    },
-    {
-      id: 3,
-      title: 'Data Scientist',
-      company: 'DataFlow Inc',
-      location: 'Seattle, WA',
-      salary: '$110,000 - $140,000',
-      type: 'Full-time',
-      postedDate: '3 days ago',
-      savedDate: '2024-01-10',
-      logo: 'https://via.placeholder.com/40x40/8B5CF6/FFFFFF?text=DF',
-    },
-    {
-      id: 4,
-      title: 'Cloud Architect',
-      company: 'CloudTech',
-      location: 'Austin, TX',
-      salary: '$130,000 - $160,000',
-      type: 'Full-time',
-      postedDate: '5 days ago',
-      savedDate: '2024-01-08',
-      logo: 'https://via.placeholder.com/40x40/F59E0B/FFFFFF?text=CT',
-    },
-  ]);
+  const [savedJobs, setSavedJobs] = useState([]);
 
   const handleApply = (job) => {
     console.log('Apply to job:', job.title);
