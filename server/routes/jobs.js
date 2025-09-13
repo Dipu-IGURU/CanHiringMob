@@ -247,18 +247,11 @@ router.get('/companies', async (req, res) => {
     console.log('📊 Total jobs in database:', totalJobs);
 
     if (totalJobs === 0) {
-      console.log('⚠️  No jobs found in database, returning sample companies');
-      // Return some sample companies when no jobs exist
-      const sampleCompanies = [
-        { id: 1, name: 'TechCorp', jobs: 5, logo: 'TC', locations: [], jobTypes: [], latestJob: null },
-        { id: 2, name: 'DevSolutions', jobs: 3, logo: 'DS', locations: [], jobTypes: [], latestJob: null },
-        { id: 3, name: 'InnovateX', jobs: 4, logo: 'IX', locations: [], jobTypes: [], latestJob: null },
-        { id: 4, name: 'DataFlow Inc', jobs: 2, logo: 'DF', locations: [], jobTypes: [], latestJob: null }
-      ];
+      console.log('⚠️  No jobs found in database, returning empty companies list');
       return res.json({
         success: true,
-        companies: sampleCompanies,
-        total: sampleCompanies.length
+        companies: [],
+        total: 0
       });
     }
 
@@ -332,19 +325,13 @@ router.get('/companies', async (req, res) => {
 
     console.log('✅ Raw companies from aggregation:', companies);
 
-    // If no companies found, return sample data
+    // If no companies found, return empty list
     if (companies.length === 0) {
-      console.log('⚠️  No companies found, returning sample companies');
-      const sampleCompanies = [
-        { id: 1, name: 'TechCorp', jobs: 5, logo: 'TC', locations: [], jobTypes: [], latestJob: null },
-        { id: 2, name: 'DevSolutions', jobs: 3, logo: 'DS', locations: [], jobTypes: [], latestJob: null },
-        { id: 3, name: 'InnovateX', jobs: 4, logo: 'IX', locations: [], jobTypes: [], latestJob: null },
-        { id: 4, name: 'DataFlow Inc', jobs: 2, logo: 'DF', locations: [], jobTypes: [], latestJob: null }
-      ];
+      console.log('⚠️  No companies found, returning empty companies list');
       return res.json({
         success: true,
-        companies: sampleCompanies,
-        total: sampleCompanies.length
+        companies: [],
+        total: 0
       });
     }
 

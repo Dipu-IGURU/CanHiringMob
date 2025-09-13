@@ -6,6 +6,91 @@ const User = require('../models/User');
 const { auth, recruiterAuth } = require('../middleware/auth');
 const router = express.Router();
 
+// Public job application endpoint (no authentication required)
+router.post('/', [
+  body('jobId').isMongoId().withMessage('Valid job ID is required'),
+  body('fullName').trim().notEmpty().withMessage('Full name is required'),
+  body('email').isEmail().normalizeEmail().withMessage('Valid email is required'),
+  body('phone').trim().notEmpty().withMessage('Phone number is required'),
+  body('currentLocation').trim().notEmpty().withMessage('Current location is required'),
+  body('experience').trim().notEmpty().withMessage('Experience is required'),
+  body('education').trim().notEmpty().withMessage('Education is required'),
+  body('coverLetter').trim().notEmpty().withMessage('Cover letter is required'),
+  body('currentCompany').optional().trim(),
+  body('currentPosition').optional().trim(),
+  body('expectedSalary').optional().trim(),
+  body('noticePeriod').optional().trim(),
+  body('linkedinProfile').optional().trim(),
+  body('portfolio').optional().trim(),
+  body('resume').optional().trim()
+], async (req, res) => {
+  try {
+    // Check validation errors
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation failed',
+        errors: errors.array()
+      });
+    }
+
+    const { jobId, ...applicationData } = req.body;
+
+    // Check if job exists and is active
+    const job = await Job.findById(jobId);
+    if (!job || !job.isActive) {
+      return res.status(404).json({
+        success: false,
+        message: 'Job not found or no longer available'
+      });
+    }
+
+    // Create application without user authentication
+    const application = new Application({
+      jobId,
+      applicantId: null, // No user authentication for public applications
+      fullName: applicationData.fullName,
+      email: applicationData.email,
+      phone: applicationData.phone,
+      currentLocation: applicationData.currentLocation,
+      experience: applicationData.experience,
+      education: applicationData.education,
+      currentCompany: applicationData.currentCompany || '',
+      currentPosition: applicationData.currentPosition || '',
+      expectedSalary: applicationData.expectedSalary || '',
+      noticePeriod: applicationData.noticePeriod || '',
+      portfolio: applicationData.portfolio || '',
+      linkedinProfile: applicationData.linkedinProfile || '',
+      resume: applicationData.resume || '',
+      coverLetter: applicationData.coverLetter,
+      status: 'pending',
+      appliedAt: new Date()
+    });
+
+    await application.save();
+
+    // Update job's total applications count
+    await Job.findByIdAndUpdate(jobId, { $inc: { totalApplications: 1 } });
+
+    // Populate the application data
+    await application.populate('jobId', 'title company location');
+
+    res.status(201).json({
+      success: true,
+      message: 'Application submitted successfully',
+      data: application
+    });
+
+  } catch (error) {
+    console.error('Error submitting public application:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while submitting application'
+    });
+  }
+});
+
 // Apply for a job
 router.post('/apply', auth, [
   body('jobId').isMongoId().withMessage('Valid job ID is required'),

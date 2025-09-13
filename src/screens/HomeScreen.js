@@ -140,7 +140,15 @@ const HomeScreen = ({ navigation }) => {
   );
 
   const renderCompany = ({ item }) => (
-    <TouchableOpacity style={styles.companyCard} onPress={() => console.log('Company pressed:', item.name)}>
+    <TouchableOpacity 
+      style={styles.companyCard} 
+      onPress={() => {
+        console.log('Company pressed:', item.name);
+        navigation.navigate('CompanyJobs', { 
+          companyName: item.name 
+        });
+      }}
+    >
       <View style={styles.companyLogo}>
         <Text style={styles.companyLogoText}>{item.logo}</Text>
       </View>

@@ -27,6 +27,8 @@ import PrivacySettingsScreen from './src/screens/PrivacySettingsScreen';
 import HelpSupportScreen from './src/screens/HelpSupportScreen';
 import AboutScreen from './src/screens/AboutScreen';
 import JobDetailsScreen from './src/screens/JobDetailsScreen';
+import CompanyJobsScreen from './src/screens/CompanyJobsScreen';
+import JobApplicationScreen from './src/screens/JobApplicationScreen';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -119,6 +121,8 @@ export default function App() {
           <Stack.Screen name="HelpSupportScreen" component={HelpSupportScreen} />
           <Stack.Screen name="AboutScreen" component={AboutScreen} />
           <Stack.Screen name="JobDetailsScreen" component={JobDetailsScreen} />
+          <Stack.Screen name="CompanyJobs" component={CompanyJobsScreen} />
+          <Stack.Screen name="JobApplication" component={JobApplicationScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </AuthProvider>

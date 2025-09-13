@@ -9,7 +9,7 @@ const applicationSchema = new mongoose.Schema({
   applicantId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true
+    required: false // Made optional for public applications
   },
   status: {
     type: String,
