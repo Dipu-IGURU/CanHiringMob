@@ -235,6 +235,148 @@ router.get('/category/:category', async (req, res) => {
   }
 });
 
+// Get featured companies from jobs database
+router.get('/companies', async (req, res) => {
+  try {
+    const { limit = 12 } = req.query;
+
+    console.log('🔍 Fetching companies from jobs database...');
+
+    // First, let's check if there are any jobs at all
+    const totalJobs = await Job.countDocuments();
+    console.log('📊 Total jobs in database:', totalJobs);
+
+    if (totalJobs === 0) {
+      console.log('⚠️  No jobs found in database, returning sample companies');
+      // Return some sample companies when no jobs exist
+      const sampleCompanies = [
+        { id: 1, name: 'TechCorp', jobs: 5, logo: 'TC', locations: [], jobTypes: [], latestJob: null },
+        { id: 2, name: 'DevSolutions', jobs: 3, logo: 'DS', locations: [], jobTypes: [], latestJob: null },
+        { id: 3, name: 'InnovateX', jobs: 4, logo: 'IX', locations: [], jobTypes: [], latestJob: null },
+        { id: 4, name: 'DataFlow Inc', jobs: 2, logo: 'DF', locations: [], jobTypes: [], latestJob: null }
+      ];
+      return res.json({
+        success: true,
+        companies: sampleCompanies,
+        total: sampleCompanies.length
+      });
+    }
+
+    // Get a sample job to see the structure
+    const sampleJob = await Job.findOne();
+    console.log('📊 Sample job structure:', {
+      _id: sampleJob._id,
+      title: sampleJob.title,
+      company: sampleJob.company,
+      isActive: sampleJob.isActive,
+      hasCompany: !!sampleJob.company
+    });
+
+    // Check jobs with company field
+    const jobsWithCompany = await Job.countDocuments({ 
+      company: { $exists: true, $ne: null, $ne: '' } 
+    });
+    console.log('📊 Jobs with company field:', jobsWithCompany);
+
+    // Simple aggregation to get companies
+    let companies = [];
+    try {
+      companies = await Job.aggregate([
+        {
+          $match: { 
+            company: { $exists: true, $ne: null, $ne: '' }
+          }
+        },
+        {
+          $group: {
+            _id: '$company',
+            jobCount: { $sum: 1 }
+          }
+        },
+        {
+          $project: {
+            name: '$_id',
+            jobCount: 1,
+            _id: 0
+          }
+        },
+        {
+          $sort: { jobCount: -1 }
+        },
+        {
+          $limit: parseInt(limit)
+        }
+      ]);
+    } catch (aggregationError) {
+      console.error('❌ Aggregation error:', aggregationError);
+      // Fallback to simple find and group
+      const jobs = await Job.find({ 
+        company: { $exists: true, $ne: null, $ne: '' } 
+      }).limit(parseInt(limit) * 2);
+      
+      const companyMap = {};
+      jobs.forEach(job => {
+        if (job.company) {
+          if (!companyMap[job.company]) {
+            companyMap[job.company] = 0;
+          }
+          companyMap[job.company]++;
+        }
+      });
+      
+      companies = Object.entries(companyMap)
+        .map(([name, jobCount]) => ({ name, jobCount }))
+        .sort((a, b) => b.jobCount - a.jobCount)
+        .slice(0, parseInt(limit));
+    }
+
+    console.log('✅ Raw companies from aggregation:', companies);
+
+    // If no companies found, return sample data
+    if (companies.length === 0) {
+      console.log('⚠️  No companies found, returning sample companies');
+      const sampleCompanies = [
+        { id: 1, name: 'TechCorp', jobs: 5, logo: 'TC', locations: [], jobTypes: [], latestJob: null },
+        { id: 2, name: 'DevSolutions', jobs: 3, logo: 'DS', locations: [], jobTypes: [], latestJob: null },
+        { id: 3, name: 'InnovateX', jobs: 4, logo: 'IX', locations: [], jobTypes: [], latestJob: null },
+        { id: 4, name: 'DataFlow Inc', jobs: 2, logo: 'DF', locations: [], jobTypes: [], latestJob: null }
+      ];
+      return res.json({
+        success: true,
+        companies: sampleCompanies,
+        total: sampleCompanies.length
+      });
+    }
+
+    // Transform the data to match the expected format
+    const formattedCompanies = companies.map((company, index) => ({
+      id: index + 1,
+      name: company.name,
+      jobs: company.jobCount,
+      logo: company.name.substring(0, 2).toUpperCase(),
+      locations: [],
+      jobTypes: [],
+      latestJob: null
+    }));
+
+    console.log('✅ Formatted companies:', formattedCompanies);
+
+    res.json({
+      success: true,
+      companies: formattedCompanies,
+      total: formattedCompanies.length
+    });
+
+  } catch (error) {
+    console.error('❌ Error fetching companies:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while fetching companies',
+      error: error.message
+    });
+  }
+});
+
 // Get single job by ID
 router.get('/:id', async (req, res) => {
   try {
@@ -390,148 +532,6 @@ router.delete('/:id', auth, recruiterAuth, async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Server error while deleting job'
-    });
-  }
-});
-
-// Get featured companies from jobs database
-router.get('/companies', async (req, res) => {
-  try {
-    const { limit = 12 } = req.query;
-
-    console.log('🔍 Fetching companies from jobs database...');
-
-    // First, let's check if there are any jobs at all
-    const totalJobs = await Job.countDocuments();
-    console.log('📊 Total jobs in database:', totalJobs);
-
-    if (totalJobs === 0) {
-      console.log('⚠️  No jobs found in database, returning sample companies');
-      // Return some sample companies when no jobs exist
-      const sampleCompanies = [
-        { id: 1, name: 'TechCorp', jobs: 5, logo: 'TC', locations: [], jobTypes: [], latestJob: null },
-        { id: 2, name: 'DevSolutions', jobs: 3, logo: 'DS', locations: [], jobTypes: [], latestJob: null },
-        { id: 3, name: 'InnovateX', jobs: 4, logo: 'IX', locations: [], jobTypes: [], latestJob: null },
-        { id: 4, name: 'DataFlow Inc', jobs: 2, logo: 'DF', locations: [], jobTypes: [], latestJob: null }
-      ];
-      return res.json({
-        success: true,
-        companies: sampleCompanies,
-        total: sampleCompanies.length
-      });
-    }
-
-    // Get a sample job to see the structure
-    const sampleJob = await Job.findOne();
-    console.log('📊 Sample job structure:', {
-      _id: sampleJob._id,
-      title: sampleJob.title,
-      company: sampleJob.company,
-      isActive: sampleJob.isActive,
-      hasCompany: !!sampleJob.company
-    });
-
-    // Check jobs with company field
-    const jobsWithCompany = await Job.countDocuments({ 
-      company: { $exists: true, $ne: null, $ne: '' } 
-    });
-    console.log('📊 Jobs with company field:', jobsWithCompany);
-
-    // Simple aggregation to get companies
-    let companies = [];
-    try {
-      companies = await Job.aggregate([
-        {
-          $match: { 
-            company: { $exists: true, $ne: null, $ne: '' }
-          }
-        },
-        {
-          $group: {
-            _id: '$company',
-            jobCount: { $sum: 1 }
-          }
-        },
-        {
-          $project: {
-            name: '$_id',
-            jobCount: 1,
-            _id: 0
-          }
-        },
-        {
-          $sort: { jobCount: -1 }
-        },
-        {
-          $limit: parseInt(limit)
-        }
-      ]);
-    } catch (aggregationError) {
-      console.error('❌ Aggregation error:', aggregationError);
-      // Fallback to simple find and group
-      const jobs = await Job.find({ 
-        company: { $exists: true, $ne: null, $ne: '' } 
-      }).limit(parseInt(limit) * 2);
-      
-      const companyMap = {};
-      jobs.forEach(job => {
-        if (job.company) {
-          if (!companyMap[job.company]) {
-            companyMap[job.company] = 0;
-          }
-          companyMap[job.company]++;
-        }
-      });
-      
-      companies = Object.entries(companyMap)
-        .map(([name, jobCount]) => ({ name, jobCount }))
-        .sort((a, b) => b.jobCount - a.jobCount)
-        .slice(0, parseInt(limit));
-    }
-
-    console.log('✅ Raw companies from aggregation:', companies);
-
-    // If no companies found, return sample data
-    if (companies.length === 0) {
-      console.log('⚠️  No companies found, returning sample companies');
-      const sampleCompanies = [
-        { id: 1, name: 'TechCorp', jobs: 5, logo: 'TC', locations: [], jobTypes: [], latestJob: null },
-        { id: 2, name: 'DevSolutions', jobs: 3, logo: 'DS', locations: [], jobTypes: [], latestJob: null },
-        { id: 3, name: 'InnovateX', jobs: 4, logo: 'IX', locations: [], jobTypes: [], latestJob: null },
-        { id: 4, name: 'DataFlow Inc', jobs: 2, logo: 'DF', locations: [], jobTypes: [], latestJob: null }
-      ];
-      return res.json({
-        success: true,
-        companies: sampleCompanies,
-        total: sampleCompanies.length
-      });
-    }
-
-    // Transform the data to match the expected format
-    const formattedCompanies = companies.map((company, index) => ({
-      id: index + 1,
-      name: company.name,
-      jobs: company.jobCount,
-      logo: company.name.substring(0, 2).toUpperCase(),
-      locations: [],
-      jobTypes: [],
-      latestJob: null
-    }));
-
-    console.log('✅ Formatted companies:', formattedCompanies);
-
-    res.json({
-      success: true,
-      companies: formattedCompanies,
-      total: formattedCompanies.length
-    });
-
-  } catch (error) {
-    console.error('❌ Error fetching companies:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Server error while fetching companies',
-      error: error.message
     });
   }
 });

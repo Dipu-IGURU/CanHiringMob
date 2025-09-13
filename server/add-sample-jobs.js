@@ -3,8 +3,8 @@ const mongoose = require('mongoose');
 require('dotenv').config();
 
 // Import the Job model
-const Job = require('./server/models/Job');
-const User = require('./server/models/User');
+const Job = require('./models/Job');
+const User = require('./models/User');
 
 const sampleJobs = [
   {
