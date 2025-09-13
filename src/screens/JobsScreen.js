@@ -42,8 +42,8 @@ const JobsScreen = ({ navigation, route }) => {
       setSearchLocation(initialLocation);
     }
     if (category) {
-      console.log('🔍 Setting selected filter to:', category.toLowerCase());
-      setSelectedFilter(category.toLowerCase());
+      console.log('🔍 Setting selected filter to:', category);
+      setSelectedFilter(category);
     }
   }, [initialSearchQuery, category, initialLocation]);
 
@@ -86,12 +86,29 @@ const JobsScreen = ({ navigation, route }) => {
       } else if (selectedFilter && selectedFilter !== 'all') {
         // Fetch jobs by category (limit to 20 jobs)
         console.log('🔍 Fetching jobs by category:', selectedFilter);
-        jobsData = await fetchJobsByCategory(selectedFilter, 1, 20);
-        console.log('🔍 Jobs data received:', jobsData.length, 'jobs');
+        // Map category ID to category name for API call
+        const categoryMapping = {
+          'technology': 'Technology',
+          'healthcare': 'Healthcare & Medical',
+          'finance': 'Finance & Banking',
+          'education': 'Education & Training',
+          'marketing': 'Sales & Marketing',
+          'engineering': 'Engineering',
+          'customer-service': 'Customer Service',
+          'human-resources': 'Human Resources',
+          'administrative': 'Administrative',
+          'construction': 'Construction',
+          'manufacturing': 'Manufacturing',
+          'retail': 'Retail',
+          'design': 'Design'
+        };
+        const categoryName = categoryMapping[selectedFilter] || selectedFilter;
+        jobsData = await fetchJobsByCategory(categoryName, 1, 25); // Fetch up to 25 jobs
+        console.log('🔍 Jobs data received:', jobsData.length, 'jobs for category:', categoryName);
       } else {
-        // Fetch all jobs (limit to 20 jobs)
+        // Fetch all jobs (limit to 25 jobs)
         console.log('🔍 Fetching all jobs');
-        jobsData = await fetchJobsByCategory('all', 1, 20);
+        jobsData = await fetchJobsByCategory('all', 1, 25); // Fetch up to 25 jobs
         console.log('🔍 All jobs data received:', jobsData.length, 'jobs');
       }
       
@@ -119,7 +136,7 @@ const JobsScreen = ({ navigation, route }) => {
       setError(null);
       
       console.log('🔍 Searching jobs with query:', searchParams.query, 'location:', searchParams.location);
-      const jobsData = await searchJobs(searchParams.query, searchParams.location, 1, 20);
+      const jobsData = await searchJobs(searchParams.query, searchParams.location, 1, 25); // Search up to 25 jobs
       console.log('🔍 Search results:', jobsData.length, 'jobs');
       
       if (jobsData && jobsData.length > 0) {
@@ -139,19 +156,70 @@ const JobsScreen = ({ navigation, route }) => {
     }
   };
 
+  const handleFilterChange = async (filterId) => {
+    console.log('🔍 Filter changed to:', filterId);
+    setSelectedFilter(filterId);
+    setIsSearchMode(false); // Exit search mode when filtering
+    setSearchQuery(''); // Clear search query
+    setSearchLocation(''); // Clear search location
+    
+    // Load jobs for the selected filter
+    try {
+      setLoading(true);
+      setError(null);
+      
+      let jobsData = [];
+      
+      if (filterId === 'all') {
+        console.log('🔍 Fetching all jobs');
+        jobsData = await fetchJobsByCategory('all', 1, 25);
+      } else {
+        // Map category ID to category name for API call
+        const categoryMapping = {
+          'technology': 'Technology',
+          'healthcare': 'Healthcare & Medical',
+          'finance': 'Finance & Banking',
+          'education': 'Education & Training',
+          'marketing': 'Sales & Marketing',
+          'engineering': 'Engineering',
+          'customer-service': 'Customer Service',
+          'human-resources': 'Human Resources',
+          'administrative': 'Administrative',
+          'construction': 'Construction',
+          'manufacturing': 'Manufacturing',
+          'retail': 'Retail',
+          'design': 'Design'
+        };
+        const categoryName = categoryMapping[filterId] || filterId;
+        console.log('🔍 Fetching jobs for category:', categoryName);
+        jobsData = await fetchJobsByCategory(categoryName, 1, 25);
+      }
+      
+      console.log('🔍 Filtered jobs received:', jobsData.length, 'jobs');
+      setJobs(jobsData);
+    } catch (err) {
+      console.error('❌ Error filtering jobs:', err);
+      setError('Failed to filter jobs');
+      setJobs([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const filters = [
     { id: 'all', label: 'All Jobs' },
     { id: 'technology', label: 'Technology' },
-    { id: 'design', label: 'Design' },
+    { id: 'healthcare', label: 'Healthcare' },
+    { id: 'finance', label: 'Finance' },
+    { id: 'education', label: 'Education' },
     { id: 'marketing', label: 'Marketing' },
+    { id: 'engineering', label: 'Engineering' },
+    { id: 'design', label: 'Design' },
+    { id: 'customer-service', label: 'Customer Service' },
+    { id: 'human-resources', label: 'HR' },
+    { id: 'administrative', label: 'Admin' },
   ];
 
-  const handleFilterChange = (filterId) => {
-    setSelectedFilter(filterId);
-    setIsSearchMode(false); // Exit search mode when using filters
-    setSearchQuery('');
-    setSearchLocation('');
-  };
 
   // For search mode, show all jobs. For filter mode, apply category filter
   const filteredJobs = isSearchMode 

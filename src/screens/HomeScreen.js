@@ -85,12 +85,13 @@ const HomeScreen = ({ navigation }) => {
           getTotalJobCount()
         ]);
         
-        // Use categories directly as they already have icons and colors
+        // Use categories directly as they now have icons and colors
         const transformedCategories = categories.map((category, index) => ({
-          id: index + 1,
-          title: category.title,
-          icon: category.icon,
-          color: category.color
+          id: category.id || (index + 1),
+          title: category.title || category.name,
+          name: category.name,
+          icon: category.icon || 'briefcase-outline',
+          color: category.color || '#3B82F6'
         }));
         
         console.log('📊 Loaded categories:', transformedCategories);
@@ -121,12 +122,15 @@ const HomeScreen = ({ navigation }) => {
   const renderJobCategory = ({ item }) => (
     <TouchableOpacity 
       style={styles.categoryCard} 
-      onPress={() => navigation.navigate('Jobs', { 
-        searchQuery: item.title,
-        location: '',
-        autoSearch: true,
-        category: item.title
-      })}
+      onPress={() => {
+        console.log('🔍 Category clicked:', item);
+        navigation.navigate('Jobs', { 
+          searchQuery: item.name || item.title,
+          location: '',
+          autoSearch: true,
+          category: item.id || item.title.toLowerCase()
+        });
+      }}
     >
       <View style={[styles.categoryIcon, { backgroundColor: item.color + '20' }]}>
         <Ionicons name={item.icon} size={24} color={item.color} />

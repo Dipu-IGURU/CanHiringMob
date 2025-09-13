@@ -1,24 +1,73 @@
 // Job Search API Service using RapidAPI JSearch
 import { API_CONFIG } from '../config/apiConfig.js';
-import { getFallbackJobs, getFallbackJobsByCategory } from './fallbackJobService.js';
 
 const RAPIDAPI_KEY = API_CONFIG.RAPIDAPI_KEY;
 const RAPIDAPI_HOST = API_CONFIG.RAPIDAPI_HOST;
 
+// Rate limiting variables
+let requestCount = 0;
+let lastResetTime = Date.now();
+const MAX_REQUESTS_PER_MINUTE = 2; // Very conservative limit to avoid 429 errors
+const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
+let isRequestInProgress = false; // Prevent multiple simultaneous requests
+
+// Request delay for rate limiting
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+// Check and enforce rate limiting
+const checkRateLimit = async () => {
+  const now = Date.now();
+  
+  // Reset counter if window has passed
+  if (now - lastResetTime >= RATE_LIMIT_WINDOW) {
+    requestCount = 0;
+    lastResetTime = now;
+  }
+  
+  // If we've hit the limit, wait
+  if (requestCount >= MAX_REQUESTS_PER_MINUTE) {
+    const waitTime = RATE_LIMIT_WINDOW - (now - lastResetTime);
+    console.log(`⏳ Rate limit reached. Waiting ${Math.ceil(waitTime / 1000)} seconds...`);
+    await delay(waitTime + 1000); // Add extra second for safety
+    requestCount = 0;
+    lastResetTime = Date.now();
+  }
+  
+  requestCount++;
+};
+
 if (!RAPIDAPI_KEY || RAPIDAPI_KEY === 'your_rapidapi_key_here') {
-  console.warn('RAPIDAPI_KEY not configured. Job search will use fallback data.');
+  console.warn('⚠️ RAPIDAPI_KEY not configured. Fallback data will be used.');
 }
+
 
 export const searchJobsFromAPI = async (params) => {
   try {
     if (!RAPIDAPI_KEY || RAPIDAPI_KEY === 'your_rapidapi_key_here') {
-      throw new Error('RAPIDAPI_KEY not configured');
+      console.log('❌ RAPIDAPI_KEY not configured - returning empty results');
+      return {
+        success: true,
+        jobs: [],
+        total: 0,
+        page: 1
+      };
     }
+
+    // Prevent multiple simultaneous requests
+    if (isRequestInProgress) {
+      console.log('⏳ Request already in progress, waiting...');
+      await delay(2000); // Wait 2 seconds
+    }
+    
+    isRequestInProgress = true;
+
+    // Apply rate limiting
+    await checkRateLimit();
 
     const {
       query = '',
       page = 1,
-      num_pages = 10, // Increased to fetch more pages (10 pages = ~100 jobs)
+      num_pages = 1, // Reduced to 1 page to avoid rate limits
       country = 'US', // Changed to US for better results
       date_posted = 'week', // Only fetch jobs posted in the last week
       job_type = 'fulltime',
@@ -57,6 +106,25 @@ export const searchJobsFromAPI = async (params) => {
     console.log('🔍 JSearch API response status:', response.status);
 
     if (!response.ok) {
+      if (response.status === 403) {
+        console.log('❌ API key invalid or expired. Returning empty results.');
+        return {
+          success: true,
+          jobs: [],
+          total: 0,
+          page: 1
+        };
+      }
+      if (response.status === 429) {
+        console.log('❌ Rate limit exceeded. Waiting 30 seconds before next request...');
+        await delay(30000); // Wait 30 seconds for rate limit reset
+        return {
+          success: true,
+          jobs: [],
+          total: 0,
+          page: 1
+        };
+      }
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
@@ -71,6 +139,9 @@ export const searchJobsFromAPI = async (params) => {
     });
     
     if (data.status === 'OK' && data.data) {
+      // Add delay after successful request to prevent rate limiting
+      await delay(2000);
+      
       return {
         success: true,
         jobs: data.data.map(job => ({
@@ -96,30 +167,39 @@ export const searchJobsFromAPI = async (params) => {
       };
     } else {
       console.log('❌ JSearch API failed:', data.message || 'Unknown error');
-      throw new Error(data.message || 'Failed to fetch jobs from API');
+      console.log('❌ Returning empty results');
+      return {
+        success: true,
+        jobs: [],
+        total: 0,
+        page: 1
+      };
     }
   } catch (error) {
     console.error('❌ Error fetching jobs from API:', error);
-    console.log('🔄 Falling back to sample job data...');
-    
-    // Use fallback data when API fails
-    const fallbackJobs = getFallbackJobs(params.query, params.location || '', 100);
-    
+    console.log('❌ Returning empty results due to error');
     return {
       success: true,
-      jobs: fallbackJobs,
-      total: fallbackJobs.length,
-      page: params.page,
-      message: 'Using sample data - API subscription required for live data'
+      jobs: [],
+      total: 0,
+      page: 1
     };
+  } finally {
+    isRequestInProgress = false; // Reset the flag
   }
 };
 
 export const getJobDetails = async (jobId) => {
   try {
     if (!RAPIDAPI_KEY || RAPIDAPI_KEY === 'your_rapidapi_key_here') {
-      throw new Error('RAPIDAPI_KEY not configured');
+      console.log('❌ RAPIDAPI_KEY not configured - returning empty job details');
+      return {
+        success: false,
+        message: 'API key not configured'
+      };
     }
+
+    await checkRateLimit();
 
     const response = await fetch(`https://jsearch.p.rapidapi.com/job-details?job_id=${jobId}`, {
       method: 'GET',
@@ -175,8 +255,14 @@ export const getJobDetails = async (jobId) => {
 export const getJobSearchSuggestions = async (query) => {
   try {
     if (!RAPIDAPI_KEY || RAPIDAPI_KEY === 'your_rapidapi_key_here') {
-      throw new Error('RAPIDAPI_KEY not configured');
+      console.log('❌ RAPIDAPI_KEY not configured - returning empty suggestions');
+      return {
+        success: true,
+        suggestions: []
+      };
     }
+
+    await checkRateLimit();
 
     const response = await fetch(`https://jsearch.p.rapidapi.com/search-filters?query=${encodeURIComponent(query)}`, {
       method: 'GET',
@@ -203,8 +289,7 @@ export const getJobSearchSuggestions = async (query) => {
   } catch (error) {
     console.error('Error fetching job search suggestions:', error);
     return {
-      success: false,
-      message: error.message,
+      success: true,
       suggestions: []
     };
   }

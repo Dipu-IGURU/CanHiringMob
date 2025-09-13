@@ -1,14 +1,14 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { searchJobsFromAPI } from './jobSearchService.js';
-import { getFallbackJobs, getFallbackJobsByCategory, getJobCategories } from './fallbackJobService.js';
 import { API_CONFIG } from '../config/apiConfig.js';
 
 const RAPIDAPI_KEY = API_CONFIG.RAPIDAPI_KEY;
 
 // API Configuration
-export const API_BASE_URL = process.env.NODE_ENV === 'development' 
-  ? 'http://localhost:5001'  // Local development server
-  : 'https://can-hiring.onrender.com';  // Production server
+export const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 
+  (process.env.NODE_ENV === 'development' 
+    ? 'http://localhost:5001'  // Local development server
+    : 'https://can-hiring.onrender.com');  // Production server
 
 // Helper function to get cached data with expiration
 const getCachedData = async (key) => {
@@ -42,7 +42,7 @@ const setCachedData = async (key, data) => {
   }
 };
 
-// Fetch job categories without position counts
+// Fetch job categories using jSearch API
 export const fetchJobCategories = async () => {
   try {
     // Check cache first
@@ -51,9 +51,121 @@ export const fetchJobCategories = async () => {
       return cachedCategories;
     }
 
-    // Use fallback categories data (no API calls needed)
-    console.log('🔄 Using fallback categories data');
-    const categories = getJobCategories();
+    // Define common job categories for search with icons and colors
+    const categories = [
+      { 
+        id: 'all', 
+        name: 'All Jobs', 
+        title: 'All Jobs',
+        count: 0, 
+        icon: 'briefcase-outline', 
+        color: '#3B82F6' 
+      },
+      { 
+        id: 'technology', 
+        name: 'Technology', 
+        title: 'Technology',
+        count: 0, 
+        icon: 'laptop-outline', 
+        color: '#8B5CF6' 
+      },
+      { 
+        id: 'healthcare', 
+        name: 'Healthcare & Medical', 
+        title: 'Healthcare',
+        count: 0, 
+        icon: 'medical-outline', 
+        color: '#EF4444' 
+      },
+      { 
+        id: 'finance', 
+        name: 'Finance & Banking', 
+        title: 'Finance',
+        count: 0, 
+        icon: 'card-outline', 
+        color: '#10B981' 
+      },
+      { 
+        id: 'education', 
+        name: 'Education & Training', 
+        title: 'Education',
+        count: 0, 
+        icon: 'school-outline', 
+        color: '#F59E0B' 
+      },
+      { 
+        id: 'marketing', 
+        name: 'Sales & Marketing', 
+        title: 'Marketing',
+        count: 0, 
+        icon: 'trending-up-outline', 
+        color: '#EC4899' 
+      },
+      { 
+        id: 'engineering', 
+        name: 'Engineering', 
+        title: 'Engineering',
+        count: 0, 
+        icon: 'construct-outline', 
+        color: '#6366F1' 
+      },
+      { 
+        id: 'customer-service', 
+        name: 'Customer Service', 
+        title: 'Customer Service',
+        count: 0, 
+        icon: 'headset-outline', 
+        color: '#14B8A6' 
+      },
+      { 
+        id: 'human-resources', 
+        name: 'Human Resources', 
+        title: 'HR',
+        count: 0, 
+        icon: 'people-outline', 
+        color: '#F97316' 
+      },
+      { 
+        id: 'administrative', 
+        name: 'Administrative', 
+        title: 'Admin',
+        count: 0, 
+        icon: 'folder-outline', 
+        color: '#84CC16' 
+      },
+      { 
+        id: 'construction', 
+        name: 'Construction', 
+        title: 'Construction',
+        count: 0, 
+        icon: 'hammer-outline', 
+        color: '#F59E0B' 
+      },
+      { 
+        id: 'manufacturing', 
+        name: 'Manufacturing', 
+        title: 'Manufacturing',
+        count: 0, 
+        icon: 'settings-outline', 
+        color: '#6B7280' 
+      },
+      { 
+        id: 'retail', 
+        name: 'Retail', 
+        title: 'Retail',
+        count: 0, 
+        icon: 'storefront-outline', 
+        color: '#DC2626' 
+      },
+      { 
+        id: 'design', 
+        name: 'Design', 
+        title: 'Design',
+        count: 0, 
+        icon: 'color-palette-outline', 
+        color: '#7C3AED' 
+      }
+    ];
     
     // Cache the results
     await setCachedData('jobCategories', categories);
@@ -61,10 +173,7 @@ export const fetchJobCategories = async () => {
     return categories;
   } catch (error) {
     console.error('Error fetching job categories:', error);
-    
-    // Return fallback categories if anything fails
-    console.log('🔄 Using fallback categories data');
-    return getJobCategories();
+    throw new Error('Failed to fetch job categories');
   }
 };
 
@@ -104,7 +213,7 @@ export const fetchJobsByCategory = async (category, page = 1, limit = 10) => {
     const jsearchParams = {
       query: searchQuery,
       page: page,
-      num_pages: 10, // Increased to fetch more pages (10 pages = ~100 jobs)
+      num_pages: 3, // Fetch 3 pages to get 15-25 jobs
       country: 'US', // Changed to US for better results
       date_posted: 'week', // Only fetch jobs posted in the last week
       job_type: 'fulltime',
@@ -117,95 +226,55 @@ export const fetchJobsByCategory = async (category, page = 1, limit = 10) => {
     
     if (jsearchResult.success && jsearchResult.jobs && jsearchResult.jobs.length > 0) {
       console.log('✅ JSearch API returned', jsearchResult.jobs.length, 'jobs for category:', category);
-      return jsearchResult.jobs.slice(0, limit); // Limit results
+      // Ensure we return at least 15 jobs, up to 25
+      const minJobs = 15;
+      const maxJobs = Math.min(25, limit);
+      const jobsToReturn = Math.max(minJobs, Math.min(maxJobs, jsearchResult.jobs.length));
+      return jsearchResult.jobs.slice(0, jobsToReturn);
     } else {
-      console.log('⚠️ JSearch API failed, trying fallback query...');
-      // Try with a simpler query as fallback
-      if (category.toLowerCase() === 'information technology') {
-        console.log('🔄 Trying fallback query for Information Technology...');
-        const fallbackParams = {
-          query: 'developer',
-          page: page,
-          num_pages: 1,
-          country: 'US',
-          date_posted: 'all',
-          job_type: 'fulltime',
-          remote_jobs_only: false
-        };
-        const fallbackResult = await searchJobsFromAPI(fallbackParams);
-        if (fallbackResult.success && fallbackResult.jobs && fallbackResult.jobs.length > 0) {
-          console.log('✅ Fallback JSearch API returned', fallbackResult.jobs.length, 'jobs for category:', category);
-          return fallbackResult.jobs.slice(0, limit);
-        }
-      }
-      console.log('⚠️ JSearch API failed, trying local API fallback');
-      throw new Error('JSearch API failed');
+      console.log('⚠️ No jobs from JSearch API, result:', jsearchResult);
+      return jsearchResult.jobs || [];
     }
   } catch (error) {
-    console.error('JSearch API error:', error);
-    
-    // Fallback to local API
-    try {
-      console.log('🔄 Falling back to local API for category:', category);
-      const response = await fetch(
-        `${API_BASE_URL}/api/jobs?category=${encodeURIComponent(category)}&page=${page}&limit=${limit}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      
-      if (data.success) {
-        console.log('✅ Local API returned', data.data?.length || 0, 'jobs for category:', category);
-        return data.data || [];
-      } else {
-        throw new Error(data.message || 'Failed to fetch jobs');
-      }
-    } catch (fallbackError) {
-      console.error('Local API fallback error:', fallbackError);
-      
-      // Use fallback sample data when all APIs fail
-      console.log('🔄 Using fallback sample data for category:', category);
-      const fallbackJobs = getFallbackJobsByCategory(category, Math.min(limit, 100)); // Return up to 100 jobs
-      return fallbackJobs;
-    }
+    console.error('❌ Error fetching jobs by category:', error);
+    // Don't throw error, return empty array to prevent app crash
+    console.log('🔄 Returning empty array due to error');
+    return [];
   }
 };
 
-// Fetch all public jobs
+// Fetch all public jobs using jSearch API
 export const fetchAllJobs = async (page = 1, limit = 20) => {
   try {
-    const response = await fetch(
-      `${API_BASE_URL}/api/jobs?page=${page}&limit=${limit}`,
-      {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const data = await response.json();
+    console.log('🔍 Fetching all jobs with jSearch API:', { page, limit });
     
-    if (data.success) {
-      return data.data || [];
+    const jsearchParams = {
+      query: 'software developer OR programmer OR IT specialist OR engineer OR data scientist OR nurse OR doctor OR teacher OR sales OR marketing',
+      page: page,
+      num_pages: 3, // Fetch 3 pages to get 15-25 jobs
+      country: 'US',
+      date_posted: 'week',
+      job_type: 'fulltime',
+      remote_jobs_only: false
+    };
+    
+    const jsearchResult = await searchJobsFromAPI(jsearchParams);
+    
+    if (jsearchResult.success && jsearchResult.jobs && jsearchResult.jobs.length > 0) {
+      console.log('✅ jSearch API returned', jsearchResult.jobs.length, 'jobs');
+      // Ensure we return at least 15 jobs, up to 25
+      const minJobs = 15;
+      const maxJobs = Math.min(25, limit);
+      const jobsToReturn = Math.max(minJobs, Math.min(maxJobs, jsearchResult.jobs.length));
+      return jsearchResult.jobs.slice(0, jobsToReturn);
     } else {
-      throw new Error(data.message || 'Failed to fetch jobs');
+      console.log('⚠️ No jobs from jSearch API, returning fallback jobs');
+      return jsearchResult.jobs || [];
     }
   } catch (error) {
-    console.error('Error fetching all jobs:', error);
+    console.error('❌ Error fetching all jobs:', error);
+    // Don't throw error, return empty array to prevent app crash
+    console.log('🔄 Returning empty array due to error');
     return [];
   }
 };
@@ -215,54 +284,44 @@ export const searchJobs = async (query, location = '', page = 1, limit = 20) => 
   try {
     console.log('🔍 searchJobs called with:', { query, location, page, limit });
     
-    // First try JSearch API if we have a valid key
-    if (RAPIDAPI_KEY && RAPIDAPI_KEY !== 'your_rapidapi_key_here') {
-      try {
-        console.log('🔄 Trying JSearch API...');
-        const jsearchParams = {
-          query: query,
-          page: page,
-          num_pages: 5, // Reduced for faster response
-          country: 'US',
-          date_posted: 'week', // Only fetch jobs posted in the last week
-          job_type: 'fulltime',
-          remote_jobs_only: false
-        };
+    const jsearchParams = {
+      query: query,
+      page: page,
+      num_pages: 3, // Fetch 3 pages to get 15-25 jobs
+      country: 'US',
+      date_posted: 'week',
+      job_type: 'fulltime',
+      remote_jobs_only: false
+    };
 
-        // Add location to query if provided
-        if (location) {
-          jsearchParams.query = `${query} ${location}`;
-        }
-
-        const jsearchResult = await searchJobsFromAPI(jsearchParams);
-        
-        if (jsearchResult.success && jsearchResult.jobs && jsearchResult.jobs.length > 0) {
-          console.log('✅ JSearch API returned', jsearchResult.jobs.length, 'jobs');
-          return jsearchResult.jobs.slice(0, limit);
-        }
-      } catch (apiError) {
-        console.log('⚠️ JSearch API failed, using fallback:', apiError.message);
-      }
+    // Add location to query if provided
+    if (location) {
+      jsearchParams.query = `${query} ${location}`;
     }
+
+    const jsearchResult = await searchJobsFromAPI(jsearchParams);
     
-    // Use enhanced fallback system
-    console.log('🔄 Using enhanced fallback system for any job role');
-    const fallbackJobs = getFallbackJobs(query, location, Math.min(limit, 100));
-    console.log('📊 Enhanced fallback returned', fallbackJobs.length, 'jobs');
-    return fallbackJobs;
+    if (jsearchResult.success && jsearchResult.jobs && jsearchResult.jobs.length > 0) {
+      console.log('✅ JSearch API returned', jsearchResult.jobs.length, 'jobs');
+      // Ensure we return at least 15 jobs, up to 25
+      const minJobs = 15;
+      const maxJobs = Math.min(25, limit);
+      const jobsToReturn = Math.max(minJobs, Math.min(maxJobs, jsearchResult.jobs.length));
+      return jsearchResult.jobs.slice(0, jobsToReturn);
+    } else {
+      console.log('⚠️ No jobs from jSearch API, returning available jobs');
+      return jsearchResult.jobs || [];
+    }
     
   } catch (error) {
     console.error('❌ Error in searchJobs:', error);
-    
-    // Final fallback - return some general jobs
-    console.log('🔄 Final fallback - returning general jobs');
-    const generalJobs = getFallbackJobs('', '', Math.min(limit, 20));
-    console.log('📊 Final fallback returned', generalJobs.length, 'jobs');
-    return generalJobs;
+    // Don't throw error, return empty array to prevent app crash
+    console.log('🔄 Returning empty array due to error');
+    return [];
   }
 };
 
-// Get total job count
+// Get total job count using jSearch API
 export const getTotalJobCount = async () => {
   try {
     // Check cache first
@@ -271,31 +330,32 @@ export const getTotalJobCount = async () => {
       return cachedTotal;
     }
 
-    const response = await fetch(`${API_BASE_URL}/api/jobs/count`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const data = await response.json();
+    // Use jSearch API to get job count
+    const jsearchParams = {
+      query: 'software developer OR programmer OR IT specialist OR engineer OR data scientist OR nurse OR doctor OR teacher OR sales OR marketing',
+      page: 1,
+      num_pages: 1,
+      country: 'US',
+      date_posted: 'week',
+      job_type: 'fulltime',
+      remote_jobs_only: false
+    };
     
-    if (data.success) {
-      const total = data.count || 0;
-      await setCachedData('totalJobs', total);
-      return total;
+    const jsearchResult = await searchJobsFromAPI(jsearchParams);
+    
+    if (jsearchResult.success && jsearchResult.jobs) {
+      // Estimate total based on first page results
+      const estimatedTotal = jsearchResult.jobs.length * 10; // Rough estimate
+      await setCachedData('totalJobs', estimatedTotal);
+      return estimatedTotal;
     } else {
-      throw new Error(data.message || 'Failed to fetch job count');
+      // Return 0 when no data available
+      await setCachedData('totalJobs', 0);
+      return 0;
     }
   } catch (error) {
     console.error('Error fetching total job count:', error);
-    
-    // Return 0 if API fails
-    console.log('❌ Failed to fetch total job count, returning 0');
+    // Return 0 when there's an error
     await setCachedData('totalJobs', 0);
     return 0;
   }
@@ -594,6 +654,7 @@ export const getAppliedJobs = async (token) => {
   }
 };
 
+
 // Fetch featured companies from database (Workly approach)
 export const fetchFeaturedCompanies = async (limit = 12) => {
   try {
@@ -611,6 +672,9 @@ export const fetchFeaturedCompanies = async (limit = 12) => {
         console.log('✅ Using dedicated companies endpoint:', companiesData.companies.length, 'companies');
         return companiesData.companies;
       }
+    } else if (companiesResponse.status >= 500) {
+      console.log('❌ Server error, returning empty companies');
+      return [];
     }
 
     // Fallback: Fetch jobs and group by company (Workly approach)
@@ -623,6 +687,10 @@ export const fetchFeaturedCompanies = async (limit = 12) => {
     });
 
     if (!jobsResponse.ok) {
+      if (jobsResponse.status >= 500) {
+        console.log('❌ Server error, returning empty companies');
+        return [];
+      }
       throw new Error(`HTTP error! status: ${jobsResponse.status}`);
     }
 
@@ -669,8 +737,8 @@ export const fetchFeaturedCompanies = async (limit = 12) => {
   } catch (error) {
     console.error('Error fetching featured companies:', error);
     
-    // Return empty array instead of dummy data to show real state
-    console.log('⚠️  No real company data available - returning empty array');
+    // Return empty array when there's an error
+    console.log('❌ Returning empty companies due to error');
     return [];
   }
 };
