@@ -108,9 +108,9 @@ const JobDetailsScreen = ({ navigation, route }) => {
     return (
       <SafeAreaView style={styles.container}>
         <AppHeader 
-          leftActions={[
-            { icon: 'arrow-back', onPress: () => navigation.goBack() }
-          ]}
+          title="Job Details"
+          showBackButton={true}
+          onBackPress={() => navigation.goBack()}
         />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#3B82F6" />
@@ -124,9 +124,9 @@ const JobDetailsScreen = ({ navigation, route }) => {
     return (
       <SafeAreaView style={styles.container}>
         <AppHeader 
-          leftActions={[
-            { icon: 'arrow-back', onPress: () => navigation.goBack() }
-          ]}
+          title="Job Details"
+          showBackButton={true}
+          onBackPress={() => navigation.goBack()}
         />
         <View style={styles.errorContainer}>
           <Ionicons name="alert-circle" size={64} color="#EF4444" />
@@ -146,9 +146,9 @@ const JobDetailsScreen = ({ navigation, route }) => {
   return (
     <SafeAreaView style={styles.container}>
       <AppHeader 
-        leftActions={[
-          { icon: 'arrow-back', onPress: () => navigation.goBack() }
-        ]}
+        title="Job Details"
+        showBackButton={true}
+        onBackPress={() => navigation.goBack()}
         rightActions={[
           { icon: 'bookmark-outline', onPress: () => console.log('Save job') }
         ]}
@@ -199,13 +199,13 @@ const JobDetailsScreen = ({ navigation, route }) => {
         {/* Job Details */}
         <View style={styles.jobDetails}>
           {/* Salary */}
-          {job.salary && job.salary !== 'Salary not specified' && (
+          {(job.salary || job.salaryRange) && (job.salary !== 'Salary not specified') && (
             <View style={styles.detailSection}>
               <View style={styles.sectionHeader}>
                 <Ionicons name="cash-outline" size={20} color="#3B82F6" />
                 <Text style={styles.sectionTitle}>Salary</Text>
               </View>
-              <Text style={styles.salaryText}>{job.salary}</Text>
+              <Text style={styles.salaryText}>{job.salary || job.salaryRange}</Text>
             </View>
           )}
 
@@ -215,8 +215,63 @@ const JobDetailsScreen = ({ navigation, route }) => {
               <Ionicons name="calendar-outline" size={20} color="#3B82F6" />
               <Text style={styles.sectionTitle}>Posted</Text>
             </View>
-            <Text style={styles.postedText}>{formatPostedDate(job.postedDate)}</Text>
+            <Text style={styles.postedText}>{formatPostedDate(job.postedDate || job.createdAt)}</Text>
           </View>
+
+          {/* Experience Required */}
+          {job.experience && (
+            <View style={styles.detailSection}>
+              <View style={styles.sectionHeader}>
+                <Ionicons name="briefcase-outline" size={20} color="#3B82F6" />
+                <Text style={styles.sectionTitle}>Experience Required</Text>
+              </View>
+              <Text style={styles.experienceText}>{job.experience}</Text>
+            </View>
+          )}
+
+          {/* Education */}
+          {job.education && (
+            <View style={styles.detailSection}>
+              <View style={styles.sectionHeader}>
+                <Ionicons name="school-outline" size={20} color="#3B82F6" />
+                <Text style={styles.sectionTitle}>Education</Text>
+              </View>
+              <Text style={styles.educationText}>{job.education}</Text>
+            </View>
+          )}
+
+          {/* Work Mode */}
+          {job.workMode && (
+            <View style={styles.detailSection}>
+              <View style={styles.sectionHeader}>
+                <Ionicons name="location-outline" size={20} color="#3B82F6" />
+                <Text style={styles.sectionTitle}>Work Mode</Text>
+              </View>
+              <Text style={styles.workModeText}>{job.workMode}</Text>
+            </View>
+          )}
+
+          {/* Company Size */}
+          {job.companySize && (
+            <View style={styles.detailSection}>
+              <View style={styles.sectionHeader}>
+                <Ionicons name="people-outline" size={20} color="#3B82F6" />
+                <Text style={styles.sectionTitle}>Company Size</Text>
+              </View>
+              <Text style={styles.companySizeText}>{job.companySize}</Text>
+            </View>
+          )}
+
+          {/* Industry */}
+          {job.industry && (
+            <View style={styles.detailSection}>
+              <View style={styles.sectionHeader}>
+                <Ionicons name="business-outline" size={20} color="#3B82F6" />
+                <Text style={styles.sectionTitle}>Industry</Text>
+              </View>
+              <Text style={styles.industryText}>{job.industry}</Text>
+            </View>
+          )}
 
           {/* Job Description */}
           <View style={styles.detailSection}>
@@ -226,6 +281,17 @@ const JobDetailsScreen = ({ navigation, route }) => {
             </View>
             <Text style={styles.descriptionText}>{job.description}</Text>
           </View>
+
+          {/* Responsibilities */}
+          {job.responsibilities && (
+            <View style={styles.detailSection}>
+              <View style={styles.sectionHeader}>
+                <Ionicons name="list-outline" size={20} color="#3B82F6" />
+                <Text style={styles.sectionTitle}>Responsibilities</Text>
+              </View>
+              <Text style={styles.responsibilitiesText}>{job.responsibilities}</Text>
+            </View>
+          )}
 
           {/* Requirements */}
           {job.requirements && (
@@ -238,16 +304,75 @@ const JobDetailsScreen = ({ navigation, route }) => {
             </View>
           )}
 
+          {/* Skills */}
+          {job.skills && job.skills.length > 0 && (
+            <View style={styles.detailSection}>
+              <View style={styles.sectionHeader}>
+                <Ionicons name="code-outline" size={20} color="#3B82F6" />
+                <Text style={styles.sectionTitle}>Required Skills</Text>
+              </View>
+              <View style={styles.skillsContainer}>
+                {job.skills.map((skill, index) => (
+                  <View key={index} style={styles.skillTag}>
+                    <Text style={styles.skillText}>{skill}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          )}
+
           {/* Benefits */}
-          {job.benefits && (
+          {job.benefits && job.benefits.length > 0 && (
             <View style={styles.detailSection}>
               <View style={styles.sectionHeader}>
                 <Ionicons name="gift-outline" size={20} color="#3B82F6" />
                 <Text style={styles.sectionTitle}>Benefits</Text>
               </View>
-              <Text style={styles.benefitsText}>{job.benefits}</Text>
+              <View style={styles.benefitsList}>
+                {job.benefits.map((benefit, index) => (
+                  <View key={index} style={styles.benefitItem}>
+                    <Ionicons name="checkmark" size={16} color="#059669" />
+                    <Text style={styles.benefitText}>{benefit}</Text>
+                  </View>
+                ))}
+              </View>
             </View>
           )}
+
+          {/* Application Deadline */}
+          {job.applicationDeadline && (
+            <View style={styles.detailSection}>
+              <View style={styles.sectionHeader}>
+                <Ionicons name="time-outline" size={20} color="#3B82F6" />
+                <Text style={styles.sectionTitle}>Application Deadline</Text>
+              </View>
+              <Text style={styles.deadlineText}>
+                {new Date(job.applicationDeadline).toLocaleDateString('en-US', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
+                })}
+              </Text>
+            </View>
+          )}
+
+          {/* Job Statistics */}
+          <View style={styles.detailSection}>
+            <View style={styles.sectionHeader}>
+              <Ionicons name="stats-chart-outline" size={20} color="#3B82F6" />
+              <Text style={styles.sectionTitle}>Job Statistics</Text>
+            </View>
+            <View style={styles.statsContainer}>
+              <View style={styles.statItem}>
+                <Text style={styles.statNumber}>{job.totalApplications || 0}</Text>
+                <Text style={styles.statLabel}>Applications</Text>
+              </View>
+              <View style={styles.statItem}>
+                <Text style={styles.statNumber}>{job.views || 0}</Text>
+                <Text style={styles.statLabel}>Views</Text>
+              </View>
+            </View>
+          </View>
         </View>
 
         {/* Apply Button */}
@@ -423,10 +548,89 @@ const styles = StyleSheet.create({
     color: '#374151',
     lineHeight: 24,
   },
-  benefitsText: {
+  responsibilitiesText: {
     fontSize: 16,
     color: '#374151',
     lineHeight: 24,
+  },
+  experienceText: {
+    fontSize: 16,
+    color: '#374151',
+    lineHeight: 24,
+  },
+  educationText: {
+    fontSize: 16,
+    color: '#374151',
+    lineHeight: 24,
+  },
+  workModeText: {
+    fontSize: 16,
+    color: '#374151',
+    lineHeight: 24,
+  },
+  companySizeText: {
+    fontSize: 16,
+    color: '#374151',
+    lineHeight: 24,
+  },
+  industryText: {
+    fontSize: 16,
+    color: '#374151',
+    lineHeight: 24,
+  },
+  deadlineText: {
+    fontSize: 16,
+    color: '#EF4444',
+    fontWeight: '600',
+  },
+  skillsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  skillTag: {
+    backgroundColor: '#F1F5F9',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  skillText: {
+    fontSize: 14,
+    color: '#475569',
+    fontWeight: '500',
+  },
+  benefitsList: {
+    gap: 8,
+  },
+  benefitItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+  },
+  benefitText: {
+    fontSize: 16,
+    color: '#374151',
+    lineHeight: 24,
+    flex: 1,
+  },
+  statsContainer: {
+    flexDirection: 'row',
+    gap: 24,
+  },
+  statItem: {
+    alignItems: 'center',
+  },
+  statNumber: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#3B82F6',
+  },
+  statLabel: {
+    fontSize: 14,
+    color: '#64748B',
+    marginTop: 4,
   },
   applySection: {
     paddingHorizontal: 20,
