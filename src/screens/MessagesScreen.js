@@ -59,9 +59,10 @@ const MessagesScreen = ({ navigation }) => {
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <AppHeader 
+        showLogo={true}
         rightActions={[
           { icon: 'create-outline', onPress: () => console.log('New Message') },
-          { icon: 'notifications-outline', onPress: () => console.log('Notifications') }
+          { icon: 'notifications-outline', onPress: () => navigation.navigate('JobAlertsScreen') }
         ]}
       />
 

@@ -15,13 +15,17 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import * as AuthSession from 'expo-auth-session';
+import * as Crypto from 'expo-crypto';
 import LogoImage from '../components/LogoImage';
 import { useAuth } from '../contexts/AuthContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { API_BASE_URL } from '../services/apiService';
 
 const { width, height } = Dimensions.get('window');
 
 const LoginScreen = ({ navigation }) => {
-  const { login } = useAuth();
+  const { login, register } = useAuth();
   const [userRole, setUserRole] = useState('user'); // 'user' or 'recruiter'
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -60,9 +64,28 @@ const LoginScreen = ({ navigation }) => {
     }
   };
 
-  const handleGoogleLogin = () => {
-    // TODO: Implement Google OAuth
-    Alert.alert('Coming Soon', 'Google Sign-In will be available soon');
+  const handleGoogleLogin = async () => {
+    try {
+      setLoading(true);
+      
+      // For now, show a demo Google login
+      // In production, you would implement actual Google OAuth
+      Alert.alert(
+        'Google Sign-In',
+        'Google Sign-In is ready to implement. You need to:\n\n1. Set up Google OAuth credentials\n2. Configure your Google Client ID\n3. Test the OAuth flow\n\nFor now, please use email/password login.',
+        [
+          {
+            text: 'OK',
+            onPress: () => setLoading(false)
+          }
+        ]
+      );
+      
+    } catch (error) {
+      console.error('Google login error:', error);
+      Alert.alert('Error', 'Google Sign-In failed. Please try again.');
+      setLoading(false);
+    }
   };
 
   return (

@@ -1,11 +1,27 @@
 import React from 'react';
-import { View, Image, StyleSheet, Text } from 'react-native';
+import { View, Image, StyleSheet, Text, Dimensions } from 'react-native';
+
+const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 const LogoImage = ({ size = 'large' }) => {
-  const isLarge = size === 'large';
-  const imageSize = isLarge ? 200 : 120;
-  const textSize = isLarge ? 24 : 18;
-  const taglineSize = isLarge ? 12 : 10;
+  const getImageSize = () => {
+    switch (size) {
+      case 'small':
+        return screenWidth * 0.15; // 15% of screen width
+      case 'medium':
+        return screenWidth * 0.25; // 25% of screen width
+      case 'large':
+        return screenWidth * 0.35; // 35% of screen width
+      case 'xlarge':
+        return screenWidth * 0.45; // 45% of screen width
+      case 'header':
+        return screenWidth * 0.4; // 40% of screen width for header
+      default:
+        return screenWidth * 0.25; // 25% of screen width
+    }
+  };
+
+  const imageSize = getImageSize();
 
   return (
     <View style={styles.container}>
@@ -16,12 +32,11 @@ const LogoImage = ({ size = 'large' }) => {
           styles.logoImage,
           {
             width: imageSize,
-            height: imageSize,
+            height: imageSize * 0.6, // Maintain aspect ratio (60% of width)
           }
         ]}
         resizeMode="contain"
       />
-      
     </View>
   );
 };

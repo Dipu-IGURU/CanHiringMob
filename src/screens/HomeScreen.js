@@ -182,9 +182,10 @@ const HomeScreen = ({ navigation }) => {
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Header */}
         <AppHeader 
+          showLogo={true}
           rightActions={[
-            { icon: 'notifications-outline', onPress: () => console.log('Notifications') },
-            { icon: 'person-outline', onPress: () => console.log('Profile') }
+            { icon: 'notifications-outline', onPress: () => navigation.navigate('JobAlertsScreen') },
+            { icon: 'person-outline', onPress: () => navigation.navigate('Profile') }
           ]}
         />
 

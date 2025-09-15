@@ -5,57 +5,83 @@ import {
   StyleSheet,
   TouchableOpacity,
   Image,
+  Dimensions,
+  Platform,
+  SafeAreaView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import StatusBar from './StatusBar';
+
+const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 const AppHeader = ({ 
   title, 
   showLogo = true, 
   rightActions = [], 
   onBackPress,
-  showBackButton = false 
+  showBackButton = false,
+  backgroundColor = '#FFFFFF',
+  textColor = '#1E293B',
+  showStatusBar = true,
+  statusBarStyle = 'dark-content'
 }) => {
   return (
-    <View style={styles.header}>
-      <View style={styles.headerTop}>
-        {showBackButton ? (
-          <TouchableOpacity style={styles.backButton} onPress={onBackPress}>
-            <Ionicons name="arrow-back" size={24} color="#1E293B" />
-          </TouchableOpacity>
-        ) : showLogo ? (
-          <View style={styles.logoContainer}>
-            <View style={styles.logoWrapper}>
-              <Image
-                source={require('../../assets/logowitohutbg.png')}
-                style={styles.logoIcon}
-                resizeMode="contain"
-              />
-              {/* <View style={styles.logoTextContainer}>
-                <Text style={styles.logoMainText}>CANHIRING</Text>
-                <Text style={styles.logoSubText}>SOLUTIONS</Text>
-              </View> */}
-            </View>
+    <View style={[styles.header, { backgroundColor }]}>
+      {showStatusBar && (
+        <StatusBar 
+          backgroundColor={backgroundColor} 
+          barStyle={statusBarStyle}
+        />
+      )}
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.headerContent}>
+          {/* Left Section */}
+          <View style={styles.leftSection}>
+            {showBackButton ? (
+              <TouchableOpacity 
+                style={styles.backButton} 
+                onPress={onBackPress}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="arrow-back" size={24} color={textColor} />
+              </TouchableOpacity>
+            ) : showLogo ? (
+              <View style={styles.logoContainer}>
+                <Image
+                  source={require('../../assets/logowitohutbg.png')}
+                  style={styles.logoIcon}
+                  resizeMode="contain"
+                />
+              </View>
+            ) : (
+              <View style={styles.placeholder} />
+            )}
           </View>
-        ) : (
-          <View style={styles.placeholder} />
-        )}
-        
-        {title && (
-          <Text style={styles.headerTitle}>{title}</Text>
-        )}
-        
-        <View style={styles.headerActions}>
-          {rightActions.map((action, index) => (
-            <TouchableOpacity 
-              key={index}
-              style={styles.headerButton} 
-              onPress={action.onPress}
-            >
-              <Ionicons name={action.icon} size={24} color="#1E293B" />
-            </TouchableOpacity>
-          ))}
+
+          {/* Center Section - Title */}
+          {title && (
+            <View style={styles.centerSection}>
+              <Text style={[styles.headerTitle, { color: textColor }]} numberOfLines={1}>
+                {title}
+              </Text>
+            </View>
+          )}
+
+          {/* Right Section - Actions */}
+          <View style={styles.rightSection}>
+            {rightActions.map((action, index) => (
+              <TouchableOpacity 
+                key={index}
+                style={styles.headerButton} 
+                onPress={action.onPress}
+                activeOpacity={0.7}
+              >
+                <Ionicons name={action.icon} size={22} color={textColor} />
+              </TouchableOpacity>
+            ))}
+          </View>
         </View>
-      </View>
+      </SafeAreaView>
     </View>
   );
 };
@@ -63,75 +89,84 @@ const AppHeader = ({
 const styles = StyleSheet.create({
   header: {
     backgroundColor: '#FFFFFF',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#E2E8F0',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
-  headerTop: {
+  safeArea: {
+    paddingHorizontal: Platform.OS === 'ios' ? 20 : 16,
+    paddingVertical: Platform.OS === 'ios' ? 8 : 12,
+  },
+  headerContent: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    minHeight: 48,
+    justifyContent: 'space-between',
+    minHeight: Platform.OS === 'ios' ? 60 : 64, // Increased height for larger logo
+    maxHeight: 80, // Increased max height
+  },
+  leftSection: {
+    flex: 2, // Increased to give more space for logo
+    alignItems: 'flex-start',
+    justifyContent: 'center',
+  },
+  centerSection: {
+    flex: 1, // Reduced to make room for larger logo
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 5,
+  },
+  rightSection: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: 8,
   },
   backButton: {
     padding: 8,
     borderRadius: 20,
     backgroundColor: '#F8FAFC',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 40,
+    minHeight: 40,
   },
   logoContainer: {
-    flex: 1,
     alignItems: 'flex-start',
-  },
-  logoWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%', // Take full width of left section
+    paddingLeft: screenWidth < 400 ? 20 : 30, // Maximum left padding
+    paddingVertical: 12, // Maximum vertical padding
   },
   logoIcon: {
-    width: 56,
-    height: 56,
-    marginRight: 14,
-  },
-  logoTextContainer: {
-    flexDirection: 'column',
-  },
-  logoMainText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#DC2626',
-    letterSpacing: 0.5,
-    lineHeight: 20,
-    fontFamily: 'System',
-  },
-  logoSubText: {
-    fontSize: 11,
-    fontWeight: '500',
-    color: '#6B7280',
-    letterSpacing: 0.3,
-    lineHeight: 13,
-    marginTop: -1,
-    fontFamily: 'System',
+    width: screenWidth * 0.4, // 40% of screen width
+    height: screenWidth * 0.4 * 0.6, // Maintain aspect ratio (60% of width)
+    maxWidth: screenWidth * 0.5, // Maximum 50% of screen width
+    maxHeight: screenWidth * 0.5 * 0.6,
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: screenWidth < 400 ? 16 : 18,
     fontWeight: '600',
-    color: '#1E293B',
-    flex: 1,
     textAlign: 'center',
-    marginHorizontal: 20,
-  },
-  headerActions: {
-    flexDirection: 'row',
-    gap: 12,
+    maxWidth: screenWidth * 0.6,
   },
   headerButton: {
-    padding: 10,
+    padding: 8,
     borderRadius: 20,
     backgroundColor: '#F8FAFC',
     alignItems: 'center',
     justifyContent: 'center',
-    minWidth: 44,
-    minHeight: 44,
+    minWidth: 36,
+    minHeight: 36,
+    maxWidth: 44,
+    maxHeight: 44,
   },
   placeholder: {
     width: 40,

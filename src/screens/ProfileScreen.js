@@ -29,7 +29,6 @@ const ProfileScreen = ({ navigation }) => {
   });
   const [loading, setLoading] = useState(true);
 
-  console.log('ProfileScreen rendered, user:', user, 'token:', !!token);
 
   useEffect(() => {
     fetchUserStats();
@@ -80,47 +79,31 @@ const ProfileScreen = ({ navigation }) => {
   };
 
   const handleLogout = () => {
-    console.log('Logout button clicked!');
-    
-    // Direct logout without confirmation for testing
-    console.log('Starting direct logout process...');
     performLogout();
   };
 
   const performLogout = async () => {
     try {
-      console.log('performLogout: Starting...');
       setLoading(true);
-      console.log('performLogout: Loading set to true');
       
-      console.log('performLogout: About to call logout() function');
       // Call logout function to clear auth data
       const logoutResult = await logout();
-      console.log('performLogout: logout() completed, result:', logoutResult);
-      console.log('Auth data cleared successfully');
       
-      console.log('performLogout: About to reset navigation');
       // Reset navigation stack to prevent going back
       try {
         navigation.reset({
           index: 0,
           routes: [{ name: 'LoginScreen' }],
         });
-        console.log('Navigation reset to LoginScreen successful');
       } catch (navError) {
-        console.log('Reset failed, trying navigate:', navError);
         // Fallback to regular navigate
         navigation.navigate('LoginScreen');
-        console.log('Fallback navigation to LoginScreen successful');
       }
       
-      console.log('performLogout: Logout process completed successfully');
-      
     } catch (error) {
-      console.error('performLogout: Error occurred:', error);
+      console.error('Logout error:', error);
       Alert.alert('Error', 'Failed to logout. Please try again.');
     } finally {
-      console.log('performLogout: Setting loading to false');
       setLoading(false);
     }
   };
@@ -136,7 +119,7 @@ const ProfileScreen = ({ navigation }) => {
       id: 2,
       title: 'My Applications',
       icon: 'document-text-outline',
-      onPress: () => navigation.navigate('UserDashboard'),
+      onPress: () => navigation.navigate('Dashboard'),
     },
   ];
 
@@ -160,8 +143,9 @@ const ProfileScreen = ({ navigation }) => {
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <AppHeader 
+        showLogo={true}
         rightActions={[
-          { icon: 'settings-outline', onPress: () => console.log('Settings') }
+          { icon: 'settings-outline', onPress: () => navigation.navigate('AccountScreen') }
         ]}
       />
 
@@ -258,39 +242,6 @@ const ProfileScreen = ({ navigation }) => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Account</Text>
           {profileMenuItems.map(renderMenuItem)}
-        </View>
-
-        {/* Test Button */}
-        <View style={styles.logoutSection}>
-          <TouchableOpacity 
-            style={[styles.logoutButton, { backgroundColor: '#10B981' }]} 
-            onPress={() => {
-              console.log('Test button clicked!');
-              Alert.alert('Test', 'Test button is working!');
-            }}
-          >
-            <Ionicons name="checkmark" size={20} color="#FFFFFF" />
-            <Text style={[styles.logoutText, { color: '#FFFFFF' }]}>Test Button</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Navigation Test Button */}
-        <View style={styles.logoutSection}>
-          <TouchableOpacity 
-            style={[styles.logoutButton, { backgroundColor: '#3B82F6' }]} 
-            onPress={() => {
-              console.log('Navigation test button clicked!');
-              try {
-                navigation.navigate('LoginScreen');
-                console.log('Navigation to LoginScreen successful');
-              } catch (error) {
-                console.error('Navigation test failed:', error);
-              }
-            }}
-          >
-            <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
-            <Text style={[styles.logoutText, { color: '#FFFFFF' }]}>Test Navigation</Text>
-          </TouchableOpacity>
         </View>
 
         {/* Logout Button */}

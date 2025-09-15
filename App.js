@@ -29,6 +29,7 @@ import AboutScreen from './src/screens/AboutScreen';
 import JobDetailsScreen from './src/screens/JobDetailsScreen';
 import CompanyJobsScreen from './src/screens/CompanyJobsScreen';
 import JobApplicationScreen from './src/screens/JobApplicationScreen';
+import MessagesScreen from './src/screens/MessagesScreen';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -123,6 +124,7 @@ export default function App() {
           <Stack.Screen name="JobDetailsScreen" component={JobDetailsScreen} />
           <Stack.Screen name="CompanyJobs" component={CompanyJobsScreen} />
           <Stack.Screen name="JobApplication" component={JobApplicationScreen} />
+          <Stack.Screen name="MessagesScreen" component={MessagesScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </AuthProvider>

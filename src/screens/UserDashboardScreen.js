@@ -50,6 +50,52 @@ const UserDashboardScreen = ({ navigation }) => {
   const [recentActivities, setRecentActivities] = useState([]);
   const [applicationsLoading, setApplicationsLoading] = useState(false);
 
+  // Function to get greeting emoji based on time of day
+  const getGreetingEmoji = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return '🌅'; // Morning
+    if (hour < 17) return '☀️'; // Afternoon
+    if (hour < 20) return '🌆'; // Evening
+    return '🌙'; // Night
+  };
+
+  // Alternative emoji options for variety
+  const getPersonalizedEmoji = () => {
+    const emojis = ['👋', '🎯', '💼', '🚀', '⭐', '💪', '🎉', '🔥'];
+    const userIndex = user ? user.firstName.charCodeAt(0) % emojis.length : 0;
+    return emojis[userIndex];
+  };
+
+  // Function to get welcome message based on time of day
+  const getWelcomeMessage = () => {
+    const hour = new Date().getHours();
+    const messages = {
+      morning: ['Good Morning', 'Rise and Shine', 'Morning Sunshine', 'Start Your Day'],
+      afternoon: ['Good Afternoon', 'Afternoon Vibes', 'Keep Going', 'Stay Productive'],
+      evening: ['Good Evening', 'Evening Time', 'Wind Down', 'Relax Mode'],
+      night: ['Good Night', 'Late Night', 'Night Owl', 'Still Working']
+    };
+    
+    let timeCategory, messageList;
+    if (hour < 12) {
+      timeCategory = 'morning';
+      messageList = messages.morning;
+    } else if (hour < 17) {
+      timeCategory = 'afternoon';
+      messageList = messages.afternoon;
+    } else if (hour < 20) {
+      timeCategory = 'evening';
+      messageList = messages.evening;
+    } else {
+      timeCategory = 'night';
+      messageList = messages.night;
+    }
+    
+    // Use user's name to pick a consistent message
+    const userIndex = user ? user.firstName.charCodeAt(0) % messageList.length : 0;
+    return messageList[userIndex];
+  };
+
   // Modal state
   const [isApplicationModalOpen, setIsApplicationModalOpen] = useState(false);
   const [selectedApplicationId, setSelectedApplicationId] = useState(null);
@@ -337,7 +383,10 @@ const UserDashboardScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <AppHeader title="Dashboard" showBackButton={false} />
+      <AppHeader 
+        title={user ? `${getPersonalizedEmoji()} ${getWelcomeMessage()}, ${user.firstName}!` : `${getPersonalizedEmoji()} ${getWelcomeMessage()}, User!`} 
+        showBackButton={false} 
+      />
       
       <ScrollView 
         style={styles.scrollView}
