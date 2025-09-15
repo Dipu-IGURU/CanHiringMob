@@ -146,24 +146,52 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      console.log('Starting logout process...');
+      console.log('AuthContext: Starting logout process...');
+      
+      console.log('AuthContext: About to clear AsyncStorage...');
+      // Clear all auth data from AsyncStorage
       await clearAuthData();
+      console.log('AuthContext: AsyncStorage cleared successfully');
+      
+      console.log('AuthContext: About to reset auth state...');
+      // Reset all auth state
       setUser(null);
       setToken(null);
       setIsAuthenticated(false);
-      console.log('Logout completed successfully');
+      setLoading(false);
+      
+      console.log('AuthContext: Auth state reset successfully');
+      console.log('AuthContext: Logout completed successfully');
+      
+      return { success: true };
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error('AuthContext: Logout error:', error);
       throw error; // Re-throw to handle in the calling component
     }
   };
 
   const clearAuthData = async () => {
     try {
+      console.log('clearAuthData: Starting to clear AsyncStorage...');
+      
+      console.log('clearAuthData: Removing token...');
+      // Remove all auth-related data
       await AsyncStorage.removeItem('token');
+      console.log('clearAuthData: Token removed');
+      
+      console.log('clearAuthData: Removing user...');
       await AsyncStorage.removeItem('user');
+      console.log('clearAuthData: User removed');
+      
+      console.log('clearAuthData: Running multiRemove...');
+      // Also try to clear any other potential auth data
+      await AsyncStorage.multiRemove(['token', 'user']);
+      console.log('clearAuthData: MultiRemove completed');
+      
+      console.log('clearAuthData: All auth data cleared from AsyncStorage successfully');
     } catch (error) {
-      console.error('Error clearing auth data:', error);
+      console.error('clearAuthData: Error clearing auth data:', error);
+      // Don't throw error here, just log it
     }
   };
 
