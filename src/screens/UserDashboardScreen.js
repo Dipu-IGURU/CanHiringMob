@@ -92,10 +92,16 @@ const UserDashboardScreen = ({ navigation }) => {
 
   const fetchAppliedJobs = async () => {
     try {
-      if (!token) return;
+      if (!token) {
+        console.log('No token available for fetching applied jobs');
+        return;
+      }
       
+      console.log('Fetching applied jobs with token:', token.substring(0, 20) + '...');
       setApplicationsLoading(true);
       const response = await getAppliedJobs(token);
+      console.log('Applied jobs response:', response);
+      
       if (response.success) {
         const jobs = response.jobs.map(item => ({
           id: item.job?._id || item._id,
@@ -107,10 +113,15 @@ const UserDashboardScreen = ({ navigation }) => {
           date: item.appliedAt || new Date().toISOString(),
           applicationId: item.applicationId
         }));
+        console.log('Mapped applied jobs:', jobs);
         setAppliedJobs(jobs);
+      } else {
+        console.log('Failed to fetch applied jobs:', response.message);
+        setAppliedJobs([]);
       }
     } catch (error) {
       console.error('Error fetching applied jobs:', error);
+      setAppliedJobs([]);
     } finally {
       setApplicationsLoading(false);
     }

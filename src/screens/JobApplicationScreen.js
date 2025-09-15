@@ -9,10 +9,12 @@ import {
 } from 'react-native';
 import AppHeader from '../components/AppHeader';
 import JobApplicationForm from '../components/JobApplicationForm';
+import { useAuth } from '../contexts/AuthContext';
 import { API_BASE_URL } from '../services/apiService';
 
 const JobApplicationScreen = ({ navigation, route }) => {
   const { job, companyName } = route.params;
+  const { user, token } = useAuth();
   const [showForm, setShowForm] = useState(true);
   const [loading, setLoading] = useState(false);
 
@@ -21,12 +23,25 @@ const JobApplicationScreen = ({ navigation, route }) => {
     
     try {
       console.log('Submitting application data:', applicationData);
+      console.log('User authenticated:', !!user, 'Token available:', !!token);
       
-      const response = await fetch(`${API_BASE_URL}/api/applications`, {
+      // Choose endpoint based on authentication status
+      const endpoint = user && token 
+        ? `${API_BASE_URL}/api/applications/apply` 
+        : `${API_BASE_URL}/api/applications`;
+      
+      const headers = {
+        'Content-Type': 'application/json',
+      };
+      
+      // Add authorization header if user is authenticated
+      if (user && token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
+      const response = await fetch(endpoint, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
         body: JSON.stringify(applicationData),
       });
 
@@ -44,12 +59,23 @@ const JobApplicationScreen = ({ navigation, route }) => {
       
       if (result.success) {
         console.log('Application submitted successfully:', result);
+        Alert.alert(
+          'Success!', 
+          'Your application has been submitted successfully. You can view it in your dashboard.',
+          [
+            {
+              text: 'OK',
+              onPress: () => navigation.navigate('UserDashboard')
+            }
+          ]
+        );
         return result;
       } else {
         throw new Error(result.message || 'Failed to submit application');
       }
     } catch (error) {
       console.error('Error submitting application:', error);
+      Alert.alert('Error', 'Failed to submit application. Please try again.');
       throw error;
     } finally {
       setLoading(false);

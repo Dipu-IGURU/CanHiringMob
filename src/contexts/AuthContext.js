@@ -119,6 +119,8 @@ export const AuthProvider = ({ children }) => {
       if (data.success) {
         const { token: newToken, user: newUser } = data;
         
+        console.log('Registration successful, storing auth data...');
+        
         // Store token and user data
         await AsyncStorage.setItem('token', newToken);
         await AsyncStorage.setItem('user', JSON.stringify(newUser));
@@ -126,6 +128,8 @@ export const AuthProvider = ({ children }) => {
         setToken(newToken);
         setUser(newUser);
         setIsAuthenticated(true);
+        
+        console.log('Auth state updated:', { token: !!newToken, user: !!newUser, isAuthenticated: true });
         
         return { success: true, user: newUser };
       } else {

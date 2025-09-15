@@ -534,14 +534,19 @@ router.get('/profile/stats', auth, async (req, res) => {
 // Get current user's applied jobs (similar to Workly implementation)
 router.get('/applied-jobs', auth, async (req, res) => {
   try {
+    console.log('Fetching applied jobs for user:', req.user._id);
+    
     // Populate the appliedJobs array with job details
     const user = await User.findById(req.user._id)
       .populate('appliedJobs.job', 'title company location type salaryRange description')
       .select('appliedJobs');
     
     if (!user) {
+      console.log('User not found:', req.user._id);
       return res.status(404).json({ success: false, message: 'User not found' });
     }
+
+    console.log('User appliedJobs:', user.appliedJobs);
 
     const jobs = user.appliedJobs.map(item => {
       return {
@@ -552,6 +557,8 @@ router.get('/applied-jobs', auth, async (req, res) => {
         status: item.status || 'applied'
       };
     });
+
+    console.log('Mapped jobs:', jobs);
 
     res.json({ 
       success: true, 

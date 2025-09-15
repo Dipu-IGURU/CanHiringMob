@@ -149,7 +149,8 @@ router.post('/apply', auth, [
     await Job.findByIdAndUpdate(jobId, { $inc: { totalApplications: 1 } });
 
     // Add to user's applied jobs
-    await User.findByIdAndUpdate(req.user._id, {
+    console.log('Adding application to user:', req.user._id, 'job:', jobId, 'application:', application._id);
+    const userUpdate = await User.findByIdAndUpdate(req.user._id, {
       $push: {
         appliedJobs: {
           job: jobId,
@@ -158,7 +159,9 @@ router.post('/apply', auth, [
           appliedAt: new Date()
         }
       }
-    });
+    }, { new: true });
+    
+    console.log('User update result:', userUpdate ? 'Success' : 'Failed');
 
     // Populate the application data
     await application.populate([

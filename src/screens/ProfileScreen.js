@@ -34,13 +34,18 @@ const ProfileScreen = ({ navigation }) => {
   }, []);
 
   const fetchUserStats = async () => {
-    if (!token) return;
+    if (!token) {
+      console.log('No token available for fetching user stats');
+      return;
+    }
     
     try {
       setLoading(true);
+      console.log('Fetching user stats with token:', token.substring(0, 20) + '...');
       
       // Fetch application stats
       const appStatsResponse = await getApplicationStats(token);
+      console.log('Application stats response:', appStatsResponse);
       if (appStatsResponse.success) {
         setStats(prev => ({
           ...prev,
@@ -50,6 +55,7 @@ const ProfileScreen = ({ navigation }) => {
 
       // Fetch interview stats
       const interviewStatsResponse = await getInterviewStats(token);
+      console.log('Interview stats response:', interviewStatsResponse);
       if (interviewStatsResponse.success) {
         setStats(prev => ({
           ...prev,

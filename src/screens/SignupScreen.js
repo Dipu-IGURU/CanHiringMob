@@ -76,6 +76,7 @@ const SignupScreen = ({ navigation }) => {
     if (!validateForm()) return;
 
     setLoading(true);
+    console.log('Starting account creation process...');
     try {
       const userData = {
         firstName: formData.firstName,
@@ -86,19 +87,40 @@ const SignupScreen = ({ navigation }) => {
         ...(userRole === 'recruiter' && { company: formData.company })
       };
 
+      console.log('Sending registration data:', userData);
       const result = await register(userData);
+      console.log('Registration result:', result);
       
       if (result.success) {
-        Alert.alert(
-          'Account Created!',
-          'Your account has been created successfully. You are now logged in.',
-          [
-            {
-              text: 'OK',
-              onPress: () => navigation.navigate('MainTabs'),
-            },
-          ]
-        );
+        console.log('Registration successful, showing success alert...');
+        
+        // Navigate immediately first
+        console.log('Navigating to MainTabs immediately...');
+        try {
+          navigation.reset({
+            index: 0,
+            routes: [{ name: 'MainTabs' }],
+          });
+        } catch (error) {
+          console.log('Reset failed, trying navigate:', error);
+          navigation.navigate('MainTabs');
+        }
+        
+        // Show success alert after navigation
+        setTimeout(() => {
+          Alert.alert(
+            '🎉 Account Created Successfully!',
+            `Welcome ${formData.firstName}! Your account has been created and you are now logged in. You can start exploring jobs right away.`,
+            [
+              {
+                text: 'OK',
+                onPress: () => {
+                  console.log('Alert dismissed');
+                },
+              },
+            ]
+          );
+        }, 500);
       } else {
         if (result.errors && result.errors.length > 0) {
           const errorMessages = result.errors.map(err => err.msg).join('\n');
@@ -375,9 +397,16 @@ const SignupScreen = ({ navigation }) => {
                 onPress={handleSignup}
                 disabled={loading}
               >
-                <Text style={styles.signupButtonText}>
-                  {loading ? 'Creating Account...' : 'Create Account'}
-                </Text>
+                {loading ? (
+                  <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="small" color="#FFFFFF" />
+                    <Text style={[styles.signupButtonText, styles.loadingText]}>
+                      Creating Account...
+                    </Text>
+                  </View>
+                ) : (
+                  <Text style={styles.signupButtonText}>Create Account</Text>
+                )}
               </TouchableOpacity>
 
               {/* Divider */}
@@ -593,6 +622,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#FFFFFF',
+  },
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loadingText: {
+    marginLeft: 8,
   },
   divider: {
     flexDirection: 'row',

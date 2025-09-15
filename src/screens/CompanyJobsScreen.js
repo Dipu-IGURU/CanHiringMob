@@ -8,6 +8,7 @@ import {
   SafeAreaView,
   ActivityIndicator,
   Alert,
+  RefreshControl,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AppHeader from '../components/AppHeader';
@@ -18,6 +19,7 @@ const CompanyJobsScreen = ({ navigation, route }) => {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
 
   console.log('CompanyJobsScreen mounted with companyName:', companyName);
 
@@ -57,6 +59,18 @@ const CompanyJobsScreen = ({ navigation, route }) => {
       setLoading(false);
     }
   };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchCompanyJobs();
+    setRefreshing(false);
+  };
+
+  const getItemLayout = (data, index) => ({
+    length: 200, // Approximate height of each job card
+    offset: 200 * index,
+    index,
+  });
 
   const handleApply = (job) => {
     navigation.navigate('JobApplication', { 
@@ -361,7 +375,23 @@ const CompanyJobsScreen = ({ navigation, route }) => {
           renderItem={renderJob}
           keyExtractor={(item) => item._id || Math.random().toString()}
           contentContainerStyle={styles.jobsList}
-          showsVerticalScrollIndicator={false}
+          showsVerticalScrollIndicator={true}
+          scrollEnabled={true}
+          bounces={true}
+          nestedScrollEnabled={true}
+          removeClippedSubviews={false}
+          maxToRenderPerBatch={10}
+          windowSize={10}
+          initialNumToRender={5}
+          getItemLayout={getItemLayout}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={['#3B82F6']}
+              tintColor="#3B82F6"
+            />
+          }
           ListEmptyComponent={() => (
             <View style={styles.emptyContainer}>
               <Text>No jobs to display</Text>
@@ -431,6 +461,9 @@ const styles = StyleSheet.create({
   },
   jobsList: {
     padding: 20,
+    paddingBottom: 40,
+    flexGrow: 1,
+    minHeight: '100%',
   },
   jobCard: {
     backgroundColor: '#FFFFFF',
