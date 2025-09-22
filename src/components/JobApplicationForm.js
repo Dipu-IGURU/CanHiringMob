@@ -62,9 +62,10 @@ const JobApplicationForm = ({ visible, onClose, job, onSubmit }) => {
       newErrors.education = 'Highest education is required';
     }
     
-    if (!formData.resume) {
-      newErrors.resume = 'Resume is required';
-    }
+    // Resume is optional for now to test form submission
+    // if (!formData.resume) {
+    //   newErrors.resume = 'Resume is required';
+    // }
     
     if (!formData.coverLetter.trim()) {
       newErrors.coverLetter = 'Cover letter is required';

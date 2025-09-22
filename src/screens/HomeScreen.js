@@ -232,13 +232,13 @@ const HomeScreen = ({ navigation }) => {
             </View>
           </View>
 
-          {/* Hero Image */}
+          {/* Hero Image - Temporarily commented out due to build error */}
           <View style={styles.heroImageContainer}>
-            <Image
+            {/* <Image
               source={require('../../assets/hero_man.png')}
               style={styles.heroImage}
               resizeMode="contain"
-            />
+            /> */}
             
             {/* Floating notification */}
             <View style={styles.floatingNotification}>

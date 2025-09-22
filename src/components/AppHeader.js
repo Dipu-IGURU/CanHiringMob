@@ -47,11 +47,12 @@ const AppHeader = ({
               </TouchableOpacity>
             ) : showLogo ? (
               <View style={styles.logoContainer}>
-                <Image
+                {/* <Image
                   source={require('../../assets/logowitohutbg.png')}
                   style={styles.logoIcon}
                   resizeMode="contain"
-                />
+                /> */}
+                <Text style={styles.logoText}>CanHiring</Text>
               </View>
             ) : (
               <View style={styles.placeholder} />
@@ -150,6 +151,12 @@ const styles = StyleSheet.create({
     height: screenWidth * 0.4 * 0.6, // Maintain aspect ratio (60% of width)
     maxWidth: screenWidth * 0.5, // Maximum 50% of screen width
     maxHeight: screenWidth * 0.5 * 0.6,
+  },
+  logoText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#3B82F6',
+    textAlign: 'left',
   },
   headerTitle: {
     fontSize: screenWidth < 400 ? 16 : 18,

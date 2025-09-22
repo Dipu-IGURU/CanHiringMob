@@ -25,8 +25,8 @@ const LogoImage = ({ size = 'large' }) => {
 
   return (
     <View style={styles.container}>
-      {/* Logo Image */}
-      <Image
+      {/* Logo Image - Temporarily replaced with text due to build error */}
+      {/* <Image
         source={require('../../assets/logowitohutbg.png')}
         style={[
           styles.logoImage,
@@ -36,7 +36,10 @@ const LogoImage = ({ size = 'large' }) => {
           }
         ]}
         resizeMode="contain"
-      />
+      /> */}
+      <Text style={[styles.logoText, { fontSize: imageSize * 0.3 }]}>
+        CanHiring
+      </Text>
     </View>
   );
 };
@@ -48,6 +51,11 @@ const styles = StyleSheet.create({
   },
   logoImage: {
     marginBottom: 10,
+  },
+  logoText: {
+    fontWeight: 'bold',
+    color: '#3B82F6',
+    textAlign: 'center',
   },
 });
 

@@ -177,10 +177,30 @@ export const fetchJobCategories = async () => {
   }
 };
 
-// Fetch jobs by category using JSearch API
+// Fetch jobs by category - try server first, then JSearch API
 export const fetchJobsByCategory = async (category, page = 1, limit = 10) => {
   try {
-    console.log('🔍 Fetching jobs by category with JSearch API:', { category, page, limit });
+    console.log('🔍 Fetching jobs by category:', { category, page, limit, server: API_BASE_URL });
+    
+    // First try to get jobs from our database
+    try {
+      const serverResponse = await fetch(`${API_BASE_URL}/api/jobs?category=${category}&page=${page}&limit=${limit}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (serverResponse.ok) {
+        const serverData = await serverResponse.json();
+        if (serverData.success && serverData.jobs && serverData.jobs.length > 0) {
+          console.log('✅ Server returned', serverData.jobs.length, 'jobs for category:', category);
+          return serverData.jobs;
+        }
+      }
+    } catch (serverError) {
+      console.log('⚠️ Server not accessible, using JSearch API');
+    }
     
     // Map category names to search queries for better JSearch results
     // These must match the queries used in fetchJobCategories for consistency
@@ -243,11 +263,32 @@ export const fetchJobsByCategory = async (category, page = 1, limit = 10) => {
   }
 };
 
-// Fetch all public jobs using jSearch API
+// Fetch all public jobs - try server first, then JSearch API
 export const fetchAllJobs = async (page = 1, limit = 20) => {
   try {
-    console.log('🔍 Fetching all jobs with jSearch API:', { page, limit });
+    console.log('🔍 Fetching all jobs:', { page, limit, server: API_BASE_URL });
     
+    // First try to get jobs from our database
+    try {
+      const serverResponse = await fetch(`${API_BASE_URL}/api/jobs?page=${page}&limit=${limit}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (serverResponse.ok) {
+        const serverData = await serverResponse.json();
+        if (serverData.success && serverData.jobs && serverData.jobs.length > 0) {
+          console.log('✅ Server returned', serverData.jobs.length, 'jobs');
+          return serverData.jobs;
+        }
+      }
+    } catch (serverError) {
+      console.log('⚠️ Server not accessible, using JSearch API');
+    }
+    
+    // If server fails, use JSearch API
     const jsearchParams = {
       query: 'software developer OR programmer OR IT specialist OR engineer OR data scientist OR nurse OR doctor OR teacher OR sales OR marketing',
       page: page,
@@ -268,7 +309,7 @@ export const fetchAllJobs = async (page = 1, limit = 20) => {
       const jobsToReturn = Math.max(minJobs, Math.min(maxJobs, jsearchResult.jobs.length));
       return jsearchResult.jobs.slice(0, jobsToReturn);
     } else {
-      console.log('⚠️ No jobs from jSearch API, returning fallback jobs');
+      console.log('⚠️ No jobs from jSearch API, returning empty array');
       return jsearchResult.jobs || [];
     }
   } catch (error) {
@@ -626,6 +667,57 @@ export const getApplicationLimits = async (token) => {
         isLimitReached: false
       }
     };
+  }
+};
+
+// Authentication functions
+export const loginUser = async (email, password) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, password }),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      return data;
+    }
+    
+    // If server fails, throw error
+    const errorText = await response.text();
+    throw new Error(`Server error: ${response.status} - ${errorText}`);
+    
+  } catch (error) {
+    console.error('❌ Error logging in:', error);
+    throw new Error('Failed to login - server not accessible');
+  }
+};
+
+export const signupUser = async (userData) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(userData),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      return data;
+    }
+    
+    // If server fails, throw error
+    const errorText = await response.text();
+    throw new Error(`Server error: ${response.status} - ${errorText}`);
+    
+  } catch (error) {
+    console.error('❌ Error signing up:', error);
+    throw new Error('Failed to signup - server not accessible');
   }
 };
 

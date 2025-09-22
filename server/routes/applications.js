@@ -36,10 +36,15 @@ router.post('/', [
     }
 
     const { jobId, ...applicationData } = req.body;
+    console.log('Received application data:', { jobId, applicationData });
 
     // Check if job exists and is active
+    console.log('Looking for job with ID:', jobId);
     const job = await Job.findById(jobId);
+    console.log('Found job:', job);
+    
     if (!job || !job.isActive) {
+      console.log('Job not found or inactive');
       return res.status(404).json({
         success: false,
         message: 'Job not found or no longer available'
@@ -84,9 +89,12 @@ router.post('/', [
 
   } catch (error) {
     console.error('Error submitting public application:', error);
+    console.error('Error details:', error.message);
+    console.error('Error stack:', error.stack);
     res.status(500).json({
       success: false,
-      message: 'Server error while submitting application'
+      message: 'Server error while submitting application',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 });

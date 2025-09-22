@@ -24,6 +24,7 @@ const corsOptions = {
       'http://localhost:19006', // Expo default dev server
       'http://localhost:19000', // Expo web dev server
       'http://localhost:3000',  // React Native web
+      'http://localhost:5001',  // Local API server
       'https://can-hiring.vercel.app',
       'https://www.can-hiring.vercel.app',
       'https://can-hiring.onrender.com',
