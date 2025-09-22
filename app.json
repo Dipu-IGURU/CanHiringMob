@@ -19,6 +19,12 @@
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#667eea"
+      },
+      "package": "com.iguru.canhiringsolutions"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "d2a35955-1a49-46e8-8538-478d76340742"
       }
     }
   }

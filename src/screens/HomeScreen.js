@@ -235,7 +235,7 @@ const HomeScreen = ({ navigation }) => {
           {/* Hero Image */}
           <View style={styles.heroImageContainer}>
             <Image
-              source={require('../../assets/hero-man.png')}
+              source={require('../../assets/hero_man.png')}
               style={styles.heroImage}
               resizeMode="contain"
             />

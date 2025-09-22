@@ -26,7 +26,6 @@ const { width, height } = Dimensions.get('window');
 
 const LoginScreen = ({ navigation }) => {
   const { login, register } = useAuth();
-  const [userRole, setUserRole] = useState('user'); // 'user' or 'recruiter'
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -127,48 +126,11 @@ const LoginScreen = ({ navigation }) => {
               </Text>
             </View>
 
-            {/* User Role Tabs */}
-            <View style={styles.tabsContainer}>
-              <View style={styles.tabsWrapper}>
-                <TouchableOpacity
-                  style={[
-                    styles.tab,
-                    userRole === 'user' && styles.activeTab
-                  ]}
-                  onPress={() => setUserRole('user')}
-                >
-                  <Ionicons 
-                    name="person" 
-                    size={16} 
-                    color={userRole === 'user' ? '#FFFFFF' : '#64748B'} 
-                  />
-                  <Text style={[
-                    styles.tabText,
-                    userRole === 'user' && styles.activeTabText
-                  ]}>
-                    Job Seeker
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[
-                    styles.tab,
-                    userRole === 'recruiter' && styles.activeTab
-                  ]}
-                  onPress={() => setUserRole('recruiter')}
-                >
-                  <Ionicons 
-                    name="briefcase" 
-                    size={16} 
-                    color={userRole === 'recruiter' ? '#FFFFFF' : '#64748B'} 
-                  />
-                  <Text style={[
-                    styles.tabText,
-                    userRole === 'recruiter' && styles.activeTabText
-                  ]}>
-                    Recruiter
-                  </Text>
-                </TouchableOpacity>
-              </View>
+            {/* Welcome Message */}
+            <View style={styles.welcomeContainer}>
+              <Text style={styles.welcomeText}>
+                Welcome back! Sign in to continue your job search journey.
+              </Text>
             </View>
 
             {/* Form */}
@@ -334,35 +296,19 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 22,
   },
-  tabsContainer: {
-    marginBottom: 30,
-  },
-  tabsWrapper: {
-    flexDirection: 'row',
-    backgroundColor: '#F1F5F9',
+  welcomeContainer: {
+    backgroundColor: '#F0F9FF',
     borderRadius: 12,
-    padding: 4,
+    padding: 16,
+    marginBottom: 30,
+    borderLeftWidth: 4,
+    borderLeftColor: '#3B82F6',
   },
-  tab: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-  },
-  activeTab: {
-    backgroundColor: '#3B82F6',
-  },
-  tabText: {
+  welcomeText: {
     fontSize: 14,
-    fontWeight: '500',
-    color: '#64748B',
-    marginLeft: 6,
-  },
-  activeTabText: {
-    color: '#FFFFFF',
+    color: '#1E40AF',
+    textAlign: 'center',
+    lineHeight: 20,
   },
   formContainer: {
     marginBottom: 30,

@@ -22,7 +22,6 @@ const { width, height } = Dimensions.get('window');
 
 const SignupScreen = ({ navigation }) => {
   const { register } = useAuth();
-  const [userRole, setUserRole] = useState('user'); // 'user' or 'recruiter'
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -33,7 +32,6 @@ const SignupScreen = ({ navigation }) => {
     email: '',
     password: '',
     confirmPassword: '',
-    company: '',
   });
 
   const handleInputChange = (field, value) => {
@@ -46,11 +44,6 @@ const SignupScreen = ({ navigation }) => {
   const validateForm = () => {
     if (!formData.firstName || !formData.lastName || !formData.email || !formData.password || !formData.confirmPassword) {
       Alert.alert('Error', 'Please fill in all required fields');
-      return false;
-    }
-
-    if (userRole === 'recruiter' && !formData.company) {
-      Alert.alert('Error', 'Company name is required for recruiters');
       return false;
     }
 
@@ -83,8 +76,7 @@ const SignupScreen = ({ navigation }) => {
         lastName: formData.lastName,
         email: formData.email,
         password: formData.password,
-        role: userRole,
-        ...(userRole === 'recruiter' && { company: formData.company })
+        role: 'user'
       };
 
       console.log('Sending registration data:', userData);
@@ -189,57 +181,10 @@ const SignupScreen = ({ navigation }) => {
               </Text>
             </View>
 
-            {/* User Role Tabs */}
-            <View style={styles.tabsContainer}>
-              <View style={styles.tabsWrapper}>
-                <TouchableOpacity
-                  style={[
-                    styles.tab,
-                    userRole === 'user' && styles.activeTab
-                  ]}
-                  onPress={() => setUserRole('user')}
-                >
-                  <Ionicons 
-                    name="person" 
-                    size={16} 
-                    color={userRole === 'user' ? '#FFFFFF' : '#64748B'} 
-                  />
-                  <Text style={[
-                    styles.tabText,
-                    userRole === 'user' && styles.activeTabText
-                  ]}>
-                    User
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[
-                    styles.tab,
-                    userRole === 'recruiter' && styles.activeTab
-                  ]}
-                  onPress={() => setUserRole('recruiter')}
-                >
-                  <Ionicons 
-                    name="briefcase" 
-                    size={16} 
-                    color={userRole === 'recruiter' ? '#FFFFFF' : '#64748B'} 
-                  />
-                  <Text style={[
-                    styles.tabText,
-                    userRole === 'recruiter' && styles.activeTabText
-                  ]}>
-                    Recruiter
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            {/* Role Description */}
-            <View style={styles.roleDescription}>
-              <Text style={styles.roleDescriptionText}>
-                {userRole === 'user' 
-                  ? 'Create an account to find your dream job.'
-                  : 'Create an account to find the best candidates.'
-                }
+            {/* Welcome Message */}
+            <View style={styles.welcomeContainer}>
+              <Text style={styles.welcomeText}>
+                Join thousands of job seekers who found their dream careers with CanHiring!
               </Text>
             </View>
 
@@ -297,24 +242,6 @@ const SignupScreen = ({ navigation }) => {
                 </View>
               </View>
 
-              {/* Company (for recruiters) */}
-              {userRole === 'recruiter' && (
-                <View style={styles.inputContainer}>
-                  <Text style={styles.label}>Company</Text>
-                  <View style={styles.inputWrapper}>
-                    <Ionicons name="business" size={20} color="#64748B" style={styles.inputIcon} />
-                    <TextInput
-                      style={styles.input}
-                      placeholder="Enter your company name"
-                      placeholderTextColor="#94A3B8"
-                      value={formData.company}
-                      onChangeText={(value) => handleInputChange('company', value)}
-                      autoCapitalize="words"
-                      autoCorrect={false}
-                    />
-                  </View>
-                </View>
-              )}
 
               {/* Password */}
               <View style={styles.inputContainer}>
@@ -492,44 +419,19 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 22,
   },
-  tabsContainer: {
-    marginBottom: 20,
-  },
-  tabsWrapper: {
-    flexDirection: 'row',
-    backgroundColor: '#F1F5F9',
+  welcomeContainer: {
+    backgroundColor: '#F0F9FF',
     borderRadius: 12,
-    padding: 4,
-  },
-  tab: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-  },
-  activeTab: {
-    backgroundColor: '#3B82F6',
-  },
-  tabText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#64748B',
-    marginLeft: 6,
-  },
-  activeTabText: {
-    color: '#FFFFFF',
-  },
-  roleDescription: {
-    alignItems: 'center',
+    padding: 16,
     marginBottom: 30,
+    borderLeftWidth: 4,
+    borderLeftColor: '#3B82F6',
   },
-  roleDescriptionText: {
+  welcomeText: {
     fontSize: 14,
-    color: '#64748B',
+    color: '#1E40AF',
     textAlign: 'center',
+    lineHeight: 20,
   },
   formContainer: {
     marginBottom: 30,
