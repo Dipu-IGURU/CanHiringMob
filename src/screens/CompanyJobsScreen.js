@@ -5,14 +5,19 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
-  SafeAreaView,
   ActivityIndicator,
   Alert,
   RefreshControl,
+  Dimensions,
+  ScrollView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import AppHeader from '../components/AppHeader';
 import { API_BASE_URL } from '../services/apiService';
+
+const { width, height } = Dimensions.get('window');
 
 const CompanyJobsScreen = ({ navigation, route }) => {
   const { companyName } = route.params || { companyName: 'Unknown Company' };
@@ -108,37 +113,64 @@ const CompanyJobsScreen = ({ navigation, route }) => {
       
       return (
     <View style={styles.jobCard}>
-      <View style={styles.jobCardContent}>
-        {/* Job Header */}
+      {/* Premium Job Header */}
+      <LinearGradient
+        colors={['#F8FAFC', '#F1F5F9']}
+        style={styles.jobHeaderGradient}
+      >
         <View style={styles.jobHeader}>
-          <Text style={styles.jobTitle}>{item.title}</Text>
-          <View style={styles.jobType}>
-            <Text style={styles.jobTypeText}>{item.type}</Text>
+          <View style={styles.jobTitleContainer}>
+            <Text style={styles.jobTitle}>{item.title}</Text>
+            <View style={styles.jobType}>
+              <Text style={styles.jobTypeText}>{item.type}</Text>
+            </View>
+          </View>
+          <View style={styles.jobStatus}>
+            <View style={styles.statusDot} />
+            <Text style={styles.statusText}>Active</Text>
           </View>
         </View>
         
-        {/* Basic Job Details */}
-        <View style={styles.jobDetails}>
-          <View style={styles.jobDetailRow}>
-            <Ionicons name="location-outline" size={16} color="#64748B" />
-            <Text style={styles.jobDetailText}>{item.location}</Text>
+        {/* Quick Info Row */}
+        <View style={styles.quickInfoRow}>
+          <View style={styles.quickInfoItem}>
+            <Ionicons name="location" size={16} color="#3B82F6" />
+            <Text style={styles.quickInfoText}>{item.location}</Text>
           </View>
           
-          <View style={styles.jobDetailRow}>
-            <Ionicons name="briefcase-outline" size={16} color="#64748B" />
-            <Text style={styles.jobDetailText}>{item.category}</Text>
+          <View style={styles.quickInfoItem}>
+            <Ionicons name="briefcase" size={16} color="#3B82F6" />
+            <Text style={styles.quickInfoText}>{item.category}</Text>
           </View>
           
           {item.salaryRange && (
-            <View style={styles.jobDetailRow}>
-              <Ionicons name="cash-outline" size={16} color="#64748B" />
-              <Text style={styles.jobDetailText}>{item.salaryRange}</Text>
+            <View style={styles.quickInfoItem}>
+              <Ionicons name="cash" size={16} color="#3B82F6" />
+              <Text style={styles.quickInfoText}>{item.salaryRange}</Text>
             </View>
           )}
-
-          <View style={styles.jobDetailRow}>
-            <Ionicons name="calendar-outline" size={16} color="#64748B" />
-            <Text style={styles.jobDetailText}>{formatPostedDate(item.createdAt)}</Text>
+        </View>
+      </LinearGradient>
+      
+      <View style={styles.jobCardContent}>
+        {/* Job Details Grid */}
+        <View style={styles.jobDetailsGrid}>
+          <View style={styles.jobDetailCard}>
+            <Ionicons name="calendar" size={20} color="#10B981" />
+            <Text style={styles.jobDetailLabel}>Posted</Text>
+            <Text style={styles.jobDetailValue}>{formatPostedDate(item.createdAt)}</Text>
+          </View>
+          
+          <View style={styles.jobDetailCard}>
+            <Ionicons name="people" size={20} color="#8B5CF6" />
+            <Text style={styles.jobDetailLabel}>Applications</Text>
+            <Text style={styles.jobDetailValue}>{item.totalApplications || 0}</Text>
+          </View>
+          
+          <View style={styles.jobDetailCard}>
+            <Ionicons name="eye" size={20} color="#F59E0B" />
+            <Text style={styles.jobDetailLabel}>Views</Text>
+            <Text style={styles.jobDetailValue}>{item.views || 0}</Text>
           </View>
         </View>
 
@@ -281,16 +313,26 @@ const CompanyJobsScreen = ({ navigation, route }) => {
         </View>
       </View>
       
-      {/* Apply Button */}
-      <View style={styles.applySection}>
-        <TouchableOpacity 
-          style={styles.applyButton}
-          onPress={() => handleApply(item)}
-        >
-          <Text style={styles.applyButtonText}>Apply Now</Text>
-          <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
-        </TouchableOpacity>
-      </View>
+      {/* Premium Apply Section */}
+      <LinearGradient
+        colors={['#3B82F6', '#1D4ED8']}
+        style={styles.applySection}
+      >
+        <View style={styles.applyButtonContainer}>
+          <TouchableOpacity 
+            style={styles.applyButton}
+            onPress={() => handleApply(item)}
+          >
+            <Ionicons name="send" size={20} color="#FFFFFF" />
+            <Text style={styles.applyButtonText}>Apply Now</Text>
+            <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
+          </TouchableOpacity>
+          
+          <TouchableOpacity style={styles.saveButton}>
+            <Ionicons name="bookmark-outline" size={20} color="#3B82F6" />
+          </TouchableOpacity>
+        </View>
+      </LinearGradient>
     </View>
     );
     } catch (error) {
@@ -348,26 +390,74 @@ const CompanyJobsScreen = ({ navigation, route }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <AppHeader 
-        title={`Jobs at ${companyName}`}
-        showBackButton={true}
-        onBackPress={() => navigation.goBack()}
-      />
-      
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>{companyName}</Text>
-        <Text style={styles.headerSubtitle}>
-          {jobs.length} {jobs.length === 1 ? 'job' : 'jobs'} available
-        </Text>
-      </View>
+      {/* Premium Header with Gradient */}
+      <LinearGradient
+        colors={['#3B82F6', '#1D4ED8', '#1E40AF']}
+        style={styles.premiumHeader}
+      >
+        <View style={styles.headerContent}>
+          <TouchableOpacity 
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+          </TouchableOpacity>
+          
+          <View style={styles.headerInfo}>
+            <View style={styles.companyLogo}>
+              <Text style={styles.companyLogoText}>
+                {companyName.charAt(0).toUpperCase()}
+              </Text>
+            </View>
+            <View style={styles.headerTextContainer}>
+              <Text style={styles.headerTitle}>{companyName}</Text>
+              <Text style={styles.headerSubtitle}>
+                {jobs.length} {jobs.length === 1 ? 'job' : 'jobs'} available
+              </Text>
+            </View>
+          </View>
+          
+          <TouchableOpacity style={styles.shareButton}>
+            <Ionicons name="share-outline" size={24} color="#FFFFFF" />
+          </TouchableOpacity>
+        </View>
+        
+        {/* Stats Cards */}
+        <View style={styles.statsContainer}>
+          <View style={styles.statCard}>
+            <Ionicons name="briefcase" size={20} color="#FFFFFF" />
+            <Text style={styles.statNumber}>{jobs.length}</Text>
+            <Text style={styles.statLabel}>Open Positions</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Ionicons name="trending-up" size={20} color="#FFFFFF" />
+            <Text style={styles.statNumber}>98%</Text>
+            <Text style={styles.statLabel}>Success Rate</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Ionicons name="star" size={20} color="#FFFFFF" />
+            <Text style={styles.statNumber}>4.8</Text>
+            <Text style={styles.statLabel}>Rating</Text>
+          </View>
+        </View>
+      </LinearGradient>
 
       {jobs.length === 0 ? (
         <View style={styles.emptyContainer}>
-          <Ionicons name="briefcase-outline" size={64} color="#94A3B8" />
+          <View style={styles.emptyIconContainer}>
+            <Ionicons name="briefcase-outline" size={80} color="#E2E8F0" />
+          </View>
           <Text style={styles.emptyTitle}>No Jobs Available</Text>
           <Text style={styles.emptyText}>
             This company doesn't have any active job postings at the moment.
           </Text>
+          <TouchableOpacity 
+            style={styles.refreshButton}
+            onPress={fetchCompanyJobs}
+          >
+            <Ionicons name="refresh" size={20} color="#3B82F6" />
+            <Text style={styles.refreshButtonText}>Refresh</Text>
+          </TouchableOpacity>
         </View>
       ) : (
         <FlatList
@@ -375,7 +465,7 @@ const CompanyJobsScreen = ({ navigation, route }) => {
           renderItem={renderJob}
           keyExtractor={(item) => item._id || Math.random().toString()}
           contentContainerStyle={styles.jobsList}
-          showsVerticalScrollIndicator={true}
+          showsVerticalScrollIndicator={false}
           scrollEnabled={true}
           bounces={true}
           nestedScrollEnabled={true}
@@ -412,17 +502,20 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#F8FAFC',
   },
   loadingText: {
     fontSize: 16,
     color: '#64748B',
     marginTop: 12,
+    fontWeight: '500',
   },
   errorContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 20,
+    backgroundColor: '#F8FAFC',
   },
   errorText: {
     fontSize: 16,
@@ -430,34 +523,112 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 12,
     marginBottom: 20,
+    fontWeight: '500',
   },
   retryButton: {
     backgroundColor: '#3B82F6',
     paddingHorizontal: 24,
     paddingVertical: 12,
-    borderRadius: 8,
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   retryButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
   },
-  header: {
-    backgroundColor: '#FFFFFF',
+  
+  // Premium Header Styles
+  premiumHeader: {
+    paddingTop: 10,
+    paddingBottom: 20,
     paddingHorizontal: 20,
-    paddingVertical: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+  },
+  headerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headerInfo: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: 16,
+  },
+  companyLogo: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  companyLogoText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+  },
+  headerTextContainer: {
+    flex: 1,
   },
   headerTitle: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: 'bold',
-    color: '#1E293B',
-    marginBottom: 4,
+    color: '#FFFFFF',
+    marginBottom: 2,
   },
   headerSubtitle: {
-    fontSize: 16,
-    color: '#64748B',
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.8)',
+    fontWeight: '500',
+  },
+  shareButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  
+  // Stats Container
+  statsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  statCard: {
+    flex: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  statNumber: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginTop: 4,
+  },
+  statLabel: {
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.8)',
+    marginTop: 2,
+    textAlign: 'center',
   },
   jobsList: {
     padding: 20,
@@ -465,21 +636,169 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     minHeight: '100%',
   },
+  
+  // Empty State
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 40,
+    backgroundColor: '#F8FAFC',
+  },
+  emptyIconContainer: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: '#F1F5F9',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  emptyTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#1E293B',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#64748B',
+    textAlign: 'center',
+    lineHeight: 24,
+    marginBottom: 32,
+  },
+  refreshButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    gap: 8,
+  },
+  refreshButtonText: {
+    color: '#3B82F6',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  
+  // Job Card Styles
   jobCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    marginBottom: 16,
+    borderRadius: 16,
+    marginBottom: 20,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 4,
     },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowRadius: 8,
+    elevation: 5,
+    overflow: 'hidden',
+  },
+  jobHeaderGradient: {
+    padding: 20,
+  },
+  jobHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 16,
+  },
+  jobTitleContainer: {
+    flex: 1,
+  },
+  jobTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#1E293B',
+    marginBottom: 8,
+    lineHeight: 26,
+  },
+  jobType: {
+    backgroundColor: '#3B82F6',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+    alignSelf: 'flex-start',
+  },
+  jobTypeText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  jobStatus: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#10B981',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  statusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#FFFFFF',
+    marginRight: 4,
+  },
+  statusText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  quickInfoRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  quickInfoItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    gap: 6,
+  },
+  quickInfoText: {
+    fontSize: 14,
+    color: '#3B82F6',
+    fontWeight: '500',
   },
   jobCardContent: {
     padding: 20,
+  },
+  jobDetailsGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+    gap: 12,
+  },
+  jobDetailCard: {
+    flex: 1,
+    backgroundColor: '#F8FAFC',
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  jobDetailLabel: {
+    fontSize: 12,
+    color: '#64748B',
+    marginTop: 8,
+    marginBottom: 4,
+    fontWeight: '500',
+  },
+  jobDetailValue: {
+    fontSize: 16,
+    color: '#1E293B',
+    fontWeight: 'bold',
   },
   sectionTitle: {
     fontSize: 16,
@@ -694,6 +1013,56 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     textAlign: 'center',
     lineHeight: 24,
+  },
+  
+  // Premium Apply Section
+  applySection: {
+    padding: 20,
+  },
+  applyButtonContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  applyButton: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  applyButtonText: {
+    color: '#3B82F6',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  saveButton: {
+    width: 48,
+    height: 48,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
 });
 

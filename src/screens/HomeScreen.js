@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  SafeAreaView,
   ScrollView,
   TextInput,
   Image,
@@ -12,6 +11,7 @@ import {
   FlatList,
   ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import LogoImage from '../components/LogoImage';
@@ -241,19 +241,19 @@ const HomeScreen = ({ navigation }) => {
             /> */}
             
             {/* Floating notification */}
-            <View style={styles.floatingNotification}>
+            {/* <View style={styles.floatingNotification}>
               <Ionicons name="mail" size={16} color="#3B82F6" />
               <View style={styles.notificationContent}>
                 <Text style={styles.notificationTitle}>Work Inquiry From</Text>
                 <Text style={styles.notificationSubtitle}>Ali Tufan</Text>
               </View>
-            </View>
+            </View> */}
 
             {/* Floating stats */}
-            <View style={styles.floatingStats}>
+            {/* <View style={styles.floatingStats}>
               <Text style={styles.statsNumber}>10k+</Text>
               <Text style={styles.statsLabel}>Candidates</Text>
-            </View>
+            </View> */}
           </View>
         </LinearGradient>
 

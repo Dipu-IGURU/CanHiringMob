@@ -5,10 +5,28 @@ import { API_CONFIG } from '../config/apiConfig.js';
 const RAPIDAPI_KEY = API_CONFIG.RAPIDAPI_KEY;
 
 // API Configuration
-export const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 
-  (process.env.NODE_ENV === 'development' 
-    ? 'http://localhost:5001'  // Local development server
-    : 'https://can-hiring.onrender.com');  // Production server
+const getApiBaseUrl = () => {
+  // If environment variable is set, use it
+  if (process.env.EXPO_PUBLIC_API_BASE_URL) {
+    return process.env.EXPO_PUBLIC_API_BASE_URL;
+  }
+  
+  // For development (Expo Go), use local IP address
+  if (__DEV__) {
+    return 'http://192.168.1.14:5001';  // Your PC's local IP address
+  }
+  
+  // For production builds (APK), always use production server
+  return 'https://can-hiring.onrender.com';
+};
+
+export const API_BASE_URL = getApiBaseUrl();
+
+// Debug logging
+console.log('🌐 API Configuration:');
+console.log('   __DEV__:', __DEV__);
+console.log('   EXPO_PUBLIC_API_BASE_URL:', process.env.EXPO_PUBLIC_API_BASE_URL);
+console.log('   Final API_BASE_URL:', API_BASE_URL);
 
 // Helper function to get cached data with expiration
 const getCachedData = async (key) => {

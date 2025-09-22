@@ -4,6 +4,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
+import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AuthProvider } from './src/contexts/AuthContext';
 
 // Import screens
@@ -36,6 +37,8 @@ const Tab = createBottomTabNavigator();
 
 // Main Tab Navigator
 function MainTabNavigator() {
+  const insets = useSafeAreaInsets();
+  
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -61,9 +64,9 @@ function MainTabNavigator() {
           backgroundColor: '#FFFFFF',
           borderTopWidth: 1,
           borderTopColor: '#E2E8F0',
-          paddingBottom: 5,
+          paddingBottom: Math.max(insets.bottom, 5),
           paddingTop: 5,
-          height: 60,
+          height: 60 + Math.max(insets.bottom, 5),
         },
         tabBarLabelStyle: {
           fontSize: 12,
@@ -81,10 +84,11 @@ function MainTabNavigator() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <NavigationContainer>
-        <StatusBar style="auto" />
-        <Stack.Navigator 
+    <SafeAreaProvider>
+      <AuthProvider>
+        <NavigationContainer>
+          <StatusBar style="auto" />
+          <Stack.Navigator 
           initialRouteName="Welcome"
           screenOptions={{
             headerShown: false,
@@ -126,7 +130,8 @@ export default function App() {
           <Stack.Screen name="JobApplication" component={JobApplicationScreen} />
           <Stack.Screen name="MessagesScreen" component={MessagesScreen} />
         </Stack.Navigator>
-      </NavigationContainer>
-    </AuthProvider>
+        </NavigationContainer>
+      </AuthProvider>
+    </SafeAreaProvider>
   );
 }

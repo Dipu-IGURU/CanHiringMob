@@ -25,6 +25,9 @@ const corsOptions = {
       'http://localhost:19000', // Expo web dev server
       'http://localhost:3000',  // React Native web
       'http://localhost:5001',  // Local API server
+      'http://192.168.1.14:19006', // Expo dev server on local IP
+      'http://192.168.1.14:19000', // Expo web dev server on local IP
+      'http://192.168.1.14:5001',  // Local API server on local IP
       'https://can-hiring.vercel.app',
       'https://www.can-hiring.vercel.app',
       'https://can-hiring.onrender.com',
@@ -105,8 +108,9 @@ const connectWithRetry = () => {
 // Start the app
 connectWithRetry();
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 CanHiring Mobile Server is running on port ${PORT}`);
   console.log(`📱 API Base URL: http://localhost:${PORT}/api`);
+  console.log(`📱 Mobile API URL: http://192.168.1.14:${PORT}/api`);
   console.log(`🔗 Health Check: http://localhost:${PORT}/api/health`);
 });
