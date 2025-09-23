@@ -89,15 +89,30 @@ app.use((err, req, res, next) => {
 
 // Database connection with retry logic
 const connectWithRetry = () => {
-  const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/canhiring';
+  // Use production MongoDB Atlas for mobile APK builds
+  const MONGODB_URI = process.env.MONGODB_URI || 
+    process.env.NODE_ENV === 'production' ? 
+    'mongodb+srv://canhiring:canhiring123@cluster0.mongodb.net/canhiring?retryWrites=true&w=majority' :
+    'mongodb://localhost:27017/canhiring';
+
+  console.log('🔗 Connecting to MongoDB:', MONGODB_URI.replace(/\/\/.*@/, '//***:***@')); // Hide credentials in logs
 
   mongoose.connect(MONGODB_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
-    serverSelectionTimeoutMS: 5000,
+    serverSelectionTimeoutMS: 10000,
     socketTimeoutMS: 45000,
+    maxPoolSize: 10,
+    serverApi: {
+      version: '1',
+      strict: true,
+      deprecationErrors: true,
+    }
   })
-  .then(() => console.log('✅ MongoDB connected successfully'))
+  .then(() => {
+    console.log('✅ MongoDB connected successfully');
+    console.log('📊 Database:', mongoose.connection.db.databaseName);
+  })
   .catch(err => {
     console.error('❌ MongoDB connection error:', err.message);
     console.log('🔁 Retrying MongoDB connection in 5 seconds...');
