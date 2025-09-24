@@ -143,7 +143,7 @@ applicationSchema.index({ applicantId: 1 });
 applicationSchema.index({ status: 1 });
 applicationSchema.index({ appliedAt: -1 });
 
-// Ensure one application per user per job
-applicationSchema.index({ jobId: 1, applicantId: 1 }, { unique: true });
+// Simple index for better query performance (duplicates handled in application logic)
+applicationSchema.index({ jobId: 1, applicantId: 1 });
 
 module.exports = mongoose.model('Application', applicationSchema);

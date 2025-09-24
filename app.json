@@ -6,7 +6,9 @@
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "sdkVersion": "54.0.0",
+    "icon": "./assets/512.jpg",
     "splash": {
+      "image": "./assets/512.jpg",
       "resizeMode": "contain",
       "backgroundColor": "#667eea"
     },
@@ -14,10 +16,13 @@
       "**/*"
     ],
     "ios": {
+      "icon": "./assets/512.jpg",
       "supportsTablet": true
     },
     "android": {
+      "icon": "./assets/512.jpg",
       "adaptiveIcon": {
+        "foregroundImage": "./assets/512.jpg",
         "backgroundColor": "#667eea"
       },
       "package": "com.iguru.canhiringsolutions",

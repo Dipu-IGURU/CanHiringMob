@@ -185,9 +185,12 @@ router.post('/apply', auth, [
 
   } catch (error) {
     console.error('Error applying for job:', error);
+    console.error('Error details:', error.message);
+    console.error('Error stack:', error.stack);
     res.status(500).json({
       success: false,
-      message: 'Server error while submitting application'
+      message: 'Server error while submitting application',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 });

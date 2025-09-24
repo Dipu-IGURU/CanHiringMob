@@ -14,12 +14,16 @@ const PORT = process.env.PORT || 5001;
 // CORS configuration
 const corsOptions = {
   origin: function (origin, callback) {
+    // Log the origin for debugging
+    console.log('Request origin:', origin);
+    
     // Allow all origins in development
     if (process.env.NODE_ENV !== 'production') {
+      console.log('✅ Development mode - allowing all origins');
       return callback(null, true);
     }
     
-    // In production, only allow specific origins
+    // In production, allow specific origins and mobile apps
     const allowedOrigins = [
       'http://localhost:19006', // Expo default dev server
       'http://localhost:19000', // Expo web dev server
@@ -34,26 +38,37 @@ const corsOptions = {
       'https://www.can-hiring.onrender.com'
     ];
     
-    // Log the origin for debugging
-    console.log('Request origin:', origin);
-    
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-    
-    if (allowedOrigins.indexOf(origin) === -1) {
-      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-      console.log('Blocked origin:', origin);
-      return callback(new Error(msg), false);
+    // Allow requests with no origin (mobile apps, Postman, curl, etc.)
+    if (!origin || origin === 'null' || origin === 'undefined') {
+      console.log('✅ Allowing request with no origin (mobile app)');
+      return callback(null, true);
     }
-    return callback(null, true);
+    
+    // Check if origin is in allowed list
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      console.log('✅ Allowed origin:', origin);
+      return callback(null, true);
+    }
+    
+    // Block unknown origins
+    console.log('❌ Blocked origin:', origin);
+    const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+    return callback(new Error(msg), false);
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Admin-Token']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Admin-Token'],
+  optionsSuccessStatus: 200 // Some legacy browsers choke on 204
 };
 
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions)); // Enable preflight for all routes
+
+// Request logging middleware
+app.use((req, res, next) => {
+  console.log(`📱 ${req.method} ${req.path} - Origin: ${req.get('Origin') || 'undefined'} - User-Agent: ${req.get('User-Agent') || 'unknown'}`);
+  next();
+});
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
@@ -73,7 +88,22 @@ app.get('/api/health', (req, res) => {
   res.json({ 
     message: 'CanHiring Mobile API is running!',
     timestamp: new Date().toISOString(),
-    version: '1.0.0'
+    version: '1.0.0',
+    status: 'healthy',
+    database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+    environment: process.env.NODE_ENV || 'development'
+  });
+});
+
+// Mobile app specific health check
+app.get('/api/mobile/health', (req, res) => {
+  res.json({
+    success: true,
+    message: 'Mobile API is ready',
+    timestamp: new Date().toISOString(),
+    database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+    cors: 'enabled',
+    mobile: true
   });
 });
 
@@ -89,11 +119,8 @@ app.use((err, req, res, next) => {
 
 // Database connection with retry logic
 const connectWithRetry = () => {
-  // Use production MongoDB Atlas for mobile APK builds
-  const MONGODB_URI = process.env.MONGODB_URI || 
-    process.env.NODE_ENV === 'production' ? 
-    'mongodb+srv://canhiring:canhiring123@cluster0.mongodb.net/canhiring?retryWrites=true&w=majority' :
-    'mongodb://localhost:27017/canhiring';
+  // Use environment variable or fallback to local MongoDB
+  const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/canhiring';
 
   console.log('🔗 Connecting to MongoDB:', MONGODB_URI.replace(/\/\/.*@/, '//***:***@')); // Hide credentials in logs
 

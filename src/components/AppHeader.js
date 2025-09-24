@@ -47,12 +47,11 @@ const AppHeader = ({
               </TouchableOpacity>
             ) : showLogo ? (
               <View style={styles.logoContainer}>
-                {/* <Image
+                <Image
                   source={require('../../assets/logowitohutbg.png')}
                   style={styles.logoIcon}
                   resizeMode="contain"
-                /> */}
-                <Text style={styles.logoText}>CanHiring</Text>
+                />
               </View>
             ) : (
               <View style={styles.placeholder} />
