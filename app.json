@@ -10,28 +10,39 @@
     "splash": {
       "image": "./assets/512.jpg",
       "resizeMode": "contain",
-      "backgroundColor": "#667eea"
+      "backgroundColor": "#2563EB"
     },
     "assetBundlePatterns": [
       "**/*"
     ],
     "ios": {
       "icon": "./assets/512.jpg",
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.iguru.canhiringsolutions"
     },
     "android": {
       "icon": "./assets/512.jpg",
       "adaptiveIcon": {
         "foregroundImage": "./assets/512.jpg",
-        "backgroundColor": "#667eea"
+        "backgroundColor": "#2563EB"
       },
       "package": "com.iguru.canhiringsolutions",
+      "versionCode": 1,
       "permissions": [
         "INTERNET",
         "ACCESS_NETWORK_STATE",
         "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE"
+        "WRITE_EXTERNAL_STORAGE",
+        "CAMERA",
+        "READ_MEDIA_IMAGES"
+      ],
+      "blockedPermissions": [
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION"
       ]
+    },
+    "web": {
+      "favicon": "./assets/canhirngfavicon.png"
     },
     "extra": {
       "eas": {
@@ -40,6 +51,7 @@
     },
     "plugins": [
       "expo-font"
-    ]
+    ],
+    "privacy": "public"
   }
 }

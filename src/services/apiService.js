@@ -6,18 +6,25 @@ const RAPIDAPI_KEY = API_CONFIG.RAPIDAPI_KEY;
 
 // API Configuration
 const getApiBaseUrl = () => {
-  // If environment variable is set, use it
+  // If environment variable is set, use it (for production builds)
   if (process.env.EXPO_PUBLIC_API_BASE_URL) {
     return process.env.EXPO_PUBLIC_API_BASE_URL;
   }
   
-  // For development (Expo Go), use local IP address
+  // For development, use local IP for mobile and localhost for web
   if (__DEV__) {
-    return 'http://192.168.1.14:5001';  // Your PC's local IP address
+    // Check if we're running on web (React Native Web)
+    if (typeof window !== 'undefined' && window.location) {
+      // Web browser - use localhost
+      return 'http://localhost:5001';
+    } else {
+      // Mobile device (Expo Go) - use local IP address
+      return 'http://192.168.1.28:5001';
+    }
   }
   
-  // For production builds (APK), always use production server
-  return 'https://can-hiring.onrender.com';
+  // For production builds, use Firebase backend
+  return 'https://us-central1-canhiring-ca.cloudfunctions.net/api';
 };
 
 export const API_BASE_URL = getApiBaseUrl();
@@ -195,145 +202,115 @@ export const fetchJobCategories = async () => {
   }
 };
 
-// Fetch jobs by category - try server first, then JSearch API
+// Fetch jobs by category - use Firebase backend as primary source
 export const fetchJobsByCategory = async (category, page = 1, limit = 10) => {
   try {
-    console.log('🔍 Fetching jobs by category:', { category, page, limit, server: API_BASE_URL });
+    console.log('🔍 Fetching jobs by category:', { category, page, limit });
     
-    // First try to get jobs from our database
-    try {
-      const serverResponse = await fetch(`${API_BASE_URL}/api/jobs?category=${category}&page=${page}&limit=${limit}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      
-      if (serverResponse.ok) {
-        const serverData = await serverResponse.json();
-        if (serverData.success && serverData.jobs && serverData.jobs.length > 0) {
-          console.log('✅ Server returned', serverData.jobs.length, 'jobs for category:', category);
-          return serverData.jobs;
-        }
-      }
-    } catch (serverError) {
-      console.log('⚠️ Server not accessible, using JSearch API');
-    }
-    
-    // Map category names to search queries for better JSearch results
-    // These must match the queries used in fetchJobCategories for consistency
-    const categoryQueries = {
-      'all': 'software developer OR programmer OR IT specialist OR engineer OR data scientist',
-      'information technology': 'developer',
-      'technology': 'software developer OR programmer OR IT specialist OR engineer OR data scientist',
-      'healthcare & medical': 'nurse OR doctor OR healthcare worker OR medical assistant OR healthcare professional',
-      'healthcare': 'nurse OR doctor OR healthcare worker OR medical assistant OR healthcare professional',
-      'finance & banking': 'financial analyst OR banker OR accountant OR financial advisor OR finance manager',
-      'finance': 'financial analyst OR banker OR accountant OR financial advisor OR finance manager',
-      'education & training': 'teacher OR instructor OR trainer OR education coordinator OR professor',
-      'education': 'teacher OR instructor OR trainer OR education coordinator OR professor',
-      'sales & marketing': 'sales representative OR marketing specialist OR digital marketing OR social media manager',
-      'marketing': 'sales representative OR marketing specialist OR digital marketing OR social media manager',
-      'engineering': 'engineer OR engineering technician OR software engineer OR mechanical engineer',
-      'customer service': 'customer service representative OR support agent OR call center',
-      'human resources': 'HR specialist OR recruiter OR human resources manager OR talent acquisition',
-      'administrative': 'administrative assistant OR office manager OR executive assistant OR coordinator',
-      'construction': 'construction worker OR contractor OR builder OR project manager OR site supervisor',
-      'manufacturing': 'manufacturing worker OR production operator OR quality control OR production manager',
-      'retail': 'retail sales OR store manager OR cashier OR sales associate OR retail manager',
-      'design': 'UX designer OR UI designer OR graphic designer OR web designer OR product designer'
-    };
+    // First try Firebase backend
+    const response = await fetch(`${API_BASE_URL}/api/jobs/public?category=${encodeURIComponent(category)}&page=${page}&limit=${limit}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
 
-    const searchQuery = categoryQueries[category.toLowerCase()] || category;
-    console.log('🔍 Category mapping:', { category, searchQuery });
-    
-    // First try JSearch API
-    const jsearchParams = {
-      query: searchQuery,
-      page: page,
-      num_pages: 3, // Fetch 3 pages to get 15-25 jobs
-      country: 'US', // Changed to US for better results
-      date_posted: 'week', // Only fetch jobs posted in the last week
-      job_type: 'fulltime',
-      remote_jobs_only: false
-    };
-    
-    console.log('🔍 JSearch params:', jsearchParams);
-
-    const jsearchResult = await searchJobsFromAPI(jsearchParams);
-    
-    if (jsearchResult.success && jsearchResult.jobs && jsearchResult.jobs.length > 0) {
-      console.log('✅ JSearch API returned', jsearchResult.jobs.length, 'jobs for category:', category);
-      // Ensure we return at least 15 jobs, up to 25
-      const minJobs = 15;
-      const maxJobs = Math.min(25, limit);
-      const jobsToReturn = Math.max(minJobs, Math.min(maxJobs, jsearchResult.jobs.length));
-      return jsearchResult.jobs.slice(0, jobsToReturn);
+    if (response.ok) {
+      const data = await response.json();
+      console.log('✅ Firebase backend returned', data.jobs?.length || 0, 'jobs for category:', category);
+      return data.jobs || data.data || [];
     } else {
-      console.log('⚠️ No jobs from JSearch API, result:', jsearchResult);
-      return jsearchResult.jobs || [];
+      console.log('⚠️ Firebase backend failed, trying JSearch API fallback');
+      
+      // Fallback to JSearch API
+      const categoryQueries = {
+        'all': 'software developer OR programmer OR IT specialist OR engineer OR data scientist',
+        'technology': 'software developer OR programmer OR IT specialist OR engineer OR data scientist',
+        'healthcare': 'nurse OR doctor OR healthcare worker OR medical assistant OR healthcare professional',
+        'finance': 'financial analyst OR banker OR accountant OR financial advisor OR finance manager',
+        'education': 'teacher OR instructor OR trainer OR education coordinator OR professor',
+        'marketing': 'sales representative OR marketing specialist OR digital marketing OR social media manager',
+        'engineering': 'engineer OR engineering technician OR software engineer OR mechanical engineer',
+        'customer service': 'customer service representative OR support agent OR call center',
+        'human resources': 'HR specialist OR recruiter OR human resources manager OR talent acquisition',
+        'administrative': 'administrative assistant OR office manager OR executive assistant OR coordinator',
+        'construction': 'construction worker OR contractor OR builder OR project manager OR site supervisor',
+        'manufacturing': 'manufacturing worker OR production operator OR quality control OR production manager',
+        'retail': 'retail sales OR store manager OR cashier OR sales associate OR retail manager',
+        'design': 'UX designer OR UI designer OR graphic designer OR web designer OR product designer'
+      };
+
+      const searchQuery = categoryQueries[category.toLowerCase()] || category;
+      
+      const jsearchParams = {
+        query: searchQuery,
+        page: page,
+        num_pages: 3,
+        country: 'US',
+        date_posted: 'week',
+        job_type: 'fulltime',
+        remote_jobs_only: false
+      };
+      
+      const jsearchResult = await searchJobsFromAPI(jsearchParams);
+      
+      if (jsearchResult.success && jsearchResult.jobs && jsearchResult.jobs.length > 0) {
+        console.log('✅ JSearch API fallback returned', jsearchResult.jobs.length, 'jobs');
+        return jsearchResult.jobs.slice(0, limit);
+      } else {
+        console.log('⚠️ No jobs from JSearch API fallback');
+        return [];
+      }
     }
   } catch (error) {
     console.error('❌ Error fetching jobs by category:', error);
-    // Don't throw error, return empty array to prevent app crash
-    console.log('🔄 Returning empty array due to error');
     return [];
   }
 };
 
-// Fetch all public jobs - try server first, then JSearch API
+// Fetch all public jobs - use Firebase backend as primary source
 export const fetchAllJobs = async (page = 1, limit = 20) => {
   try {
-    console.log('🔍 Fetching all jobs:', { page, limit, server: API_BASE_URL });
+    console.log('🔍 Fetching all jobs:', { page, limit });
     
-    // First try to get jobs from our database
-    try {
-      const serverResponse = await fetch(`${API_BASE_URL}/api/jobs?page=${page}&limit=${limit}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      
-      if (serverResponse.ok) {
-        const serverData = await serverResponse.json();
-        if (serverData.success && serverData.jobs && serverData.jobs.length > 0) {
-          console.log('✅ Server returned', serverData.jobs.length, 'jobs');
-          return serverData.jobs;
-        }
-      }
-    } catch (serverError) {
-      console.log('⚠️ Server not accessible, using JSearch API');
-    }
-    
-    // If server fails, use JSearch API
-    const jsearchParams = {
-      query: 'software developer OR programmer OR IT specialist OR engineer OR data scientist OR nurse OR doctor OR teacher OR sales OR marketing',
-      page: page,
-      num_pages: 3, // Fetch 3 pages to get 15-25 jobs
-      country: 'US',
-      date_posted: 'week',
-      job_type: 'fulltime',
-      remote_jobs_only: false
-    };
-    
-    const jsearchResult = await searchJobsFromAPI(jsearchParams);
-    
-    if (jsearchResult.success && jsearchResult.jobs && jsearchResult.jobs.length > 0) {
-      console.log('✅ jSearch API returned', jsearchResult.jobs.length, 'jobs');
-      // Ensure we return at least 15 jobs, up to 25
-      const minJobs = 15;
-      const maxJobs = Math.min(25, limit);
-      const jobsToReturn = Math.max(minJobs, Math.min(maxJobs, jsearchResult.jobs.length));
-      return jsearchResult.jobs.slice(0, jobsToReturn);
+    // First try Firebase backend
+    const response = await fetch(`${API_BASE_URL}/api/jobs/public?page=${page}&limit=${limit}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      console.log('✅ Firebase backend returned', data.jobs?.length || 0, 'jobs');
+      return data.jobs || data.data || [];
     } else {
-      console.log('⚠️ No jobs from jSearch API, returning empty array');
-      return jsearchResult.jobs || [];
+      console.log('⚠️ Firebase backend failed, trying JSearch API fallback');
+      
+      // Fallback to JSearch API
+      const jsearchParams = {
+        query: 'software developer OR programmer OR IT specialist OR engineer OR data scientist OR nurse OR doctor OR teacher OR sales OR marketing',
+        page: page,
+        num_pages: 3,
+        country: 'US',
+        date_posted: 'week',
+        job_type: 'fulltime',
+        remote_jobs_only: false
+      };
+      
+      const jsearchResult = await searchJobsFromAPI(jsearchParams);
+      
+      if (jsearchResult.success && jsearchResult.jobs && jsearchResult.jobs.length > 0) {
+        console.log('✅ JSearch API fallback returned', jsearchResult.jobs.length, 'jobs');
+        return jsearchResult.jobs.slice(0, limit);
+      } else {
+        console.log('⚠️ No jobs from JSearch API fallback');
+        return [];
+      }
     }
   } catch (error) {
     console.error('❌ Error fetching all jobs:', error);
-    // Don't throw error, return empty array to prevent app crash
-    console.log('🔄 Returning empty array due to error');
     return [];
   }
 };
@@ -451,7 +428,7 @@ export const getApplicationDetails = async (applicationId, token) => {
 // Get user applications
 export const getUserApplications = async (token, page = 1, limit = 10) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/applications/user?page=${page}&limit=${limit}`, {
+    const response = await fetch(`${API_BASE_URL}/api/applications/user/${token}?page=${page}&limit=${limit}`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -478,7 +455,7 @@ export const getUserApplications = async (token, page = 1, limit = 10) => {
 // Get application statistics
 export const getApplicationStats = async (token) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/applications/stats`, {
+    const response = await fetch(`${API_BASE_URL}/api/profile/applied-jobs/stats`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -510,7 +487,7 @@ export const getApplicationStats = async (token) => {
 // Get interview statistics
 export const getInterviewStats = async (token) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/applications/interview-stats`, {
+    const response = await fetch(`${API_BASE_URL}/api/profile/interview-stats`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -541,7 +518,7 @@ export const getInterviewStats = async (token) => {
 // Get profile view statistics
 export const getProfileStats = async (token) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/auth/profile/stats`, {
+    const response = await fetch(`${API_BASE_URL}/api/profile/view-stats`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -572,13 +549,12 @@ export const getProfileStats = async (token) => {
 // Track profile view
 export const trackProfileView = async (token, viewedUserId) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/auth/profile/view`, {
+    const response = await fetch(`${API_BASE_URL}/api/profile/${viewedUserId}/view`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ viewedUserId }),
     });
 
     if (!response.ok) {
@@ -620,6 +596,110 @@ export const getRecentActivities = async (token, limit = 10) => {
       message: 'Failed to fetch recent activities',
       activities: []
     };
+  }
+};
+
+// Get current user profile
+export const getCurrentUserProfile = async (token) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/profile/`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching user profile:', error);
+    return {
+      success: false,
+      message: 'Failed to fetch user profile'
+    };
+  }
+};
+
+// Update user profile
+export const updateUserProfile = async (token, profileData) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/profile/`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(profileData),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error updating user profile:', error);
+    return {
+      success: false,
+      message: 'Failed to update user profile'
+    };
+  }
+};
+
+// Apply to a job
+export const applyToJob = async (token, jobId, applicationData) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/jobs/${jobId}/apply`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(applicationData),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error applying to job:', error);
+    return {
+      success: false,
+      message: 'Failed to apply to job'
+    };
+  }
+};
+
+// Get job categories from backend
+export const fetchJobCategoriesFromBackend = async () => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/jobs/categories`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      console.log('✅ Firebase backend returned job categories');
+      return data.categories || data.data || [];
+    } else {
+      console.log('⚠️ Firebase backend failed for categories, using local categories');
+      return await fetchJobCategories(); // Use local categories as fallback
+    }
+  } catch (error) {
+    console.error('Error fetching job categories from backend:', error);
+    return await fetchJobCategories(); // Use local categories as fallback
   }
 };
 
@@ -691,6 +771,8 @@ export const getApplicationLimits = async (token) => {
 // Authentication functions
 export const loginUser = async (email, password) => {
   try {
+    console.log('🔍 Attempting login with Firebase backend');
+    
     const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
       method: 'POST',
       headers: {
@@ -699,23 +781,28 @@ export const loginUser = async (email, password) => {
       body: JSON.stringify({ email, password }),
     });
 
+    console.log('📊 Auth response status:', response.status);
+    
     if (response.ok) {
       const data = await response.json();
+      console.log('✅ Login successful');
       return data;
+    } else {
+      const errorData = await response.json().catch(() => ({}));
+      console.log('❌ Login failed:', response.status, errorData);
+      throw new Error(errorData.message || 'Login failed');
     }
-    
-    // If server fails, throw error
-    const errorText = await response.text();
-    throw new Error(`Server error: ${response.status} - ${errorText}`);
     
   } catch (error) {
     console.error('❌ Error logging in:', error);
-    throw new Error('Failed to login - server not accessible');
+    throw error;
   }
 };
 
 export const signupUser = async (userData) => {
   try {
+    console.log('🔍 Attempting signup with Firebase backend');
+    
     const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
       method: 'POST',
       headers: {
@@ -724,25 +811,28 @@ export const signupUser = async (userData) => {
       body: JSON.stringify(userData),
     });
 
+    console.log('📊 Signup response status:', response.status);
+    
     if (response.ok) {
       const data = await response.json();
+      console.log('✅ Signup successful');
       return data;
+    } else {
+      const errorData = await response.json().catch(() => ({}));
+      console.log('❌ Signup failed:', response.status, errorData);
+      throw new Error(errorData.message || 'Signup failed');
     }
-    
-    // If server fails, throw error
-    const errorText = await response.text();
-    throw new Error(`Server error: ${response.status} - ${errorText}`);
     
   } catch (error) {
     console.error('❌ Error signing up:', error);
-    throw new Error('Failed to signup - server not accessible');
+    throw error;
   }
 };
 
-// Get user's applied jobs (similar to Workly implementation)
+// Get user's applied jobs
 export const getAppliedJobs = async (token) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/auth/applied-jobs`, {
+    const response = await fetch(`${API_BASE_URL}/api/profile/applied-jobs`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -767,36 +857,154 @@ export const getAppliedJobs = async (token) => {
 };
 
 
-// Fetch featured companies from database (Workly approach)
-export const fetchFeaturedCompanies = async (limit = 12) => {
+// Fetch jobs by company name - use Firebase backend as primary source
+export const fetchJobsByCompany = async (companyName, page = 1, limit = 20) => {
   try {
-    // First, try the dedicated companies endpoint
-    const companiesResponse = await fetch(`${API_BASE_URL}/api/jobs/companies?limit=${limit}`, {
+    console.log('🔍 Fetching jobs by company:', { companyName, page, limit });
+    
+    // First try Firebase backend
+    const response = await fetch(`${API_BASE_URL}/api/jobs/company/${encodeURIComponent(companyName)}?page=${page}&limit=${limit}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
       },
     });
 
-    if (companiesResponse.ok) {
-      const companiesData = await companiesResponse.json();
-      if (companiesData.success && companiesData.companies && companiesData.companies.length > 0) {
-        console.log('✅ Using dedicated companies endpoint:', companiesData.companies.length, 'companies');
-        return companiesData.companies;
+    if (response.ok) {
+      const data = await response.json();
+      console.log('✅ Firebase backend returned', data.jobs?.length || 0, 'jobs for company:', companyName);
+      return data.jobs || data.data || [];
+    } else {
+      console.log('⚠️ Firebase backend failed, trying JSearch API fallback');
+      
+      // Fallback to JSearch API
+      const jsearchParams = {
+        query: `${companyName} jobs OR ${companyName} careers OR ${companyName} employment`,
+        page: page,
+        num_pages: 3,
+        country: 'US',
+        date_posted: 'week',
+        job_type: 'fulltime',
+        remote_jobs_only: false
+      };
+      
+      const jsearchResult = await searchJobsFromAPI(jsearchParams);
+      
+      if (jsearchResult.success && jsearchResult.jobs && jsearchResult.jobs.length > 0) {
+        // Filter jobs by company name to ensure relevance
+        const filteredJobs = jsearchResult.jobs.filter(job => 
+          job.company && job.company.toLowerCase().includes(companyName.toLowerCase())
+        );
+        
+        console.log('✅ JSearch API fallback returned', filteredJobs.length, 'jobs for company:', companyName);
+        return filteredJobs.slice(0, limit);
+      } else {
+        console.log('⚠️ No jobs found for company:', companyName);
+        return [];
       }
-    } else if (companiesResponse.status >= 500) {
-      console.log('❌ Server error, returning empty companies');
+    }
+  } catch (error) {
+    console.error('❌ Error fetching jobs by company:', error);
+    return [];
+  }
+};
+
+// Fetch featured companies - use Firebase backend as primary source
+export const fetchFeaturedCompanies = async (limit = 12) => {
+  try {
+    console.log('🔍 Fetching featured companies');
+    
+    // First try Firebase backend (if you have a companies endpoint)
+    // For now, we'll generate from job data using Firebase jobs
+    const response = await fetch(`${API_BASE_URL}/api/jobs/public?limit=50`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      const jobs = data.jobs || data.data || [];
+      
+      if (jobs.length > 0) {
+        // Extract unique companies from Firebase jobs
+        const companyMap = new Map();
+        
+        jobs.forEach(job => {
+          if (job.company && job.company.trim()) {
+            const companyName = job.company.trim();
+            if (!companyMap.has(companyName)) {
+              companyMap.set(companyName, {
+                name: companyName,
+                logo: job.company_logo || null,
+                jobsCount: 1,
+                location: job.job_city || job.location || 'Various Locations'
+              });
+            } else {
+              companyMap.get(companyName).jobsCount++;
+            }
+          }
+        });
+        
+        // Convert to array and sort by job count
+        const companies = Array.from(companyMap.values())
+          .sort((a, b) => b.jobsCount - a.jobsCount)
+          .slice(0, limit);
+        
+        console.log('✅ Generated', companies.length, 'featured companies from Firebase jobs');
+        return companies;
+      }
+    }
+    
+    console.log('⚠️ Firebase backend failed, trying JSearch API fallback');
+    
+    // Fallback to JSearch API
+    const jsearchParams = {
+      query: 'software developer OR programmer OR IT specialist OR engineer OR data scientist OR nurse OR doctor OR teacher OR sales OR marketing',
+      page: 1,
+      num_pages: 2,
+      country: 'US',
+      date_posted: 'week',
+      job_type: 'fulltime',
+      remote_jobs_only: false
+    };
+    
+    const jsearchResult = await searchJobsFromAPI(jsearchParams);
+    
+    if (jsearchResult.success && jsearchResult.jobs && jsearchResult.jobs.length > 0) {
+      // Extract unique companies from jobs
+      const companyMap = new Map();
+      
+      jsearchResult.jobs.forEach(job => {
+        if (job.company && job.company.trim()) {
+          const companyName = job.company.trim();
+          if (!companyMap.has(companyName)) {
+            companyMap.set(companyName, {
+              name: companyName,
+              logo: job.company_logo || null,
+              jobsCount: 1,
+              location: job.job_city || 'Various Locations'
+            });
+          } else {
+            companyMap.get(companyName).jobsCount++;
+          }
+        }
+      });
+      
+      // Convert to array and sort by job count
+      const companies = Array.from(companyMap.values())
+        .sort((a, b) => b.jobsCount - a.jobsCount)
+        .slice(0, limit);
+      
+      console.log('✅ Generated', companies.length, 'featured companies from JSearch API fallback');
+      return companies;
+    } else {
+      console.log('⚠️ No jobs found to generate companies');
       return [];
     }
-
-    // If no companies from dedicated endpoint, return empty array
-    console.log('📊 No companies from dedicated endpoint, returning empty list');
-    return [];
   } catch (error) {
     console.error('Error fetching featured companies:', error);
-    
-    // Return empty array when there's an error
-    console.log('❌ Returning empty companies due to error');
     return [];
   }
 };

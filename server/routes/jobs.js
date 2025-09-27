@@ -364,6 +364,115 @@ router.get('/companies', async (req, res) => {
   }
 });
 
+// Get public jobs (for mobile app)
+router.get('/public', async (req, res) => {
+  try {
+    const {
+      page = 1,
+      limit = 20,
+      category,
+      company
+    } = req.query;
+
+    console.log('🔍 Fetching public jobs:', { page, limit, category, company });
+
+    // Build filter object
+    const filter = { $or: [{ isActive: true }, { isActive: { $exists: false } }] };
+
+    if (category && category !== 'all') {
+      filter.category = new RegExp(category, 'i');
+    }
+
+    if (company) {
+      filter.company = new RegExp(company, 'i');
+    }
+
+    // Calculate pagination
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    // Execute query
+    const jobs = await Job.find(filter)
+      .populate('postedBy', 'firstName lastName company')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit))
+      .lean();
+
+    // Get total count for pagination
+    const total = await Job.countDocuments(filter);
+
+    console.log('✅ Found', jobs.length, 'public jobs');
+
+    res.json({
+      success: true,
+      jobs: jobs,
+      data: jobs, // For backward compatibility
+      pagination: {
+        current: parseInt(page),
+        pages: Math.ceil(total / parseInt(limit)),
+        total
+      }
+    });
+
+  } catch (error) {
+    console.error('Error fetching public jobs:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while fetching public jobs',
+      jobs: [],
+      data: []
+    });
+  }
+});
+
+// Get jobs by company name (for mobile app)
+router.get('/company/:companyName', async (req, res) => {
+  try {
+    const { companyName } = req.params;
+    const { page = 1, limit = 20 } = req.query;
+
+    console.log('🔍 Fetching jobs by company:', { companyName, page, limit });
+
+    const filter = { 
+      $or: [{ isActive: true }, { isActive: { $exists: false } }],
+      company: new RegExp(companyName, 'i')
+    };
+
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    const jobs = await Job.find(filter)
+      .populate('postedBy', 'firstName lastName company')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit))
+      .lean();
+
+    const total = await Job.countDocuments(filter);
+
+    console.log('✅ Found', jobs.length, 'jobs for company:', companyName);
+
+    res.json({
+      success: true,
+      jobs: jobs,
+      data: jobs, // For backward compatibility
+      pagination: {
+        current: parseInt(page),
+        pages: Math.ceil(total / parseInt(limit)),
+        total
+      }
+    });
+
+  } catch (error) {
+    console.error('Error fetching jobs by company:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while fetching jobs by company',
+      jobs: [],
+      data: []
+    });
+  }
+});
+
 // Get single job by ID
 router.get('/:id', async (req, res) => {
   try {

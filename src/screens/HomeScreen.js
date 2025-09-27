@@ -17,6 +17,7 @@ import { Ionicons } from '@expo/vector-icons';
 import LogoImage from '../components/LogoImage';
 import AppHeader from '../components/AppHeader';
 import { fetchJobCategories, getTotalJobCount, fetchFeaturedCompanies } from '../services/apiService';
+import { Colors, Typography, Spacing, BorderRadius, Shadows } from '../constants/colors';
 
 const { width, height } = Dimensions.get('window');
 
@@ -36,8 +37,16 @@ const HomeScreen = ({ navigation }) => {
     try {
       setCompaniesLoading(true);
       const companies = await fetchFeaturedCompanies(12);
-      setFeaturedCompanies(companies);
-      console.log('📊 Loaded companies:', companies.length);
+      // Ensure companies have proper structure
+      const safeCompanies = (companies || []).map((company, index) => ({
+        id: company?.id || index + 1,
+        name: company?.name || 'Unknown Company',
+        logo: company?.logo || null,
+        jobsCount: company?.jobsCount || company?.jobs || 0,
+        location: company?.location || 'Various Locations'
+      }));
+      setFeaturedCompanies(safeCompanies);
+      console.log('📊 Loaded companies:', safeCompanies.length);
     } catch (err) {
       console.error('Error loading featured companies:', err);
       // Set empty array to show real state instead of dummy data
@@ -86,12 +95,12 @@ const HomeScreen = ({ navigation }) => {
         ]);
         
         // Use categories directly as they now have icons and colors
-        const transformedCategories = categories.map((category, index) => ({
-          id: category.id || (index + 1),
-          title: category.title || category.name,
-          name: category.name,
-          icon: category.icon || 'briefcase-outline',
-          color: category.color || '#3B82F6'
+        const transformedCategories = (categories || []).map((category, index) => ({
+          id: category?.id || (index + 1),
+          title: category?.title || category?.name || 'Unknown',
+          name: category?.name || 'Unknown',
+          icon: category?.icon || 'briefcase-outline',
+          color: category?.color || '#3B82F6'
         }));
         
         console.log('📊 Loaded categories:', transformedCategories);
@@ -191,37 +200,37 @@ const HomeScreen = ({ navigation }) => {
 
         {/* Hero Section */}
         <LinearGradient
-          colors={['#F8FAFC', '#E2E8F0']}
+          colors={Colors.gradientSurface}
           style={styles.heroSection}
         >
           <View style={styles.heroContent}>
             <Text style={styles.heroTitle}>
-              There Are{' '}
+              Discover{' '}
               <Text style={styles.heroHighlight}>{totalJobs.toLocaleString()}</Text>{' '}
-              Postings Here{'\n'}For you!
+              Career Opportunities{'\n'}Waiting for You
             </Text>
             <Text style={styles.heroSubtitle}>
-              Find Jobs, Employment & Career Opportunities Worldwide
+              Connect with top companies and find your dream job today
             </Text>
 
             {/* Search Bar */}
             <View style={styles.searchContainer}>
               <View style={styles.searchInputContainer}>
-                <Ionicons name="search" size={20} color="#64748B" style={styles.searchIcon} />
+                <Ionicons name="search" size={20} color={Colors.textTertiary} style={styles.searchIcon} />
                 <TextInput
                   style={styles.searchInput}
                   placeholder="Job title, keywords..."
-                  placeholderTextColor="#94A3B8"
+                  placeholderTextColor={Colors.secondaryLight}
                   value={searchQuery}
                   onChangeText={setSearchQuery}
                 />
               </View>
               <View style={styles.searchInputContainer}>
-                <Ionicons name="location" size={20} color="#64748B" style={styles.searchIcon} />
+                <Ionicons name="location" size={20} color={Colors.textTertiary} style={styles.searchIcon} />
                 <TextInput
                   style={styles.searchInput}
                   placeholder="City or postcode"
-                  placeholderTextColor="#94A3B8"
+                  placeholderTextColor={Colors.secondaryLight}
                   value={location}
                   onChangeText={setLocation}
                 />
@@ -309,9 +318,9 @@ const HomeScreen = ({ navigation }) => {
             </View>
           ) : (
             <FlatList
-              data={jobCategories}
+              data={jobCategories || []}
               renderItem={renderJobCategory}
-              keyExtractor={(item) => item.id.toString()}
+              keyExtractor={(item) => item?.id?.toString() || item?._id?.toString() || Math.random().toString()}
               numColumns={2}
               scrollEnabled={false}
               contentContainerStyle={styles.categoriesGrid}
@@ -340,9 +349,9 @@ const HomeScreen = ({ navigation }) => {
             </View>
           ) : featuredCompanies.length > 0 ? (
             <FlatList
-              data={featuredCompanies}
+              data={featuredCompanies || []}
               renderItem={renderCompany}
-              keyExtractor={(item) => item.id.toString()}
+              keyExtractor={(item) => item?.id?.toString() || item?._id?.toString() || Math.random().toString()}
               numColumns={3}
               scrollEnabled={false}
               contentContainerStyle={styles.companiesGrid}
@@ -372,9 +381,9 @@ const HomeScreen = ({ navigation }) => {
           </View>
           
           <FlatList
-            data={testimonials}
+            data={testimonials || []}
             renderItem={renderTestimonial}
-            keyExtractor={(item) => item.id.toString()}
+            keyExtractor={(item) => item?.id?.toString() || item?._id?.toString() || Math.random().toString()}
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.testimonialsList}
@@ -389,73 +398,66 @@ const HomeScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.background,
   },
   heroSection: {
-    paddingHorizontal: 20,
-    paddingVertical: 30,
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: Spacing['3xl'],
   },
   heroContent: {
-    marginBottom: 30,
+    marginBottom: Spacing['3xl'],
   },
   heroTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#1E293B',
-    lineHeight: 36,
-    marginBottom: 15,
+    fontSize: Typography['3xl'],
+    fontWeight: Typography.bold,
+    color: Colors.textPrimary,
+    lineHeight: Typography['3xl'] * Typography.tight,
+    marginBottom: Spacing.lg,
   },
   heroHighlight: {
-    color: '#3B82F6',
+    color: Colors.primary,
   },
   heroSubtitle: {
-    fontSize: 16,
-    color: '#64748B',
-    marginBottom: 25,
-    lineHeight: 24,
+    fontSize: Typography.lg,
+    color: Colors.textSecondary,
+    marginBottom: Spacing['2xl'],
+    lineHeight: Typography.lg * Typography.normal,
   },
   searchContainer: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
+    backgroundColor: Colors.surface,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.lg,
+    ...Shadows.md,
   },
   searchInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    marginBottom: 12,
+    backgroundColor: Colors.surfaceLight,
+    borderRadius: BorderRadius.md,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.md,
+    marginBottom: Spacing.md,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: Colors.border,
   },
   searchIcon: {
-    marginRight: 10,
+    marginRight: Spacing.sm,
   },
   searchInput: {
     flex: 1,
-    fontSize: 16,
-    color: '#1E293B',
+    fontSize: Typography.base,
+    color: Colors.textPrimary,
   },
   searchButton: {
-    backgroundColor: '#3B82F6',
-    borderRadius: 8,
-    paddingVertical: 14,
+    backgroundColor: Colors.primary,
+    borderRadius: BorderRadius.md,
+    paddingVertical: Spacing.lg,
     alignItems: 'center',
   },
   searchButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
+    color: Colors.textInverse,
+    fontSize: Typography.base,
+    fontWeight: Typography.semibold,
   },
   heroImageContainer: {
     alignItems: 'center',
@@ -546,22 +548,15 @@ const styles = StyleSheet.create({
   },
   categoryCard: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 16,
-    marginHorizontal: 5,
-    marginBottom: 15,
+    backgroundColor: Colors.surface,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.lg,
+    marginHorizontal: Spacing.xs,
+    marginBottom: Spacing.lg,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
+    borderColor: Colors.border,
+    ...Shadows.sm,
   },
   categoryIcon: {
     width: 48,
@@ -569,60 +564,53 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 12,
+    marginBottom: Spacing.md,
   },
   categoryTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#1E293B',
+    fontSize: Typography.sm,
+    fontWeight: Typography.semibold,
+    color: Colors.textPrimary,
     textAlign: 'center',
-    marginBottom: 4,
+    marginBottom: Spacing.xs,
   },
   companiesGrid: {
-    gap: 15,
+    gap: Spacing.lg,
   },
   companyCard: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 16,
-    marginHorizontal: 5,
+    backgroundColor: Colors.surface,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.lg,
+    marginHorizontal: Spacing.xs,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
+    borderColor: Colors.border,
+    ...Shadows.sm,
   },
   companyLogo: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#3B82F6',
+    backgroundColor: Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 12,
+    marginBottom: Spacing.md,
   },
   companyLogoText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold',
+    color: Colors.textInverse,
+    fontSize: Typography.base,
+    fontWeight: Typography.bold,
   },
   companyName: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#1E293B',
+    fontSize: Typography.sm,
+    fontWeight: Typography.semibold,
+    color: Colors.textPrimary,
     textAlign: 'center',
-    marginBottom: 4,
+    marginBottom: Spacing.xs,
   },
   companyJobs: {
-    fontSize: 12,
-    color: '#64748B',
+    fontSize: Typography.xs,
+    color: Colors.textSecondary,
   },
   testimonialsList: {
     paddingHorizontal: 10,

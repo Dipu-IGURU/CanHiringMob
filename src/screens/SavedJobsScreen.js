@@ -122,9 +122,9 @@ const SavedJobsScreen = ({ navigation }) => {
           <View style={styles.jobsContainer}>
             <Text style={styles.sectionTitle}>Your Saved Jobs</Text>
             <FlatList
-              data={savedJobs}
+              data={savedJobs || []}
               renderItem={renderJob}
-              keyExtractor={(item) => item.id.toString()}
+              keyExtractor={(item) => item?.id?.toString() || item?._id?.toString() || Math.random().toString()}
               showsVerticalScrollIndicator={false}
               contentContainerStyle={styles.jobsList}
             />

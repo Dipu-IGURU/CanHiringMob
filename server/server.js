@@ -6,6 +6,7 @@ require('dotenv').config();
 const authRoutes = require('./routes/auth');
 const jobRoutes = require('./routes/jobs');
 const applicationRoutes = require('./routes/applications');
+const profileRoutes = require('./routes/profile');
 
 const app = express();
 const PORT = process.env.PORT || 5001;
@@ -29,13 +30,12 @@ const corsOptions = {
       'http://localhost:19000', // Expo web dev server
       'http://localhost:3000',  // React Native web
       'http://localhost:5001',  // Local API server
-      'http://192.168.1.14:19006', // Expo dev server on local IP
-      'http://192.168.1.14:19000', // Expo web dev server on local IP
-      'http://192.168.1.14:5001',  // Local API server on local IP
-      'https://can-hiring.vercel.app',
-      'https://www.can-hiring.vercel.app',
-      'https://can-hiring.onrender.com',
-      'https://www.can-hiring.onrender.com'
+      'http://127.0.0.1:19006', // Expo dev server on localhost
+      'http://127.0.0.1:19000', // Expo web dev server on localhost
+      'http://127.0.0.1:5001',  // Local API server on localhost
+      'http://192.168.1.28:19006', // Expo dev server on local IP
+      'http://192.168.1.28:19000', // Expo web dev server on local IP
+      'http://192.168.1.28:5001'   // Local API server on local IP
     ];
     
     // Allow requests with no origin (mobile apps, Postman, curl, etc.)
@@ -77,6 +77,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use('/api/auth', authRoutes);
 app.use('/api/jobs', jobRoutes);
 app.use('/api/applications', applicationRoutes);
+app.use('/api/profile', profileRoutes);
 
 // Root route for base URL
 app.get('/', (req, res) => {

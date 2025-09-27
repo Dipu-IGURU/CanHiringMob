@@ -10,7 +10,7 @@ import {
   SafeAreaView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import StatusBar from './StatusBar';
+import { Colors, Typography, Spacing, BorderRadius, Shadows } from '../constants/colors';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -21,18 +21,10 @@ const AppHeader = ({
   onBackPress,
   showBackButton = false,
   backgroundColor = '#FFFFFF',
-  textColor = '#1E293B',
-  showStatusBar = true,
-  statusBarStyle = 'dark-content'
+  textColor = '#1E293B'
 }) => {
   return (
     <View style={[styles.header, { backgroundColor }]}>
-      {showStatusBar && (
-        <StatusBar 
-          backgroundColor={backgroundColor} 
-          barStyle={statusBarStyle}
-        />
-      )}
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.headerContent}>
           {/* Left Section */}
@@ -88,51 +80,44 @@ const AppHeader = ({
 
 const styles = StyleSheet.create({
   header: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
+    borderBottomColor: Colors.border,
+    ...Shadows.md,
   },
   safeArea: {
-    paddingHorizontal: Platform.OS === 'ios' ? 20 : 16,
-    paddingVertical: Platform.OS === 'ios' ? 8 : 12,
+    paddingHorizontal: Platform.OS === 'ios' ? Spacing.xl : Spacing.lg,
+    paddingVertical: Platform.OS === 'ios' ? Spacing.sm : Spacing.md,
   },
   headerContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    minHeight: Platform.OS === 'ios' ? 60 : 64, // Increased height for larger logo
-    maxHeight: 80, // Increased max height
+    minHeight: Platform.OS === 'ios' ? 60 : 64,
+    maxHeight: 80,
   },
   leftSection: {
-    flex: 2, // Increased to give more space for logo
+    flex: 2,
     alignItems: 'flex-start',
     justifyContent: 'center',
   },
   centerSection: {
-    flex: 1, // Reduced to make room for larger logo
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 5,
+    paddingHorizontal: Spacing.xs,
   },
   rightSection: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-end',
-    gap: 8,
+    gap: Spacing.sm,
   },
   backButton: {
-    padding: 8,
-    borderRadius: 20,
-    backgroundColor: '#F8FAFC',
+    padding: Spacing.sm,
+    borderRadius: BorderRadius['2xl'],
+    backgroundColor: Colors.surfaceLight,
     alignItems: 'center',
     justifyContent: 'center',
     minWidth: 40,
@@ -141,20 +126,20 @@ const styles = StyleSheet.create({
   logoContainer: {
     alignItems: 'flex-start',
     justifyContent: 'center',
-    width: '100%', // Take full width of left section
-    paddingLeft: screenWidth < 400 ? 20 : 30, // Maximum left padding
-    paddingVertical: 12, // Maximum vertical padding
+    width: '100%',
+    paddingLeft: screenWidth < 400 ? Spacing.xl : Spacing['3xl'],
+    paddingVertical: Spacing.md,
   },
   logoIcon: {
-    width: screenWidth * 0.4, // 40% of screen width
-    height: screenWidth * 0.4 * 0.6, // Maintain aspect ratio (60% of width)
-    maxWidth: screenWidth * 0.5, // Maximum 50% of screen width
+    width: screenWidth * 0.4,
+    height: screenWidth * 0.4 * 0.6,
+    maxWidth: screenWidth * 0.5,
     maxHeight: screenWidth * 0.5 * 0.6,
   },
   logoText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#3B82F6',
+    fontSize: Typography['2xl'],
+    fontWeight: Typography.bold,
+    color: Colors.primary,
     textAlign: 'left',
   },
   headerTitle: {

@@ -7,6 +7,10 @@
     "development": {
       "developmentClient": true,
       "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_API_BASE_URL": "http://192.168.1.28:5001",
+        "NODE_ENV": "development"
+      },
       "android": {
         "gradleCommand": ":app:assembleDebug"
       }
@@ -14,7 +18,7 @@
     "preview": {
       "distribution": "internal",
       "env": {
-        "EXPO_PUBLIC_API_BASE_URL": "https://can-hiring.onrender.com",
+        "EXPO_PUBLIC_API_BASE_URL": "https://us-central1-canhiring-ca.cloudfunctions.net/api",
         "NODE_ENV": "production"
       },
       "android": {
@@ -25,15 +29,20 @@
     "production": {
       "autoIncrement": true,
       "env": {
-        "EXPO_PUBLIC_API_BASE_URL": "https://can-hiring.onrender.com",
+        "EXPO_PUBLIC_API_BASE_URL": "https://us-central1-canhiring-ca.cloudfunctions.net/api",
         "NODE_ENV": "production"
       },
       "android": {
-        "buildType": "apk"
+        "buildType": "app-bundle"
       }
     }
   },
   "submit": {
-    "production": {}
+    "production": {
+      "android": {
+        "serviceAccountKeyPath": "./google-service-account.json",
+        "track": "internal"
+      }
+    }
   }
 }

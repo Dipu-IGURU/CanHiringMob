@@ -406,7 +406,7 @@ const JobsScreen = ({ navigation, route }) => {
             </View>
           ) : (
             <FlatList
-              data={filteredJobs}
+              data={filteredJobs || []}
               renderItem={renderJobCard}
               keyExtractor={(item) => item?.id?.toString() || item?._id?.toString() || Math.random().toString()}
               scrollEnabled={false}

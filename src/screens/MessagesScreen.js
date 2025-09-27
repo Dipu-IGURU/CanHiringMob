@@ -106,9 +106,9 @@ const MessagesScreen = ({ navigation }) => {
         </View>
         
         <FlatList
-          data={filteredMessages}
+          data={filteredMessages || []}
           renderItem={renderMessageItem}
-          keyExtractor={(item) => item.id.toString()}
+          keyExtractor={(item) => item?.id?.toString() || item?._id?.toString() || Math.random().toString()}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.messagesList}
         />

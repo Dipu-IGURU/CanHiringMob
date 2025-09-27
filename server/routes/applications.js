@@ -195,12 +195,62 @@ router.post('/apply', auth, [
   }
 });
 
+// Get user's applications (alternative route for mobile app compatibility)
+router.get('/user/:token', auth, async (req, res) => {
+  try {
+    const { page = 1, limit = 10, status } = req.query;
+
+    const filter = { 
+      $or: [
+        { applicantId: req.user._id },
+        { userId: req.user._id }
+      ]
+    };
+    if (status) {
+      filter.status = status;
+    }
+
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    const applications = await Application.find(filter)
+      .populate('jobId', 'title company location type salaryRange')
+      .sort({ appliedAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit))
+      .lean();
+
+    const total = await Application.countDocuments(filter);
+
+    res.json({
+      success: true,
+      data: applications,
+      pagination: {
+        current: parseInt(page),
+        pages: Math.ceil(total / parseInt(limit)),
+        total
+      }
+    });
+
+  } catch (error) {
+    console.error('Error fetching user applications:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while fetching applications'
+    });
+  }
+});
+
 // Get user's applications
 router.get('/my-applications', auth, async (req, res) => {
   try {
     const { page = 1, limit = 10, status } = req.query;
 
-    const filter = { applicantId: req.user._id };
+    const filter = { 
+      $or: [
+        { applicantId: req.user._id },
+        { userId: req.user._id }
+      ]
+    };
     if (status) {
       filter.status = status;
     }
