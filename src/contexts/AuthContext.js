@@ -24,40 +24,56 @@ export const AuthProvider = ({ children }) => {
 
   const checkAuthState = async () => {
     try {
+      console.log('🔍 AuthContext: Checking authentication state...');
       const storedToken = await AsyncStorage.getItem('token');
       const storedUser = await AsyncStorage.getItem('user');
 
+      console.log('🔍 AuthContext: Stored token exists:', !!storedToken);
+      console.log('🔍 AuthContext: Stored user exists:', !!storedUser);
+
       if (storedToken && storedUser) {
+        console.log('🔍 AuthContext: Verifying token with server...');
         // Verify token with server
         const isValid = await verifyToken(storedToken);
+        console.log('🔍 AuthContext: Token verification result:', isValid);
+        
         if (isValid) {
           setToken(storedToken);
           setUser(JSON.parse(storedUser));
           setIsAuthenticated(true);
+          console.log('✅ AuthContext: User authenticated successfully');
         } else {
+          console.log('❌ AuthContext: Token invalid, clearing auth data');
           // Token is invalid, clear storage
           await clearAuthData();
         }
+      } else {
+        console.log('ℹ️ AuthContext: No stored auth data found');
       }
     } catch (error) {
-      console.error('Error checking auth state:', error);
+      console.error('❌ AuthContext: Error checking auth state:', error);
       await clearAuthData();
     } finally {
       setLoading(false);
+      console.log('🔍 AuthContext: Auth state check completed');
     }
   };
 
   const verifyToken = async (tokenToVerify) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/auth/verify-token`, {
+      // Try to get user profile to verify token
+      const response = await fetch(`${API_BASE_URL}/api/profile/`, {
         headers: {
           'Authorization': `Bearer ${tokenToVerify}`,
           'Content-Type': 'application/json'
         }
       });
 
-      const data = await response.json();
-      return data.valid;
+      if (response.ok) {
+        const data = await response.json();
+        return data.success;
+      }
+      return false;
     } catch (error) {
       console.error('Error verifying token:', error);
       return false;

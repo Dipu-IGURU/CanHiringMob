@@ -5,7 +5,8 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { AuthProvider } from './src/contexts/AuthContext';
+import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import { AuthProvider, useAuth } from './src/contexts/AuthContext';
 
 // Import screens
 import WelcomeScreen from './src/screens/WelcomeScreen';
@@ -34,6 +35,15 @@ import MessagesScreen from './src/screens/MessagesScreen';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
+
+// Loading Screen Component
+function LoadingScreen() {
+  return (
+    <View style={styles.loadingContainer}>
+      <ActivityIndicator size="large" color="#3B82F6" />
+    </View>
+  );
+}
 
 // Main Tab Navigator
 function MainTabNavigator() {
@@ -82,56 +92,121 @@ function MainTabNavigator() {
   );
 }
 
+// Auth Stack Navigator (for non-authenticated users)
+function AuthStackNavigator() {
+  return (
+    <Stack.Navigator 
+      screenOptions={{
+        headerShown: false,
+        gestureEnabled: true,
+        cardStyleInterpolator: ({ current, layouts }) => {
+          return {
+            cardStyle: {
+              transform: [
+                {
+                  translateX: current.progress.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [layouts.screen.width, 0],
+                  }),
+                },
+              ],
+            },
+          };
+        },
+      }}
+    >
+      <Stack.Screen name="Welcome" component={WelcomeScreen} />
+      <Stack.Screen name="LoginScreen" component={LoginScreen} />
+      <Stack.Screen name="SignupScreen" component={SignupScreen} />
+      <Stack.Screen name="UserTypeSelection" component={UserTypeSelection} />
+      <Stack.Screen name="UserOnboarding" component={UserOnboarding} />
+      <Stack.Screen name="RecruiterOnboarding" component={RecruiterOnboarding} />
+      <Stack.Screen name="AdminOnboarding" component={AdminOnboarding} />
+    </Stack.Navigator>
+  );
+}
+
+// Main App Stack Navigator (for authenticated users)
+function MainAppStackNavigator() {
+  return (
+    <Stack.Navigator 
+      screenOptions={{
+        headerShown: false,
+        gestureEnabled: true,
+        cardStyleInterpolator: ({ current, layouts }) => {
+          return {
+            cardStyle: {
+              transform: [
+                {
+                  translateX: current.progress.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [layouts.screen.width, 0],
+                  }),
+                },
+              ],
+            },
+          };
+        },
+      }}
+    >
+      <Stack.Screen name="MainTabs" component={MainTabNavigator} />
+      <Stack.Screen name="AccountScreen" component={AccountScreen} />
+      <Stack.Screen name="EditProfileScreen" component={EditProfileScreen} />
+      <Stack.Screen name="MyApplicationsScreen" component={MyApplicationsScreen} />
+      <Stack.Screen name="SavedJobsScreen" component={SavedJobsScreen} />
+      <Stack.Screen name="JobAlertsScreen" component={JobAlertsScreen} />
+      <Stack.Screen name="PrivacySettingsScreen" component={PrivacySettingsScreen} />
+      <Stack.Screen name="HelpSupportScreen" component={HelpSupportScreen} />
+      <Stack.Screen name="AboutScreen" component={AboutScreen} />
+      <Stack.Screen name="JobDetailsScreen" component={JobDetailsScreen} />
+      <Stack.Screen name="CompanyJobs" component={CompanyJobsScreen} />
+      <Stack.Screen name="JobApplication" component={JobApplicationScreen} />
+      <Stack.Screen name="MessagesScreen" component={MessagesScreen} />
+    </Stack.Navigator>
+  );
+}
+
+// Main App Navigator with Authentication Logic
+function AppNavigator() {
+  const { isAuthenticated, loading } = useAuth();
+
+  console.log('🧭 AppNavigator: Auth state -', { isAuthenticated, loading });
+
+  // Show loading screen while checking authentication
+  if (loading) {
+    console.log('⏳ AppNavigator: Showing loading screen');
+    return <LoadingScreen />;
+  }
+
+  // Show appropriate navigator based on authentication status
+  if (isAuthenticated) {
+    console.log('🏠 AppNavigator: User authenticated, showing main app');
+    return <MainAppStackNavigator />;
+  } else {
+    console.log('🔐 AppNavigator: User not authenticated, showing auth screens');
+    return <AuthStackNavigator />;
+  }
+}
+
 export default function App() {
   return (
     <SafeAreaProvider>
       <AuthProvider>
         <NavigationContainer>
           <StatusBar style="auto" />
-          <Stack.Navigator 
-          initialRouteName="Welcome"
-          screenOptions={{
-            headerShown: false,
-            gestureEnabled: true,
-            cardStyleInterpolator: ({ current, layouts }) => {
-              return {
-                cardStyle: {
-                  transform: [
-                    {
-                      translateX: current.progress.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: [layouts.screen.width, 0],
-                      }),
-                    },
-                  ],
-                },
-              };
-            },
-          }}
-        >
-          <Stack.Screen name="Welcome" component={WelcomeScreen} />
-          <Stack.Screen name="LoginScreen" component={LoginScreen} />
-          <Stack.Screen name="SignupScreen" component={SignupScreen} />
-          <Stack.Screen name="UserTypeSelection" component={UserTypeSelection} />
-          <Stack.Screen name="UserOnboarding" component={UserOnboarding} />
-          <Stack.Screen name="RecruiterOnboarding" component={RecruiterOnboarding} />
-          <Stack.Screen name="AdminOnboarding" component={AdminOnboarding} />
-          <Stack.Screen name="MainTabs" component={MainTabNavigator} />
-          <Stack.Screen name="AccountScreen" component={AccountScreen} />
-          <Stack.Screen name="EditProfileScreen" component={EditProfileScreen} />
-          <Stack.Screen name="MyApplicationsScreen" component={MyApplicationsScreen} />
-          <Stack.Screen name="SavedJobsScreen" component={SavedJobsScreen} />
-          <Stack.Screen name="JobAlertsScreen" component={JobAlertsScreen} />
-          <Stack.Screen name="PrivacySettingsScreen" component={PrivacySettingsScreen} />
-          <Stack.Screen name="HelpSupportScreen" component={HelpSupportScreen} />
-          <Stack.Screen name="AboutScreen" component={AboutScreen} />
-          <Stack.Screen name="JobDetailsScreen" component={JobDetailsScreen} />
-          <Stack.Screen name="CompanyJobs" component={CompanyJobsScreen} />
-          <Stack.Screen name="JobApplication" component={JobApplicationScreen} />
-          <Stack.Screen name="MessagesScreen" component={MessagesScreen} />
-        </Stack.Navigator>
+          <AppNavigator />
         </NavigationContainer>
       </AuthProvider>
     </SafeAreaProvider>
   );
 }
+
+// Styles for the loading screen
+const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+  },
+});
