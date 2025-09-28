@@ -16,6 +16,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import LogoImage from '../components/LogoImage';
 import AppHeader from '../components/AppHeader';
+import CompanyLogo from '../components/CompanyLogo';
 import { fetchJobCategories, getTotalJobCount, fetchFeaturedCompanies } from '../services/apiService';
 import { Colors, Typography, Spacing, BorderRadius, Shadows } from '../constants/colors';
 
@@ -148,23 +149,29 @@ const HomeScreen = ({ navigation }) => {
     </TouchableOpacity>
   );
 
-  const renderCompany = ({ item }) => (
-    <TouchableOpacity 
-      style={styles.companyCard} 
-      onPress={() => {
-        console.log('Company pressed:', item.name);
-        navigation.navigate('CompanyJobs', { 
-          companyName: item.name 
-        });
-      }}
-    >
-      <View style={styles.companyLogo}>
-        <Text style={styles.companyLogoText}>{item.logo}</Text>
-      </View>
-      <Text style={styles.companyName} numberOfLines={1}>{item.name}</Text>
-      <Text style={styles.companyJobs}>{item.jobs} jobs</Text>
-    </TouchableOpacity>
-  );
+  const renderCompany = ({ item }) => {
+    const companyName = item.name || 'Unknown Company';
+    
+    return (
+      <TouchableOpacity 
+        style={styles.companyCard} 
+        onPress={() => {
+          console.log('Company pressed:', companyName);
+          navigation.navigate('CompanyJobs', { 
+            companyName: companyName 
+          });
+        }}
+      >
+        <CompanyLogo 
+          companyName={companyName}
+          size={48}
+          fontSize={18}
+        />
+        <Text style={styles.companyName} numberOfLines={1}>{companyName}</Text>
+        <Text style={styles.companyJobs}>{item.jobsCount || item.jobs || 0} jobs</Text>
+      </TouchableOpacity>
+    );
+  };
 
   const renderTestimonial = ({ item }) => (
     <View style={styles.testimonialCard}>
@@ -586,20 +593,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.border,
     ...Shadows.sm,
-  },
-  companyLogo: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: Colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: Spacing.md,
-  },
-  companyLogoText: {
-    color: Colors.textInverse,
-    fontSize: Typography.base,
-    fontWeight: Typography.bold,
   },
   companyName: {
     fontSize: Typography.sm,

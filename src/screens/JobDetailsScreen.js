@@ -14,6 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import AppHeader from '../components/AppHeader';
+import CompanyLogo from '../components/CompanyLogo';
 import { getJobDetails } from '../services/jobSearchService';
 
 const JobDetailsScreen = ({ navigation, route }) => {
@@ -165,11 +166,12 @@ const JobDetailsScreen = ({ navigation, route }) => {
               {job.companyLogo ? (
                 <Image source={{ uri: job.companyLogo }} style={styles.companyLogo} />
               ) : (
-                <View style={styles.companyLogoPlaceholder}>
-                  <Text style={styles.companyLogoText}>
-                    {job.company?.charAt(0) || 'C'}
-                  </Text>
-                </View>
+                <CompanyLogo 
+                  companyName={job.company || 'Company'}
+                  size={60}
+                  fontSize={24}
+                  style={{ borderRadius: 12 }}
+                />
               )}
             </View>
             
@@ -469,19 +471,6 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 12,
-  },
-  companyLogoPlaceholder: {
-    width: 60,
-    height: 60,
-    borderRadius: 12,
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  companyLogoText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#3B82F6',
   },
   jobTitleContainer: {
     flex: 1,

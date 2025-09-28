@@ -17,6 +17,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import AppHeader from '../components/AppHeader';
+import CompanyLogo from '../components/CompanyLogo';
 import { API_BASE_URL, fetchJobsByCompany } from '../services/apiService';
 import { Colors, Typography, Spacing, BorderRadius, Shadows } from '../constants/colors';
 
@@ -441,11 +442,13 @@ const CompanyJobsScreen = ({ navigation, route }) => {
           
           <View style={styles.headerInfo}>
             <View style={styles.companyLogoContainer}>
-              <View style={styles.companyLogo}>
-                <Text style={styles.companyLogoText}>
-                  {companyName.charAt(0).toUpperCase()}
-                </Text>
-              </View>
+              <CompanyLogo 
+                companyName={companyName}
+                size={56}
+                fontSize={22}
+                style={{ backgroundColor: 'rgba(255, 255, 255, 0.3)' }}
+                textStyle={{ color: '#FFFFFF' }}
+              />
             </View>
             <View style={styles.headerTextContainer}>
               <Text style={styles.headerTitle}>{companyName}</Text>
@@ -647,27 +650,6 @@ const styles = StyleSheet.create({
   },
   companyLogoContainer: {
     marginRight: 12,
-  },
-  companyLogo: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  companyLogoText: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
   },
   headerTextContainer: {
     flex: 1,
