@@ -11,6 +11,7 @@ import AppHeader from '../components/AppHeader';
 import JobApplicationForm from '../components/JobApplicationForm';
 import { useAuth } from '../contexts/AuthContext';
 import { API_BASE_URL } from '../services/apiService';
+import { enhancedFetch } from '../config/networkConfig';
 
 const JobApplicationScreen = ({ navigation, route }) => {
   const { job, companyName } = route.params;
@@ -22,8 +23,9 @@ const JobApplicationScreen = ({ navigation, route }) => {
     setLoading(true);
     
     try {
-      console.log('Submitting application data:', applicationData);
-      console.log('User authenticated:', !!user, 'Token available:', !!token);
+      console.log('🔍 Submitting application data:', applicationData);
+      console.log('🔍 User authenticated:', !!user, 'Token available:', !!token);
+      console.log('🔍 API_BASE_URL:', API_BASE_URL);
       
       // Choose endpoint based on authentication status
       const endpoint = user && token 
@@ -39,26 +41,36 @@ const JobApplicationScreen = ({ navigation, route }) => {
         headers['Authorization'] = `Bearer ${token}`;
       }
       
-      const response = await fetch(endpoint, {
+      console.log('🔍 Making request to:', endpoint);
+      console.log('🔍 Request headers:', headers);
+      
+      const response = await enhancedFetch(endpoint, {
         method: 'POST',
         headers,
         body: JSON.stringify(applicationData),
       });
 
-      console.log('Response status:', response.status);
-      console.log('Response headers:', response.headers);
+      console.log('🔍 Response status:', response.status);
+      console.log('🔍 Response ok:', response.ok);
+      console.log('🔍 Response headers:', Object.fromEntries(response.headers.entries()));
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('Error response:', errorText);
+        console.error('🔍 Error response text:', errorText);
+        
+        // Check if response is HTML (error page)
+        if (errorText.includes('<!DOCTYPE') || errorText.includes('<html')) {
+          throw new Error(`Server returned HTML error page. Status: ${response.status}. Please check if the backend server is running and accessible.`);
+        }
+        
         throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
       }
 
       const result = await response.json();
-      console.log('Application submission result:', result);
+      console.log('🔍 Application submission result:', result);
       
       if (result.success) {
-        console.log('Application submitted successfully:', result);
+        console.log('✅ Application submitted successfully:', result);
         Alert.alert(
           'Success!', 
           'Your application has been submitted successfully. You can view it in your dashboard.',
@@ -74,8 +86,24 @@ const JobApplicationScreen = ({ navigation, route }) => {
         throw new Error(result.message || 'Failed to submit application');
       }
     } catch (error) {
-      console.error('Error submitting application:', error);
-      Alert.alert('Error', 'Failed to submit application. Please try again.');
+      console.error('❌ Error submitting application:', error);
+      console.error('❌ Error details:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      });
+      
+      // Show more specific error message
+      let errorMessage = 'Failed to submit application. Please try again.';
+      if (error.message.includes('HTML error page')) {
+        errorMessage = 'Server is not responding properly. Please check your internet connection and try again.';
+      } else if (error.message.includes('Network request failed')) {
+        errorMessage = 'Network error. Please check your internet connection and try again.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      Alert.alert('Error', errorMessage);
       throw error;
     } finally {
       setLoading(false);

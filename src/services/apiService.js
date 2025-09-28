@@ -1,33 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { searchJobsFromAPI } from './jobSearchService.js';
 import { API_CONFIG } from '../config/apiConfig.js';
+import { API_BASE_URL } from '../config/environment.js';
 
 const RAPIDAPI_KEY = API_CONFIG.RAPIDAPI_KEY;
-
-// API Configuration
-const getApiBaseUrl = () => {
-  // If environment variable is set, use it (for production builds)
-  if (process.env.EXPO_PUBLIC_API_BASE_URL) {
-    return process.env.EXPO_PUBLIC_API_BASE_URL;
-  }
-  
-  // For development, use local IP for mobile and localhost for web
-  if (__DEV__) {
-    // Check if we're running on web (React Native Web)
-    if (typeof window !== 'undefined' && window.location) {
-      // Web browser - use localhost
-      return 'http://localhost:5001';
-    } else {
-      // Mobile device (Expo Go) - use local IP address
-      return 'http://192.168.1.28:5001';
-    }
-  }
-  
-  // For production builds, use Firebase backend
-  return 'https://us-central1-canhiring-ca.cloudfunctions.net/api';
-};
-
-export const API_BASE_URL = getApiBaseUrl();
 
 // Debug logging
 console.log('🌐 API Configuration:');
@@ -455,22 +431,30 @@ export const getUserApplications = async (token, page = 1, limit = 10) => {
 // Get application statistics
 export const getApplicationStats = async (token) => {
   try {
+    console.log('🔍 getApplicationStats: Starting request...');
+    
     const response = await fetch(`${API_BASE_URL}/api/profile/applied-jobs/stats`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
+      timeout: 30000,
     });
 
+    console.log('🔍 getApplicationStats: Response status:', response.status);
+
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const errorText = await response.text();
+      console.error('🔍 getApplicationStats: Error response:', errorText);
+      throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
     }
 
     const data = await response.json();
+    console.log('🔍 getApplicationStats: Success response:', JSON.stringify(data, null, 2));
     return data;
   } catch (error) {
-    console.error('Error fetching application stats:', error);
+    console.error('❌ getApplicationStats: Error fetching application stats:', error);
     return {
       success: false,
       message: 'Failed to fetch application stats',
@@ -478,7 +462,8 @@ export const getApplicationStats = async (token) => {
         total: 0,
         pending: 0,
         reviewed: 0,
-        rejected: 0
+        rejected: 0,
+        changeFromLastWeek: 0
       }
     };
   }
@@ -487,29 +472,38 @@ export const getApplicationStats = async (token) => {
 // Get interview statistics
 export const getInterviewStats = async (token) => {
   try {
+    console.log('🔍 getInterviewStats: Starting request...');
+    
     const response = await fetch(`${API_BASE_URL}/api/profile/interview-stats`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
+      timeout: 30000,
     });
 
+    console.log('🔍 getInterviewStats: Response status:', response.status);
+
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const errorText = await response.text();
+      console.error('🔍 getInterviewStats: Error response:', errorText);
+      throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
     }
 
     const data = await response.json();
+    console.log('🔍 getInterviewStats: Success response:', JSON.stringify(data, null, 2));
     return data;
   } catch (error) {
-    console.error('Error fetching interview stats:', error);
+    console.error('❌ getInterviewStats: Error fetching interview stats:', error);
     return {
       success: false,
       message: 'Failed to fetch interview stats',
       stats: {
         totalInterviews: 0,
         upcomingInterviews: 0,
-        completedInterviews: 0
+        completedInterviews: 0,
+        interviewsThisWeek: 0
       }
     };
   }
@@ -518,22 +512,30 @@ export const getInterviewStats = async (token) => {
 // Get profile view statistics
 export const getProfileStats = async (token) => {
   try {
+    console.log('🔍 getProfileStats: Starting request...');
+    
     const response = await fetch(`${API_BASE_URL}/api/profile/view-stats`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
+      timeout: 30000,
     });
 
+    console.log('🔍 getProfileStats: Response status:', response.status);
+
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const errorText = await response.text();
+      console.error('🔍 getProfileStats: Error response:', errorText);
+      throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
     }
 
     const data = await response.json();
+    console.log('🔍 getProfileStats: Success response:', JSON.stringify(data, null, 2));
     return data;
   } catch (error) {
-    console.error('Error fetching profile stats:', error);
+    console.error('❌ getProfileStats: Error fetching profile stats:', error);
     return {
       success: false,
       message: 'Failed to fetch profile stats',
@@ -575,22 +577,30 @@ export const trackProfileView = async (token, viewedUserId) => {
 // Get recent activities
 export const getRecentActivities = async (token, limit = 10) => {
   try {
+    console.log('🔍 getRecentActivities: Starting request...');
+    
     const response = await fetch(`${API_BASE_URL}/api/applications/recent-activities?limit=${limit}`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
+      timeout: 30000,
     });
 
+    console.log('🔍 getRecentActivities: Response status:', response.status);
+
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const errorText = await response.text();
+      console.error('🔍 getRecentActivities: Error response:', errorText);
+      throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
     }
 
     const data = await response.json();
+    console.log('🔍 getRecentActivities: Success response:', JSON.stringify(data, null, 2));
     return data;
   } catch (error) {
-    console.error('Error fetching recent activities:', error);
+    console.error('❌ getRecentActivities: Error fetching recent activities:', error);
     return {
       success: false,
       message: 'Failed to fetch recent activities',
@@ -655,6 +665,11 @@ export const updateUserProfile = async (token, profileData) => {
 // Apply to a job
 export const applyToJob = async (token, jobId, applicationData) => {
   try {
+    console.log('🔍 applyToJob: Starting request...');
+    console.log('🔍 applyToJob: API_BASE_URL:', API_BASE_URL);
+    console.log('🔍 applyToJob: Job ID:', jobId);
+    console.log('🔍 applyToJob: Token exists:', !!token);
+    
     const response = await fetch(`${API_BASE_URL}/api/jobs/${jobId}/apply`, {
       method: 'POST',
       headers: {
@@ -662,19 +677,37 @@ export const applyToJob = async (token, jobId, applicationData) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(applicationData),
+      timeout: 30000, // 30 seconds timeout
     });
 
+    console.log('🔍 applyToJob: Response status:', response.status);
+    console.log('🔍 applyToJob: Response ok:', response.ok);
+
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const errorText = await response.text();
+      console.error('🔍 applyToJob: Error response:', errorText);
+      
+      // Check if response is HTML (error page)
+      if (errorText.includes('<!DOCTYPE') || errorText.includes('<html')) {
+        throw new Error(`Server returned HTML error page. Status: ${response.status}. Please check if the backend server is running.`);
+      }
+      
+      throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
     }
 
     const data = await response.json();
+    console.log('🔍 applyToJob: Success response:', JSON.stringify(data, null, 2));
     return data;
   } catch (error) {
-    console.error('Error applying to job:', error);
+    console.error('❌ applyToJob: Error applying to job:', error);
+    console.error('❌ applyToJob: Error details:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    });
     return {
       success: false,
-      message: 'Failed to apply to job'
+      message: 'Failed to apply to job: ' + error.message
     };
   }
 };
@@ -706,22 +739,30 @@ export const fetchJobCategoriesFromBackend = async () => {
 // Get job offers statistics
 export const getOffersStats = async (token) => {
   try {
+    console.log('🔍 getOffersStats: Starting request...');
+    
     const response = await fetch(`${API_BASE_URL}/api/applications/offers-stats`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
+      timeout: 30000,
     });
 
+    console.log('🔍 getOffersStats: Response status:', response.status);
+
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const errorText = await response.text();
+      console.error('🔍 getOffersStats: Error response:', errorText);
+      throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
     }
 
     const data = await response.json();
+    console.log('🔍 getOffersStats: Success response:', JSON.stringify(data, null, 2));
     return data;
   } catch (error) {
-    console.error('Error fetching offers stats:', error);
+    console.error('❌ getOffersStats: Error fetching offers stats:', error);
     return {
       success: false,
       message: 'Failed to fetch offers stats',
@@ -832,22 +873,39 @@ export const signupUser = async (userData) => {
 // Get user's applied jobs
 export const getAppliedJobs = async (token) => {
   try {
+    console.log('🔍 getAppliedJobs: Starting request...');
+    console.log('🔍 getAppliedJobs: API_BASE_URL:', API_BASE_URL);
+    console.log('🔍 getAppliedJobs: Token exists:', !!token);
+    
     const response = await fetch(`${API_BASE_URL}/api/profile/applied-jobs`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
+      // Add timeout and network configuration for APK builds
+      timeout: 30000, // 30 seconds timeout
     });
 
+    console.log('🔍 getAppliedJobs: Response status:', response.status);
+    console.log('🔍 getAppliedJobs: Response ok:', response.ok);
+
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const errorText = await response.text();
+      console.error('🔍 getAppliedJobs: Error response:', errorText);
+      throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
     }
 
     const data = await response.json();
+    console.log('🔍 getAppliedJobs: Success response:', JSON.stringify(data, null, 2));
     return data;
   } catch (error) {
-    console.error('Error fetching applied jobs:', error);
+    console.error('❌ getAppliedJobs: Error fetching applied jobs:', error);
+    console.error('❌ getAppliedJobs: Error details:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    });
     return {
       success: false,
       message: 'Failed to fetch applied jobs',
