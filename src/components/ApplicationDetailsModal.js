@@ -18,6 +18,7 @@ const ApplicationDetailsModal = ({ isOpen, onClose, applicationId }) => {
   const { token } = useAuth();
   const [application, setApplication] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     if (isOpen && applicationId) {
@@ -26,28 +27,34 @@ const ApplicationDetailsModal = ({ isOpen, onClose, applicationId }) => {
       // Reset state when modal closes
       setApplication(null);
       setLoading(false);
+      setError(null);
     }
   }, [isOpen, applicationId]);
 
   const fetchApplicationDetails = async () => {
     setLoading(true);
     setApplication(null); // Reset application state
+    setError(null); // Reset error state
     try {
       if (!token) {
-        Alert.alert('Error', 'Authentication required');
+        console.error('❌ No authentication token available');
+        setError('Authentication required. Please log in to view application details.');
         return;
       }
 
+      console.log('🔍 Fetching application details for ID:', applicationId);
       const response = await getApplicationDetails(applicationId, token);
+      
       if (response.success) {
+        console.log('✅ Application details loaded successfully');
         setApplication(response.application);
       } else {
-        console.error('API Error:', response.message);
-        // Don't show alert, let the error UI handle it
+        console.error('❌ API Error:', response.message);
+        setError(response.message || 'Failed to load application details');
       }
     } catch (error) {
-      console.error('Error fetching application details:', error);
-      // Don't show alert, let the error UI handle it
+      console.error('❌ Error fetching application details:', error);
+      setError('Failed to load application details. Please check your internet connection and try again.');
     } finally {
       setLoading(false);
     }
@@ -174,6 +181,19 @@ const ApplicationDetailsModal = ({ isOpen, onClose, applicationId }) => {
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="large" color="#3B82F6" />
               <Text style={styles.loadingText}>Loading application details...</Text>
+            </View>
+          ) : error ? (
+            <View style={styles.errorContainer}>
+              <Ionicons name="alert-circle" size={48} color="#EF4444" />
+              <Text style={styles.errorTitle}>Failed to Load Details</Text>
+              <Text style={styles.errorMessage}>{error}</Text>
+              <TouchableOpacity 
+                style={styles.retryButton}
+                onPress={fetchApplicationDetails}
+              >
+                <Ionicons name="refresh" size={20} color="#FFFFFF" />
+                <Text style={styles.retryButtonText}>Try Again</Text>
+              </TouchableOpacity>
             </View>
           ) : application ? (
             <View style={styles.content}>
@@ -398,6 +418,40 @@ const styles = StyleSheet.create({
     marginTop: 16,
     fontSize: 16,
     color: '#6B7280',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 32,
+  },
+  errorTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1F2937',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  errorMessage: {
+    fontSize: 14,
+    color: '#6B7280',
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 24,
+  },
+  retryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#3B82F6',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 8,
+    gap: 8,
+  },
+  retryButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
   },
   content: {
     padding: 16,

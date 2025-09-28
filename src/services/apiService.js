@@ -378,25 +378,48 @@ export const getTotalJobCount = async () => {
 // Get application details by ID
 export const getApplicationDetails = async (applicationId, token) => {
   try {
+    console.log('🔍 getApplicationDetails: Starting request...');
+    console.log('🔍 getApplicationDetails: API_BASE_URL:', API_BASE_URL);
+    console.log('🔍 getApplicationDetails: Application ID:', applicationId);
+    console.log('🔍 getApplicationDetails: Token exists:', !!token);
+    
     const response = await fetch(`${API_BASE_URL}/api/applications/${applicationId}`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
+      timeout: 30000, // 30 seconds timeout
     });
 
+    console.log('🔍 getApplicationDetails: Response status:', response.status);
+    console.log('🔍 getApplicationDetails: Response ok:', response.ok);
+
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const errorText = await response.text();
+      console.error('🔍 getApplicationDetails: Error response:', errorText);
+      
+      // Check if response is HTML (error page)
+      if (errorText.includes('<!DOCTYPE') || errorText.includes('<html')) {
+        throw new Error(`Server returned HTML error page. Status: ${response.status}. Please check if the backend server is running.`);
+      }
+      
+      throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
     }
 
     const data = await response.json();
+    console.log('🔍 getApplicationDetails: Success response:', JSON.stringify(data, null, 2));
     return data;
   } catch (error) {
-    console.error('Error fetching application details:', error);
+    console.error('❌ getApplicationDetails: Error fetching application details:', error);
+    console.error('❌ getApplicationDetails: Error details:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    });
     return {
       success: false,
-      message: 'Failed to fetch application details'
+      message: 'Failed to fetch application details: ' + error.message
     };
   }
 };
@@ -474,7 +497,7 @@ export const getInterviewStats = async (token) => {
   try {
     console.log('🔍 getInterviewStats: Starting request...');
     
-    const response = await fetch(`${API_BASE_URL}/api/profile/interview-stats`, {
+    const response = await fetch(`${API_BASE_URL}/api/applications/interview-stats`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -514,7 +537,7 @@ export const getProfileStats = async (token) => {
   try {
     console.log('🔍 getProfileStats: Starting request...');
     
-    const response = await fetch(`${API_BASE_URL}/api/profile/view-stats`, {
+    const response = await fetch(`${API_BASE_URL}/api/auth/profile/stats`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,

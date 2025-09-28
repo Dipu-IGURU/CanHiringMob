@@ -114,3 +114,4 @@ export default {
   enhancedFetch,
   checkNetworkStatus
 };
+

@@ -49,6 +49,8 @@ const UserDashboardScreen = ({ navigation }) => {
   });
   const [recentActivities, setRecentActivities] = useState([]);
   const [applicationsLoading, setApplicationsLoading] = useState(false);
+  const [selectedApplicationId, setSelectedApplicationId] = useState(null);
+  const [isApplicationModalOpen, setIsApplicationModalOpen] = useState(false);
 
   // Function to get greeting emoji based on time of day
   const getGreetingEmoji = () => {
@@ -96,9 +98,6 @@ const UserDashboardScreen = ({ navigation }) => {
     return messageList[userIndex];
   };
 
-  // Modal state
-  const [isApplicationModalOpen, setIsApplicationModalOpen] = useState(false);
-  const [selectedApplicationId, setSelectedApplicationId] = useState(null);
 
   useEffect(() => {
     checkAuthAndFetchData();
@@ -313,18 +312,18 @@ const UserDashboardScreen = ({ navigation }) => {
         });
       } else {
         console.log('⚠️ UserDashboard: Interview stats failed:', response.message);
-        // Use mock data for testing
+        // Show zero instead of mock data
         setInterviewStats({
-          total: 3,
-          thisWeek: 1
+          total: 0,
+          thisWeek: 0
         });
       }
     } catch (error) {
       console.error('❌ UserDashboard: Error fetching interview stats:', error);
-      // Use mock data for testing
+      // Show zero instead of mock data
       setInterviewStats({
-        total: 3,
-        thisWeek: 1
+        total: 0,
+        thisWeek: 0
       });
     }
   };
@@ -348,18 +347,18 @@ const UserDashboardScreen = ({ navigation }) => {
         });
       } else {
         console.log('⚠️ UserDashboard: Profile stats failed:', response.message);
-        // Use mock data for testing
+        // Show zero instead of mock data
         setProfileStats({
-          totalViews: 25,
-          percentageChange: 15
+          totalViews: 0,
+          percentageChange: 0
         });
       }
     } catch (error) {
       console.error('❌ UserDashboard: Error fetching profile stats:', error);
-      // Use mock data for testing
+      // Show zero instead of mock data
       setProfileStats({
-        totalViews: 25,
-        percentageChange: 15
+        totalViews: 0,
+        percentageChange: 0
       });
     }
   };
@@ -383,18 +382,18 @@ const UserDashboardScreen = ({ navigation }) => {
         });
       } else {
         console.log('⚠️ UserDashboard: Offers stats failed:', response.message);
-        // Use mock data for testing
+        // Show zero instead of mock data
         setOffersStats({
-          totalOffers: 1,
-          lastMonthOffers: 1
+          totalOffers: 0,
+          lastMonthOffers: 0
         });
       }
     } catch (error) {
       console.error('❌ UserDashboard: Error fetching offers stats:', error);
-      // Use mock data for testing
+      // Show zero instead of mock data
       setOffersStats({
-        totalOffers: 1,
-        lastMonthOffers: 1
+        totalOffers: 0,
+        lastMonthOffers: 0
       });
     }
   };

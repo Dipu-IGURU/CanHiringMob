@@ -361,8 +361,8 @@ router.get('/user/:applicationId', auth, async (req, res) => {
     }
 
     // Check if user is the applicant or the job poster
-    const isApplicant = application.applicantId._id.toString() === req.user._id.toString();
-    const isJobPoster = application.jobId.postedBy.toString() === req.user._id.toString();
+    const isApplicant = application.applicantId && application.applicantId._id.toString() === req.user._id.toString();
+    const isJobPoster = application.jobId.postedBy && application.jobId.postedBy.toString() === req.user._id.toString();
 
     if (!isApplicant && !isJobPoster) {
       return res.status(403).json({
@@ -694,7 +694,7 @@ router.get('/:id', auth, async (req, res) => {
     }
 
     // Check if user is the applicant or the job poster
-    const isApplicant = application.applicantId._id.toString() === userId.toString();
+    const isApplicant = application.applicantId && application.applicantId._id.toString() === userId.toString();
     const isJobPoster = application.jobId.postedBy && application.jobId.postedBy.toString() === userId.toString();
 
     if (!isApplicant && !isJobPoster) {
