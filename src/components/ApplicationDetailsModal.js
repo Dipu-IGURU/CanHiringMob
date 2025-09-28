@@ -180,36 +180,38 @@ const ApplicationDetailsModal = ({ isOpen, onClose, applicationId }) => {
               {/* Job Information */}
               <InfoCard title="Job Information" icon="business">
                 <View style={styles.jobHeader}>
-                  <Text style={styles.jobTitle}>{application.jobId.title}</Text>
-                  <Text style={styles.jobCompany}>{application.jobId.company}</Text>
+                  <Text style={styles.jobTitle}>
+                    {application.jobId?.title || 'Job Title Not Available'}
+                  </Text>
+                  <Text style={styles.jobCompany}>
+                    {application.jobId?.company || 'Company Not Available'}
+                  </Text>
                 </View>
                 
                 <View style={styles.jobDetails}>
                   <InfoField 
                     label="Location" 
-                    value={application.jobId.location}
-                    icon="location"
+                    value={application.jobId?.location || 'Location Not Specified'}
                   />
                   <InfoField 
                     label="Type" 
-                    value={application.jobId.type}
-                    icon="time"
+                    value={application.jobId?.type || 'Full-time'}
                   />
-                  {application.jobId.salaryRange && (
+                  {application.jobId?.salaryRange && (
                     <InfoField 
                       label="Salary" 
                       value={application.jobId.salaryRange}
-                      icon="cash"
                     />
                   )}
-                  <InfoField 
-                    label="Experience" 
-                    value={application.jobId.experience}
-                    icon="person"
-                  />
+                  {application.jobId?.experience && (
+                    <InfoField 
+                      label="Experience" 
+                      value={application.jobId.experience}
+                    />
+                  )}
                 </View>
 
-                {application.jobId.description && (
+                {application.jobId?.description && (
                   <View style={styles.descriptionSection}>
                     <Text style={styles.descriptionTitle}>Job Description</Text>
                     <Text style={styles.descriptionText}>{application.jobId.description}</Text>
@@ -339,6 +341,18 @@ const ApplicationDetailsModal = ({ isOpen, onClose, applicationId }) => {
         </ScrollView>
 
         <View style={styles.footer}>
+          {application?.jobId && (
+            <TouchableOpacity 
+              style={styles.viewJobButton} 
+              onPress={() => {
+                // Navigate to job details screen
+                console.log('Navigate to job details for job:', application.jobId._id);
+                // You can add navigation logic here if needed
+              }}
+            >
+              <Text style={styles.viewJobButtonText}>View Full Job Details</Text>
+            </TouchableOpacity>
+          )}
           <TouchableOpacity style={styles.closeFooterButton} onPress={onClose}>
             <Text style={styles.closeFooterButtonText}>Close</Text>
           </TouchableOpacity>
@@ -578,6 +592,18 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderTopWidth: 1,
     borderTopColor: '#E5E7EB',
+    gap: 12,
+  },
+  viewJobButton: {
+    backgroundColor: '#3B82F6',
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  viewJobButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '500',
   },
   closeFooterButton: {
     backgroundColor: '#6B7280',

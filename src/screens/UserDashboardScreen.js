@@ -146,24 +146,54 @@ const UserDashboardScreen = ({ navigation }) => {
       console.log('Fetching applied jobs with token:', token.substring(0, 20) + '...');
       setApplicationsLoading(true);
       const response = await getAppliedJobs(token);
-      console.log('Applied jobs response:', response);
+      console.log('Applied jobs response:', JSON.stringify(response, null, 2));
       
-      if (response.success) {
-        const jobs = response.jobs.map(item => ({
-          id: item.job?._id || item._id,
-          title: item.job?.title || 'No Title',
-          company: item.job?.company || 'No Company',
-          location: item.job?.location || 'Location not specified',
-          type: item.job?.type || 'Full-time',
-          status: item.status || 'applied',
-          date: item.appliedAt || new Date().toISOString(),
-          applicationId: item.applicationId
-        }));
+      if (response.success && response.jobs && response.jobs.length > 0) {
+        const jobs = response.jobs.map(item => {
+          console.log('Processing job item:', JSON.stringify(item, null, 2));
+          return {
+            id: item._id || item.id,
+            title: item.title || 'No Title',
+            company: item.company || 'No Company',
+            location: item.location || 'Location not specified',
+            type: item.type || 'Full-time',
+            status: item.status || 'applied',
+            date: item.appliedAt || new Date().toISOString(),
+            applicationId: item._id || item.id,
+            jobId: item.jobId
+          };
+        });
         console.log('Mapped applied jobs:', jobs);
         setAppliedJobs(jobs);
       } else {
-        console.log('Failed to fetch applied jobs:', response.message);
-        setAppliedJobs([]);
+        console.log('No applied jobs found or API error:', response.message);
+        // Try fallback to getUserApplications
+        console.log('Trying fallback to getUserApplications...');
+        try {
+          const fallbackResponse = await getUserApplications(token, 1, 10);
+          console.log('Fallback response:', JSON.stringify(fallbackResponse, null, 2));
+          
+          if (fallbackResponse.success && fallbackResponse.data && fallbackResponse.data.length > 0) {
+            const fallbackJobs = fallbackResponse.data.map(item => ({
+              id: item._id,
+              title: item.jobId?.title || 'No Title',
+              company: item.jobId?.company || 'No Company',
+              location: item.jobId?.location || 'Location not specified',
+              type: item.jobId?.type || 'Full-time',
+              status: item.status || 'applied',
+              date: item.appliedAt || new Date().toISOString(),
+              applicationId: item._id,
+              jobId: item.jobId?._id
+            }));
+            console.log('Fallback mapped jobs:', fallbackJobs);
+            setAppliedJobs(fallbackJobs);
+          } else {
+            setAppliedJobs([]);
+          }
+        } catch (fallbackError) {
+          console.error('Fallback also failed:', fallbackError);
+          setAppliedJobs([]);
+        }
       }
     } catch (error) {
       console.error('Error fetching applied jobs:', error);
