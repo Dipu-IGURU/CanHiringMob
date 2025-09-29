@@ -5,6 +5,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   Alert,
+  Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../contexts/AuthContext';
@@ -91,13 +92,37 @@ const JobApplicationProgress = ({ className, style, refreshTrigger }) => {
       'You need to upgrade your plan to apply for more jobs.',
       [
         { text: 'Cancel', style: 'cancel' },
-        { text: 'View Packages', onPress: () => console.log('Navigate to packages') }
+        { text: 'View Packages', onPress: () => openCanHiringWebsite() }
       ]
     );
   };
 
   const handleViewPackages = () => {
-    console.log('Navigate to packages page');
+    openCanHiringWebsite();
+  };
+
+  const openCanHiringWebsite = async () => {
+    const url = 'https://canhiring.com/login';
+    
+    try {
+      const supported = await Linking.canOpenURL(url);
+      if (supported) {
+        await Linking.openURL(url);
+      } else {
+        Alert.alert(
+          'Error',
+          'Cannot open the website. Please check your internet connection and try again.',
+          [{ text: 'OK' }]
+        );
+      }
+    } catch (error) {
+      console.error('Error opening CanHiring website:', error);
+      Alert.alert(
+        'Error',
+        'Failed to open the website. Please try again later.',
+        [{ text: 'OK' }]
+      );
+    }
   };
 
   if (loading) {
