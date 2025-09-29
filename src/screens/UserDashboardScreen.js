@@ -103,12 +103,36 @@ const UserDashboardScreen = ({ navigation }) => {
     checkAuthAndFetchData();
   }, []);
 
+  // Watch for changes in authUser to clear data when switching accounts
+  useEffect(() => {
+    if (authUser) {
+      console.log('🔍 UserDashboard: User changed, clearing old data and fetching new data...');
+      // Clear old data first
+      setAppliedJobs([]);
+      setAppStats({ total: 0, changeFromLastWeek: 0 });
+      setInterviewStats({ total: 0, thisWeek: 0 });
+      setProfileStats({ totalViews: 0, percentageChange: 0 });
+      setOffersStats({ totalOffers: 0, lastMonthOffers: 0 });
+      setRecentActivities([]);
+      // Then fetch new data
+      fetchAllData();
+    }
+  }, [authUser?.email, authUser?._id]); // Watch for changes in user email or ID
+
   const checkAuthAndFetchData = async () => {
     try {
       if (authUser) {
         setUser(authUser);
         await fetchAllData();
       } else {
+        console.log('🔍 UserDashboard: No user, clearing data...');
+        // Clear all data when no user is logged in
+        setAppliedJobs([]);
+        setAppStats({ total: 0, changeFromLastWeek: 0 });
+        setInterviewStats({ total: 0, thisWeek: 0 });
+        setProfileStats({ totalViews: 0, percentageChange: 0 });
+        setOffersStats({ totalOffers: 0, lastMonthOffers: 0 });
+        setRecentActivities([]);
         Alert.alert('Error', 'Please log in to view your dashboard');
         navigation.navigate('LoginScreen');
       }
@@ -139,12 +163,15 @@ const UserDashboardScreen = ({ navigation }) => {
     try {
       if (!token) {
         console.log('❌ No token available for fetching applied jobs');
+        setAppliedJobs([]);
         return;
       }
       
       console.log('🔍 UserDashboard: Fetching applied jobs...');
       console.log('🔍 UserDashboard: Token exists:', !!token);
       console.log('🔍 UserDashboard: Token preview:', token.substring(0, 20) + '...');
+      console.log('🔍 UserDashboard: Current user:', authUser?.email || 'No user email');
+      console.log('🔍 UserDashboard: User ID:', authUser?._id || 'No user ID');
       
       setApplicationsLoading(true);
       const response = await getAppliedJobs(token);
@@ -211,34 +238,8 @@ const UserDashboardScreen = ({ navigation }) => {
             console.log('✅ UserDashboard: Fallback mapped jobs:', fallbackJobs);
             setAppliedJobs(fallbackJobs);
           } else {
-            console.log('⚠️ UserDashboard: Fallback also returned no data');
-            // Add some mock data for testing when no real data is available
-            const mockJobs = [
-              {
-                id: 'mock-1',
-                title: 'Software Developer',
-                company: 'Tech Corp',
-                location: 'New York, NY',
-                type: 'Full-time',
-                status: 'applied',
-                date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago
-                applicationId: 'mock-1',
-                jobId: 'mock-job-1'
-              },
-              {
-                id: 'mock-2',
-                title: 'Frontend Engineer',
-                company: 'StartupXYZ',
-                location: 'San Francisco, CA',
-                type: 'Full-time',
-                status: 'reviewed',
-                date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), // 5 days ago
-                applicationId: 'mock-2',
-                jobId: 'mock-job-2'
-              }
-            ];
-            console.log('🔧 UserDashboard: Using mock data for testing');
-            setAppliedJobs(mockJobs);
+            console.log('⚠️ UserDashboard: No applied jobs found for this user');
+            setAppliedJobs([]);
           }
         } catch (fallbackError) {
           console.error('❌ UserDashboard: Fallback also failed:', fallbackError);
