@@ -57,7 +57,8 @@ export const enhancedFetch = async (url, options = {}) => {
   const fetchOptions = {
     ...options,
     headers,
-    timeout
+    // Remove timeout from fetch options as it's not supported by fetch API
+    // We'll implement timeout using AbortController
   };
   
   let lastError;
@@ -65,13 +66,28 @@ export const enhancedFetch = async (url, options = {}) => {
   for (let attempt = 1; attempt <= retryAttempts; attempt++) {
     try {
       console.log(`🌐 Network request attempt ${attempt}/${retryAttempts}:`, url);
+      console.log(`🌐 Request options:`, {
+        method: fetchOptions.method || 'GET',
+        headers: fetchOptions.headers,
+        body: fetchOptions.body ? 'Present' : 'None'
+      });
       
-      const response = await fetch(url, fetchOptions);
+      // Create AbortController for timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeout);
+      
+      const response = await fetch(url, {
+        ...fetchOptions,
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeoutId);
       
       console.log(`🌐 Network response (attempt ${attempt}):`, {
         status: response.status,
         ok: response.ok,
-        url: url
+        url: url,
+        headers: Object.fromEntries(response.headers.entries())
       });
       
       return response;
@@ -79,7 +95,9 @@ export const enhancedFetch = async (url, options = {}) => {
       lastError = error;
       console.error(`❌ Network request failed (attempt ${attempt}/${retryAttempts}):`, {
         error: error.message,
-        url: url
+        name: error.name,
+        url: url,
+        stack: error.stack
       });
       
       // Don't retry on the last attempt

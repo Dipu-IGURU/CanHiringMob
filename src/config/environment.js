@@ -15,7 +15,7 @@ const API_CONFIG = {
   // Development configurations
   development: {
     web: 'http://localhost:5001',
-    mobile: 'http://localhost:5001' // Use localhost for mobile development too
+    mobile: 'http://192.168.1.28:5001' // Use actual IP for mobile development
   }
 };
 
