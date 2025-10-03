@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
   Dimensions,
   FlatList,
   ActivityIndicator,
+  Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -22,6 +23,10 @@ import { Colors, Typography, Spacing, BorderRadius, Shadows } from '../constants
 
 const { width, height } = Dimensions.get('window');
 
+// Helper function for responsive calculations
+const getCardWidth = () => width < 400 ? width - 24 : width - 32;
+const isSmallScreen = width < 400;
+
 const HomeScreen = ({ navigation }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [location, setLocation] = useState('');
@@ -31,6 +36,10 @@ const HomeScreen = ({ navigation }) => {
   const [companiesLoading, setCompaniesLoading] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [currentTestimonialIndex, setCurrentTestimonialIndex] = useState(0);
+  const [isUserScrolling, setIsUserScrolling] = useState(false);
+  const flatListRef = useRef(null);
+  const scrollX = useRef(new Animated.Value(0)).current;
 
 
   // Fetch featured companies from database
@@ -63,7 +72,7 @@ const HomeScreen = ({ navigation }) => {
       id: 1,
       name: 'Sarah Johnson',
       role: 'CEO at TechCorp',
-      content: 'Finding top talent has never been easier. CanHiring connected us with highly skilled developers.',
+      content: 'Finding top talent has never been easier. CanHiring connected us with highly skilled developers who perfectly matched our company culture.',
       avatar: 'SJ'
     },
     {
@@ -77,8 +86,22 @@ const HomeScreen = ({ navigation }) => {
       id: 3,
       name: 'Emily Rodriguez',
       role: 'CTO at InnovateX',
-      content: 'CanHiring\'s platform streamlined our hiring process and helped us build an amazing tech team.',
+      content: 'CanHiring\'s platform streamlined our hiring process and helped us build an amazing tech team. Highly recommended!',
       avatar: 'ER'
+    },
+    {
+      id: 4,
+      name: 'David Kim',
+      role: 'HR Director at StartupHub',
+      content: 'The AI-powered matching system saved us countless hours. We found our ideal candidate within days of posting.',
+      avatar: 'DK'
+    },
+    {
+      id: 5,
+      name: 'Lisa Thompson',
+      role: 'VP Engineering at CloudTech',
+      content: 'Outstanding platform! The candidate quality and response time exceeded our expectations. Will definitely use again.',
+      avatar: 'LT'
     }
   ];
 
@@ -120,6 +143,35 @@ const HomeScreen = ({ navigation }) => {
     loadData();
     loadFeaturedCompanies();
   }, []);
+
+  // Auto-slide testimonials every 2 seconds
+  useEffect(() => {
+    if (testimonials.length === 0 || isUserScrolling) return;
+
+    const interval = setInterval(() => {
+      setCurrentTestimonialIndex((prevIndex) => {
+        const nextIndex = (prevIndex + 1) % testimonials.length;
+        console.log('Auto-sliding to testimonial:', nextIndex);
+        
+        // Smooth scroll to next testimonial
+        if (flatListRef.current && nextIndex < testimonials.length) {
+          try {
+            const cardWidth = getCardWidth();
+            flatListRef.current.scrollToOffset({
+              offset: nextIndex * cardWidth,
+              animated: true,
+            });
+          } catch (error) {
+            console.log('Scroll error:', error);
+          }
+        }
+        
+        return nextIndex;
+      });
+    }, 2000); // 2 seconds
+
+    return () => clearInterval(interval);
+  }, [testimonials.length, width, isUserScrolling]);
 
   const handleSearch = () => {
     // Navigate to Jobs screen with search parameters
@@ -175,6 +227,11 @@ const HomeScreen = ({ navigation }) => {
 
   const renderTestimonial = ({ item }) => (
     <View style={styles.testimonialCard}>
+      {/* Quote Icon */}
+      <View style={styles.quoteIcon}>
+        <Ionicons name="quote" size={24} color="#3B82F6" />
+      </View>
+      
       <View style={styles.testimonialHeader}>
         <View style={styles.testimonialAvatar}>
           <Text style={styles.testimonialAvatarText}>{item.avatar}</Text>
@@ -184,10 +241,12 @@ const HomeScreen = ({ navigation }) => {
           <Text style={styles.testimonialRole}>{item.role}</Text>
         </View>
       </View>
-      <Text style={styles.testimonialContent}>"{item.content}"</Text>
+      
+      <Text style={styles.testimonialContent}>{item.content}</Text>
+      
       <View style={styles.testimonialStars}>
         {[...Array(5)].map((_, i) => (
-          <Ionicons key={i} name="star" size={16} color="#FCD34D" />
+          <Ionicons key={i} name="star" size={18} color="#FCD34D" />
         ))}
       </View>
     </View>
@@ -387,14 +446,56 @@ const HomeScreen = ({ navigation }) => {
             <Text style={styles.sectionSubtitle}>Hear from companies that found their perfect match</Text>
           </View>
           
-          <FlatList
-            data={testimonials || []}
-            renderItem={renderTestimonial}
-            keyExtractor={(item) => item?.id?.toString() || item?._id?.toString() || Math.random().toString()}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.testimonialsList}
-          />
+          <View style={styles.testimonialsContainer}>
+            <FlatList
+              ref={flatListRef}
+              data={testimonials || []}
+              renderItem={renderTestimonial}
+              keyExtractor={(item) => item?.id?.toString() || item?._id?.toString() || Math.random().toString()}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.testimonialsList}
+              pagingEnabled
+              snapToAlignment="start"
+              decelerationRate="fast"
+              onScroll={Animated.event(
+                [{ nativeEvent: { contentOffset: { x: scrollX } } }],
+                { useNativeDriver: false }
+              )}
+              scrollEventThrottle={16}
+              onScrollBeginDrag={() => setIsUserScrolling(true)}
+              onScrollEndDrag={() => {
+                setTimeout(() => setIsUserScrolling(false), 1000);
+              }}
+              onMomentumScrollEnd={(event) => {
+                const cardWidth = getCardWidth();
+                const index = Math.round(event.nativeEvent.contentOffset.x / cardWidth);
+                setCurrentTestimonialIndex(index);
+                setTimeout(() => setIsUserScrolling(false), 1000);
+              }}
+              getItemLayout={(data, index) => {
+                const cardWidth = getCardWidth();
+                return {
+                  length: cardWidth,
+                  offset: cardWidth * index,
+                  index,
+                };
+              }}
+            />
+            
+            {/* Pagination Dots */}
+            <View style={styles.paginationContainer}>
+              {testimonials.map((_, index) => (
+                <View
+                  key={index}
+                  style={[
+                    styles.paginationDot,
+                    index === currentTestimonialIndex && styles.paginationDotActive
+                  ]}
+                />
+              ))}
+            </View>
+          </View>
         </View>
 
       </ScrollView>
@@ -605,66 +706,111 @@ const styles = StyleSheet.create({
     fontSize: Typography.xs,
     color: Colors.textSecondary,
   },
+  testimonialsContainer: {
+    marginTop: 20,
+  },
   testimonialsList: {
-    paddingHorizontal: 10,
+    paddingHorizontal: 0,
   },
   testimonialCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 20,
-    marginHorizontal: 5,
-    width: width * 0.8,
+    borderRadius: 20,
+    padding: isSmallScreen ? 16 : 20, // Responsive padding for mobile
+    marginHorizontal: isSmallScreen ? 12 : 16, // Responsive margins
+    width: getCardWidth(), // Responsive width
     borderWidth: 1,
     borderColor: '#E2E8F0',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 1,
+      height: 8,
     },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
+    elevation: 8,
+    transform: [{ scale: 1 }],
+  },
+  quoteIcon: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    opacity: 0.1,
   },
   testimonialHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 15,
+    justifyContent: 'center',
+    marginBottom: 20,
   },
   testimonialAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: isSmallScreen ? 40 : 50,
+    height: isSmallScreen ? 40 : 50,
+    borderRadius: isSmallScreen ? 20 : 25,
     backgroundColor: '#3B82F6',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 12,
+    marginRight: isSmallScreen ? 12 : 16,
+    shadowColor: '#3B82F6',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
   testimonialAvatarText: {
     color: '#FFFFFF',
-    fontSize: 14,
+    fontSize: isSmallScreen ? 16 : 18,
     fontWeight: 'bold',
   },
   testimonialInfo: {
     flex: 1,
   },
   testimonialName: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: isSmallScreen ? 16 : 18,
+    fontWeight: '700',
     color: '#1E293B',
+    marginBottom: 4,
   },
   testimonialRole: {
-    fontSize: 14,
+    fontSize: isSmallScreen ? 12 : 14,
     color: '#64748B',
+    fontWeight: '500',
   },
   testimonialContent: {
-    fontSize: 14,
+    fontSize: isSmallScreen ? 14 : 16,
     color: '#1E293B',
-    lineHeight: 20,
-    marginBottom: 15,
+    lineHeight: isSmallScreen ? 20 : 24,
+    marginBottom: 20,
+    fontStyle: 'italic',
+    textAlign: 'center',
   },
   testimonialStars: {
     flexDirection: 'row',
-    gap: 2,
+    gap: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  paginationContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 20,
+    gap: 8,
+  },
+  paginationDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#E2E8F0',
+    transition: 'all 0.3s ease',
+  },
+  paginationDotActive: {
+    width: 24,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#3B82F6',
   },
   loadingContainer: {
     alignItems: 'center',

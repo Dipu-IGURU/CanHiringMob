@@ -304,45 +304,74 @@ router.put('/profile', auth, [
 });
 
 // Google Login/Register endpoint
-router.post('/google-login', async (req, res) => {
+router.post('/google', async (req, res) => {
   try {
-    const { email, name, photoURL, role } = req.body;
+    const { googleToken, user: googleUser } = req.body;
 
-    if (!email || !name || !role) {
+    if (!googleToken || !googleUser) {
       return res.status(400).json({
         success: false,
-        message: 'Email, name, and role are required for Google Sign-In.'
+        message: 'Google token and user data are required.'
       });
     }
 
+    const { uid, email, displayName, photoURL, emailVerified, provider } = googleUser;
+
+    if (!email || !displayName) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email and display name are required for Google Sign-In.'
+      });
+    }
+
+    // Check if user already exists
     let user = await User.findOne({ email });
 
     if (!user) {
       // If user doesn't exist, create a new one
-      const nameParts = name.split(' ');
+      const nameParts = displayName.split(' ');
       const firstName = nameParts[0];
-      const lastName = nameParts.slice(1).join(' ') || firstName; // Handle names without a last name
+      const lastName = nameParts.slice(1).join(' ') || firstName;
 
       const userData = {
         email,
         firstName,
         lastName,
         photoURL,
-        role,
-        isVerified: true // Google users are considered verified
+        role: 'user', // Default role for Google users
+        isVerified: emailVerified || true,
+        provider: provider || 'google',
+        googleId: uid
       };
 
       user = new User(userData);
       // We need to bypass password validation since it's not required for Google users
       await user.save({ validateBeforeSave: false });
+      
+      console.log('✅ New Google user created:', email);
+    } else {
+      // Update existing user with Google info if needed
+      if (!user.googleId) {
+        user.googleId = uid;
+        user.photoURL = photoURL || user.photoURL;
+        user.isVerified = emailVerified || user.isVerified;
+        user.provider = provider || 'google';
+        await user.save();
+      }
+      
+      console.log('✅ Existing Google user logged in:', email);
     }
 
-    // Generate token using the existing function
+    // Update last login
+    user.lastLogin = new Date();
+    await user.save();
+
+    // Generate token
     const token = generateToken(user._id);
 
     res.json({
       success: true,
-      message: 'Google login successful',
+      message: 'Google authentication successful',
       token,
       user: {
         id: user._id,
@@ -351,15 +380,17 @@ router.post('/google-login', async (req, res) => {
         email: user.email,
         role: user.role,
         company: user.company,
-        photoURL: user.photoURL
+        photoURL: user.photoURL,
+        isVerified: user.isVerified,
+        provider: user.provider
       }
     });
 
   } catch (error) {
-    console.error('Google login error:', error);
+    console.error('Google authentication error:', error);
     res.status(500).json({
       success: false,
-      message: 'Server error during Google login'
+      message: 'Server error during Google authentication'
     });
   }
 });

@@ -118,11 +118,9 @@ const JobApplicationForm = ({ visible, onClose, job, onSubmit }) => {
 
       await onSubmit(applicationData);
       
-      Alert.alert(
-        'Application Submitted!',
-        'Your application has been submitted successfully. We will review it and get back to you soon.',
-        [{ text: 'OK', onPress: handleClose }]
-      );
+      // Success handling is done in the parent component (JobApplicationScreen)
+      // Just close the form after successful submission
+      handleClose();
     } catch (error) {
       console.error('Error submitting application:', error);
       Alert.alert('Error', 'Failed to submit application. Please try again.');

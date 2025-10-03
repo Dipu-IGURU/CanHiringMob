@@ -201,7 +201,7 @@ router.get('/category/:category', async (req, res) => {
     const { page = 1, limit = 10 } = req.query;
 
     const filter = { 
-      isActive: true,
+      $or: [{ isActive: true }, { isActive: { $exists: false } }],
       category: new RegExp(category, 'i')
     };
 
@@ -231,6 +231,109 @@ router.get('/category/:category', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Server error while fetching jobs by category'
+    });
+  }
+});
+
+// Seed sample jobs for testing
+router.post('/seed', async (req, res) => {
+  try {
+    console.log('🌱 Seeding sample jobs...');
+    
+    const sampleJobs = [
+      {
+        title: 'Senior Software Engineer',
+        company: 'TechCorp Inc.',
+        location: 'San Francisco, CA',
+        type: 'Full-time',
+        salaryRange: '$120,000 - $180,000',
+        description: 'We are looking for a senior software engineer to join our team...',
+        category: 'Technology',
+        requirements: ['5+ years experience', 'JavaScript', 'React', 'Node.js'],
+        isActive: true,
+        postedBy: null
+      },
+      {
+        title: 'Registered Nurse',
+        company: 'City General Hospital',
+        location: 'New York, NY',
+        type: 'Full-time',
+        salaryRange: '$70,000 - $90,000',
+        description: 'Join our healthcare team as a registered nurse...',
+        category: 'Healthcare',
+        requirements: ['RN License', '2+ years experience', 'BLS Certification'],
+        isActive: true,
+        postedBy: null
+      },
+      {
+        title: 'Financial Analyst',
+        company: 'Global Finance Group',
+        location: 'Chicago, IL',
+        type: 'Full-time',
+        salaryRange: '$80,000 - $110,000',
+        description: 'Analyze financial data and create reports...',
+        category: 'Finance',
+        requirements: ['Bachelor in Finance', 'Excel proficiency', '2+ years experience'],
+        isActive: true,
+        postedBy: null
+      },
+      {
+        title: 'Elementary School Teacher',
+        company: 'Sunshine Elementary School',
+        location: 'Austin, TX',
+        type: 'Full-time',
+        salaryRange: '$45,000 - $60,000',
+        description: 'Teach elementary school students...',
+        category: 'Education',
+        requirements: ['Teaching License', 'Bachelor in Education', '1+ years experience'],
+        isActive: true,
+        postedBy: null
+      },
+      {
+        title: 'Digital Marketing Specialist',
+        company: 'Creative Agency',
+        location: 'Los Angeles, CA',
+        type: 'Full-time',
+        salaryRange: '$55,000 - $75,000',
+        description: 'Manage digital marketing campaigns...',
+        category: 'Marketing',
+        requirements: ['Marketing degree', 'Social media experience', 'Google Ads certification'],
+        isActive: true,
+        postedBy: null
+      },
+      {
+        title: 'Mechanical Engineer',
+        company: 'Manufacturing Solutions',
+        location: 'Detroit, MI',
+        type: 'Full-time',
+        salaryRange: '$75,000 - $100,000',
+        description: 'Design and develop mechanical systems...',
+        category: 'Engineering',
+        requirements: ['Mechanical Engineering degree', 'CAD experience', '3+ years experience'],
+        isActive: true,
+        postedBy: null
+      }
+    ];
+
+    // Clear existing jobs (optional)
+    // await Job.deleteMany({});
+    
+    // Insert sample jobs
+    const createdJobs = await Job.insertMany(sampleJobs);
+    
+    console.log('✅ Seeded', createdJobs.length, 'sample jobs');
+    
+    res.json({
+      success: true,
+      message: `Successfully seeded ${createdJobs.length} sample jobs`,
+      jobs: createdJobs
+    });
+
+  } catch (error) {
+    console.error('Error seeding jobs:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while seeding jobs'
     });
   }
 });

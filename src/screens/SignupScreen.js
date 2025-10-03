@@ -16,12 +16,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import LogoImage from '../components/LogoImage';
+import GoogleSignInButton from '../components/GoogleSignInButton';
 import { useAuth } from '../contexts/AuthContext';
 
 const { width, height } = Dimensions.get('window');
 
 const SignupScreen = ({ navigation }) => {
-  const { register } = useAuth();
+  const { register, loginWithGoogle } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -137,9 +138,20 @@ const SignupScreen = ({ navigation }) => {
     }
   };
 
-  const handleGoogleSignup = () => {
-    // TODO: Implement Google OAuth
-    Alert.alert('Coming Soon', 'Google Sign-Up will be available soon');
+  const handleGoogleSignup = async () => {
+    try {
+      const result = await loginWithGoogle();
+      
+      if (result.success) {
+        // Navigate to main app after successful signup
+        navigation.navigate('MainTabs');
+      } else {
+        Alert.alert('Google Sign-Up Failed', result.message || 'Failed to sign up with Google');
+      }
+    } catch (error) {
+      console.error('Google signup error:', error);
+      Alert.alert('Error', 'Google Sign-Up failed. Please try again.');
+    }
   };
 
   return (
@@ -344,13 +356,12 @@ const SignupScreen = ({ navigation }) => {
               </View>
 
               {/* Google Sign Up */}
-              <TouchableOpacity
-                style={styles.googleButton}
+              <GoogleSignInButton
                 onPress={handleGoogleSignup}
-              >
-                <Ionicons name="logo-google" size={20} color="#DB4437" />
-                <Text style={styles.googleButtonText}>Continue with Google</Text>
-              </TouchableOpacity>
+                loading={loading}
+                disabled={loading}
+                text="Continue with Google"
+              />
             </View>
 
             {/* Sign In Link */}

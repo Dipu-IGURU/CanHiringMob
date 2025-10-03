@@ -178,63 +178,70 @@ export const fetchJobCategories = async () => {
   }
 };
 
-// Fetch jobs by category - use Firebase backend as primary source
+// Fetch jobs by category - use JSearch API as primary source
 export const fetchJobsByCategory = async (category, page = 1, limit = 10) => {
   try {
-    console.log('🔍 Fetching jobs by category:', { category, page, limit });
+    console.log('🔍 Fetching jobs by category from JSearch API:', { category, page, limit });
     
-    // First try Firebase backend
-    const response = await fetch(`${API_BASE_URL}/api/jobs/public?category=${encodeURIComponent(category)}&page=${page}&limit=${limit}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    // Use JSearch API as primary source
+    const categoryQueries = {
+      'all': 'software developer OR programmer OR IT specialist OR engineer OR data scientist OR nurse OR doctor OR teacher OR sales OR marketing OR designer OR product manager',
+      'technology': 'software developer OR programmer OR IT specialist OR engineer OR data scientist OR frontend developer OR backend developer OR full stack developer',
+      'healthcare': 'nurse OR doctor OR healthcare worker OR medical assistant OR healthcare professional OR physician OR pharmacist OR therapist',
+      'finance': 'financial analyst OR banker OR accountant OR financial advisor OR finance manager OR investment analyst OR risk analyst',
+      'education': 'teacher OR instructor OR trainer OR education coordinator OR professor OR academic advisor OR curriculum developer',
+      'marketing': 'sales representative OR marketing specialist OR digital marketing OR social media manager OR marketing coordinator OR brand manager',
+      'engineering': 'engineer OR engineering technician OR software engineer OR mechanical engineer OR civil engineer OR electrical engineer',
+      'design': 'UX designer OR UI designer OR graphic designer OR web designer OR product designer OR visual designer OR creative director',
+      'product': 'product manager OR product owner OR product analyst OR product coordinator OR product strategist',
+      'data-science': 'data scientist OR data analyst OR data engineer OR machine learning engineer OR business intelligence analyst',
+      'sales': 'sales representative OR sales manager OR account executive OR business development OR sales coordinator',
+      'business': 'business analyst OR business development OR operations manager OR project manager OR consultant',
+      'customer service': 'customer service representative OR support agent OR call center OR customer success OR help desk',
+      'human resources': 'HR specialist OR recruiter OR human resources manager OR talent acquisition OR HR coordinator',
+      'administrative': 'administrative assistant OR office manager OR executive assistant OR coordinator OR receptionist',
+      'construction': 'construction worker OR contractor OR builder OR project manager OR site supervisor OR architect',
+      'manufacturing': 'manufacturing worker OR production operator OR quality control OR production manager OR assembly worker',
+      'retail': 'retail sales OR store manager OR cashier OR sales associate OR retail manager OR merchandiser'
+    };
 
-    if (response.ok) {
-      const data = await response.json();
-      console.log('✅ Firebase backend returned', data.jobs?.length || 0, 'jobs for category:', category);
-      return data.jobs || data.data || [];
+    const searchQuery = categoryQueries[category.toLowerCase()] || category;
+    console.log('🔍 JSearch API query for category', category, ':', searchQuery);
+    
+    const jsearchParams = {
+      query: searchQuery,
+      page: page,
+      num_pages: 3, // Get more pages for better results
+      country: 'US',
+      date_posted: 'week', // Get recent jobs
+      job_type: 'fulltime',
+      remote_jobs_only: false
+    };
+    
+    console.log('🔍 Calling JSearch API with params:', jsearchParams);
+    const jsearchResult = await searchJobsFromAPI(jsearchParams);
+    
+    if (jsearchResult.success && jsearchResult.jobs && jsearchResult.jobs.length > 0) {
+      console.log('✅ JSearch API returned', jsearchResult.jobs.length, 'jobs for category:', category);
+      return jsearchResult.jobs.slice(0, limit);
     } else {
-      console.log('⚠️ Firebase backend failed, trying JSearch API fallback');
+      console.log('⚠️ No jobs from JSearch API for category:', category, 'result:', jsearchResult);
       
-      // Fallback to JSearch API
-      const categoryQueries = {
-        'all': 'software developer OR programmer OR IT specialist OR engineer OR data scientist',
-        'technology': 'software developer OR programmer OR IT specialist OR engineer OR data scientist',
-        'healthcare': 'nurse OR doctor OR healthcare worker OR medical assistant OR healthcare professional',
-        'finance': 'financial analyst OR banker OR accountant OR financial advisor OR finance manager',
-        'education': 'teacher OR instructor OR trainer OR education coordinator OR professor',
-        'marketing': 'sales representative OR marketing specialist OR digital marketing OR social media manager',
-        'engineering': 'engineer OR engineering technician OR software engineer OR mechanical engineer',
-        'customer service': 'customer service representative OR support agent OR call center',
-        'human resources': 'HR specialist OR recruiter OR human resources manager OR talent acquisition',
-        'administrative': 'administrative assistant OR office manager OR executive assistant OR coordinator',
-        'construction': 'construction worker OR contractor OR builder OR project manager OR site supervisor',
-        'manufacturing': 'manufacturing worker OR production operator OR quality control OR production manager',
-        'retail': 'retail sales OR store manager OR cashier OR sales associate OR retail manager',
-        'design': 'UX designer OR UI designer OR graphic designer OR web designer OR product designer'
-      };
+      // Fallback to database if JSearch API fails
+      console.log('🔄 Trying database fallback...');
+      const response = await fetch(`${API_BASE_URL}/api/jobs/category/${encodeURIComponent(category)}?page=${page}&limit=${limit}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
 
-      const searchQuery = categoryQueries[category.toLowerCase()] || category;
-      
-      const jsearchParams = {
-        query: searchQuery,
-        page: page,
-        num_pages: 3,
-        country: 'US',
-        date_posted: 'week',
-        job_type: 'fulltime',
-        remote_jobs_only: false
-      };
-      
-      const jsearchResult = await searchJobsFromAPI(jsearchParams);
-      
-      if (jsearchResult.success && jsearchResult.jobs && jsearchResult.jobs.length > 0) {
-        console.log('✅ JSearch API fallback returned', jsearchResult.jobs.length, 'jobs');
-        return jsearchResult.jobs.slice(0, limit);
+      if (response.ok) {
+        const data = await response.json();
+        console.log('✅ Database fallback returned', data.data?.length || 0, 'jobs for category:', category);
+        return data.data || [];
       } else {
-        console.log('⚠️ No jobs from JSearch API fallback');
+        console.log('❌ Both JSearch API and database failed for category:', category);
         return [];
       }
     }
@@ -244,44 +251,45 @@ export const fetchJobsByCategory = async (category, page = 1, limit = 10) => {
   }
 };
 
-// Fetch all public jobs - use Firebase backend as primary source
+// Fetch all public jobs - use JSearch API as primary source
 export const fetchAllJobs = async (page = 1, limit = 20) => {
   try {
-    console.log('🔍 Fetching all jobs:', { page, limit });
+    console.log('🔍 Fetching all jobs from JSearch API:', { page, limit });
     
-    // First try Firebase backend
-    const response = await fetch(`${API_BASE_URL}/api/jobs/public?page=${page}&limit=${limit}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (response.ok) {
-      const data = await response.json();
-      console.log('✅ Firebase backend returned', data.jobs?.length || 0, 'jobs');
-      return data.jobs || data.data || [];
+    // Use JSearch API as primary source
+    const jsearchParams = {
+      query: 'software developer OR programmer OR IT specialist OR engineer OR data scientist OR nurse OR doctor OR teacher OR sales OR marketing OR designer OR product manager OR business analyst',
+      page: page,
+      num_pages: 3,
+      country: 'US',
+      date_posted: 'week',
+      job_type: 'fulltime',
+      remote_jobs_only: false
+    };
+    
+    console.log('🔍 Calling JSearch API for all jobs with params:', jsearchParams);
+    const jsearchResult = await searchJobsFromAPI(jsearchParams);
+    
+    if (jsearchResult.success && jsearchResult.jobs && jsearchResult.jobs.length > 0) {
+      console.log('✅ JSearch API returned', jsearchResult.jobs.length, 'jobs');
+      return jsearchResult.jobs.slice(0, limit);
     } else {
-      console.log('⚠️ Firebase backend failed, trying JSearch API fallback');
+      console.log('⚠️ No jobs from JSearch API, trying database fallback');
       
-      // Fallback to JSearch API
-      const jsearchParams = {
-        query: 'software developer OR programmer OR IT specialist OR engineer OR data scientist OR nurse OR doctor OR teacher OR sales OR marketing',
-        page: page,
-        num_pages: 3,
-        country: 'US',
-        date_posted: 'week',
-        job_type: 'fulltime',
-        remote_jobs_only: false
-      };
-      
-      const jsearchResult = await searchJobsFromAPI(jsearchParams);
-      
-      if (jsearchResult.success && jsearchResult.jobs && jsearchResult.jobs.length > 0) {
-        console.log('✅ JSearch API fallback returned', jsearchResult.jobs.length, 'jobs');
-        return jsearchResult.jobs.slice(0, limit);
+      // Fallback to database if JSearch API fails
+      const response = await fetch(`${API_BASE_URL}/api/jobs/public?page=${page}&limit=${limit}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('✅ Database fallback returned', data.jobs?.length || 0, 'jobs');
+        return data.jobs || data.data || [];
       } else {
-        console.log('⚠️ No jobs from JSearch API fallback');
+        console.log('❌ Both JSearch API and database failed');
         return [];
       }
     }

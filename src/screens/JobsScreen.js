@@ -89,10 +89,10 @@ const JobsScreen = ({ navigation, route }) => {
         // Map category ID to category name for API call
         const categoryMapping = {
           'technology': 'Technology',
-          'healthcare': 'Healthcare & Medical',
-          'finance': 'Finance & Banking',
-          'education': 'Education & Training',
-          'marketing': 'Sales & Marketing',
+          'healthcare': 'Healthcare',
+          'finance': 'Finance',
+          'education': 'Education',
+          'marketing': 'Marketing',
           'engineering': 'Engineering',
           'customer-service': 'Customer Service',
           'human-resources': 'Human Resources',
@@ -100,7 +100,11 @@ const JobsScreen = ({ navigation, route }) => {
           'construction': 'Construction',
           'manufacturing': 'Manufacturing',
           'retail': 'Retail',
-          'design': 'Design'
+          'design': 'Design',
+          'product': 'Product',
+          'data-science': 'Data Science',
+          'sales': 'Sales',
+          'business': 'Business'
         };
         const categoryName = categoryMapping[selectedFilter] || selectedFilter;
         jobsData = await fetchJobsByCategory(categoryName, 1, 25); // Fetch up to 25 jobs
@@ -177,10 +181,10 @@ const JobsScreen = ({ navigation, route }) => {
         // Map category ID to category name for API call
         const categoryMapping = {
           'technology': 'Technology',
-          'healthcare': 'Healthcare & Medical',
-          'finance': 'Finance & Banking',
-          'education': 'Education & Training',
-          'marketing': 'Sales & Marketing',
+          'healthcare': 'Healthcare',
+          'finance': 'Finance',
+          'education': 'Education',
+          'marketing': 'Marketing',
           'engineering': 'Engineering',
           'customer-service': 'Customer Service',
           'human-resources': 'Human Resources',
@@ -188,7 +192,11 @@ const JobsScreen = ({ navigation, route }) => {
           'construction': 'Construction',
           'manufacturing': 'Manufacturing',
           'retail': 'Retail',
-          'design': 'Design'
+          'design': 'Design',
+          'product': 'Product',
+          'data-science': 'Data Science',
+          'sales': 'Sales',
+          'business': 'Business'
         };
         const categoryName = categoryMapping[filterId] || filterId;
         console.log('🔍 Fetching jobs for category:', categoryName);
@@ -209,15 +217,12 @@ const JobsScreen = ({ navigation, route }) => {
   const filters = [
     { id: 'all', label: 'All Jobs' },
     { id: 'technology', label: 'Technology' },
-    { id: 'healthcare', label: 'Healthcare' },
-    { id: 'finance', label: 'Finance' },
-    { id: 'education', label: 'Education' },
-    { id: 'marketing', label: 'Marketing' },
-    { id: 'engineering', label: 'Engineering' },
     { id: 'design', label: 'Design' },
-    { id: 'customer-service', label: 'Customer Service' },
-    { id: 'human-resources', label: 'HR' },
-    { id: 'administrative', label: 'Admin' },
+    { id: 'marketing', label: 'Marketing' },
+    { id: 'product', label: 'Product' },
+    { id: 'data-science', label: 'Data Science' },
+    { id: 'sales', label: 'Sales' },
+    { id: 'business', label: 'Business' },
   ];
 
 
