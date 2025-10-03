@@ -26,6 +26,8 @@ const corsOptions = {
     
     // In production, allow specific origins and mobile apps
     const allowedOrigins = [
+      'https://www.canhiring.com', // Production frontend domain
+      'https://canhiring.com', // Production frontend domain (without www)
       'http://localhost:19006', // Expo default dev server
       'http://localhost:19000', // Expo web dev server
       'http://localhost:3000',  // React Native web
