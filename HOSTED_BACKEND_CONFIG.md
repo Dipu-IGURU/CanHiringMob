@@ -3,13 +3,13 @@
 ## ✅ Configuration Updated
 
 ### **Backend URL Configuration**
-- **Primary URL**: `https://us-central1-canhiring-ca.cloudfunctions.net/api`
+- **Primary URL**: `https://canhiringmob.onrender.com`
 - **Alternative URL**: `https://canhiring-backend.herokuapp.com/api`
 - **Local Fallback**: `http://192.168.1.28:5001` (for development)
 
 ### **Environment Variables Set**
 ```bash
-EXPO_PUBLIC_API_BASE_URL=https://us-central1-canhiring-ca.cloudfunctions.net/api
+EXPO_PUBLIC_API_BASE_URL=https://canhiringmob.onrender.com
 VITE_RAPIDAPI_KEY=3fe89ef3cfmsha78975fefe8bf57p1579b2jsnb1b2ec2377d9
 VITE_RAPIDAPI_HOST=jsearch.p.rapidapi.com
 NODE_ENV=production
@@ -18,7 +18,7 @@ NODE_ENV=production
 ## 🔧 API Configuration
 
 ### **Primary Backend**
-- **URL**: `https://us-central1-canhiring-ca.cloudfunctions.net/api`
+- **URL**: `https://canhiringmob.onrender.com`
 - **Type**: Firebase Cloud Functions
 - **Status**: Production ready
 - **Features**: All endpoints available
@@ -42,7 +42,7 @@ NODE_ENV=production
 {
   "preview": {
     "env": {
-      "EXPO_PUBLIC_API_BASE_URL": "https://us-central1-canhiring-ca.cloudfunctions.net/api",
+      "EXPO_PUBLIC_API_BASE_URL": "https://canhiringmob.onrender.com",
       "NODE_ENV": "production"
     }
   }

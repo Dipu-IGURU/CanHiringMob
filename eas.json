@@ -18,7 +18,7 @@
     "preview": {
       "distribution": "internal",
       "env": {
-        "EXPO_PUBLIC_API_BASE_URL": "https://us-central1-canhiring-ca.cloudfunctions.net/api",
+        "EXPO_PUBLIC_API_BASE_URL": "https://canhiringmob.onrender.com",
         "NODE_ENV": "production"
       },
       "android": {
@@ -29,7 +29,7 @@
     "production": {
       "autoIncrement": true,
       "env": {
-        "EXPO_PUBLIC_API_BASE_URL": "https://us-central1-canhiring-ca.cloudfunctions.net/api",
+        "EXPO_PUBLIC_API_BASE_URL": "https://canhiringmob.onrender.com",
         "NODE_ENV": "production"
       },
       "android": {

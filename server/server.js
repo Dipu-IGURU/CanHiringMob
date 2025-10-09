@@ -28,7 +28,7 @@ const corsOptions = {
     const allowedOrigins = [
       'https://www.canhiring.com', // Production frontend domain
       'https://canhiring.com', // Production frontend domain (without www)
-      'https://canhiring-backend.onrender.com', // Render backend URL
+      'https://canhiringmob.onrender.com', // Render backend URL
       'https://canhiring-frontend.onrender.com', // Render frontend URL (if you deploy frontend too)
       'http://localhost:19006', // Expo default dev server
       'http://localhost:19000', // Expo web dev server

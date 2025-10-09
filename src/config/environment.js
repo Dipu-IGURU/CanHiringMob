@@ -10,7 +10,7 @@ const isIOS = Platform.OS === 'ios';
 // API Configuration
 const API_CONFIG = {
   // Production Render backend (for APK builds)
-  production: 'https://canhiring-backend.onrender.com',
+  production: 'https://canhiringmob.onrender.com',
   
   // Development configurations
   development: {
