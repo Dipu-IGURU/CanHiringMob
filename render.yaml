@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: canhiring-backend
+    env: node
+    plan: free
+    buildCommand: cd server && npm install
+    startCommand: cd server && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: MONGODB_URI
+        fromDatabase:
+          name: canhiring-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRE
+        value: 7d
+
+databases:
+  - name: canhiring-db
+    plan: free
+    databaseName: canhiring
+    user: canhiring_user

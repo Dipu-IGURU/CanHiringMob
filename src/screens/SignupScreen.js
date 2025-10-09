@@ -138,20 +138,26 @@ const SignupScreen = ({ navigation }) => {
     }
   };
 
-  const handleGoogleSignup = async () => {
-    try {
-      const result = await loginWithGoogle();
+  // COMMENTED OUT: Google Signup Handler
+  // const handleGoogleSignup = async () => {
+  //   try {
+  //     const result = await loginWithGoogle();
       
-      if (result.success) {
-        // Navigate to main app after successful signup
-        navigation.navigate('MainTabs');
-      } else {
-        Alert.alert('Google Sign-Up Failed', result.message || 'Failed to sign up with Google');
-      }
-    } catch (error) {
-      console.error('Google signup error:', error);
-      Alert.alert('Error', 'Google Sign-Up failed. Please try again.');
-    }
+  //     if (result.success) {
+  //       // Navigate to main app after successful signup
+  //       navigation.navigate('MainTabs');
+  //     } else {
+  //       Alert.alert('Google Sign-Up Failed', result.message || 'Failed to sign up with Google');
+  //     }
+  //   } catch (error) {
+  //     console.error('Google signup error:', error);
+  //     Alert.alert('Error', 'Google Sign-Up failed. Please try again.');
+  //   }
+  // };
+
+  // Placeholder method to prevent errors
+  const handleGoogleSignup = async () => {
+    Alert.alert('Google Sign-Up Disabled', 'Google authentication is currently disabled.');
   };
 
   return (

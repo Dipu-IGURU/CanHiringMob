@@ -9,8 +9,8 @@ const isIOS = Platform.OS === 'ios';
 
 // API Configuration
 const API_CONFIG = {
-  // Production Firebase backend (for APK builds)
-  production: 'https://us-central1-canhiring-ca.cloudfunctions.net/api',
+  // Production Render backend (for APK builds)
+  production: 'https://canhiring-backend.onrender.com',
   
   // Development configurations
   development: {

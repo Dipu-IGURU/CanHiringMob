@@ -56,15 +56,23 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  // COMMENTED OUT: Google-related fields
+  // provider: {
+  //   type: String,
+  //   enum: ['local', 'google', 'facebook'],
+  //   default: 'local'
+  // },
+  // googleId: {
+  //   type: String,
+  //   sparse: true,
+  //   unique: true
+  // },
+  
+  // Simplified provider field (Google removed)
   provider: {
     type: String,
-    enum: ['local', 'google', 'facebook'],
+    enum: ['local', 'facebook'],
     default: 'local'
-  },
-  googleId: {
-    type: String,
-    sparse: true,
-    unique: true
   },
   profileViews: [profileViewSchema],
   lastProfileView: {

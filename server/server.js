@@ -28,6 +28,8 @@ const corsOptions = {
     const allowedOrigins = [
       'https://www.canhiring.com', // Production frontend domain
       'https://canhiring.com', // Production frontend domain (without www)
+      'https://canhiring-backend.onrender.com', // Render backend URL
+      'https://canhiring-frontend.onrender.com', // Render frontend URL (if you deploy frontend too)
       'http://localhost:19006', // Expo default dev server
       'http://localhost:19000', // Expo web dev server
       'http://localhost:3000',  // React Native web
@@ -155,7 +157,13 @@ connectWithRetry();
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 CanHiring Mobile Server is running on port ${PORT}`);
+  console.log(`📱 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`📱 API Base URL: http://localhost:${PORT}/api`);
-  console.log(`📱 Mobile API URL: http://192.168.1.14:${PORT}/api`);
   console.log(`🔗 Health Check: http://localhost:${PORT}/api/health`);
+  
+  // Log Render-specific information if running on Render
+  if (process.env.RENDER) {
+    console.log(`🌐 Render Service: ${process.env.RENDER_SERVICE_NAME || 'unknown'}`);
+    console.log(`🌐 Render URL: https://${process.env.RENDER_EXTERNAL_HOSTNAME || 'unknown'}`);
+  }
 });
