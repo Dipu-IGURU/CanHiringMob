@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Alert,
   RefreshControl,
+  Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AppHeader from '../components/AppHeader';
@@ -26,6 +27,7 @@ import {
 } from '../services/apiService';
 
 const UserDashboardScreen = ({ navigation }) => {
+  const { width } = Dimensions.get('window');
   const { user: authUser, token, refreshUserData } = useAuth();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -587,9 +589,20 @@ const UserDashboardScreen = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <AppHeader 
-        title={user ? `${getPersonalizedEmoji()} ${getWelcomeMessage()}, ${user.firstName}!` : `${getPersonalizedEmoji()} ${getWelcomeMessage()}, User!`} 
-        showBackButton={false} 
+        showBackButton={false}
+        showLogo={true}
+        rightActions={[
+          { icon: 'notifications-outline', onPress: () => navigation.navigate('JobAlertsScreen') },
+          { icon: 'person-outline', onPress: () => navigation.navigate('Profile') }
+        ]}
       />
+      
+      {/* Greeting Section */}
+      <View style={styles.greetingSection}>
+        <Text style={styles.greetingText}>
+          {user ? `${getPersonalizedEmoji()} ${getWelcomeMessage()}, ${user.firstName}!` : `${getPersonalizedEmoji()} ${getWelcomeMessage()}, User!`}
+        </Text>
+      </View>
       
       <ScrollView 
         style={styles.scrollView}
@@ -738,6 +751,27 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F8FAFC',
+  },
+  greetingSection: {
+    backgroundColor: '#FFFFFF',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  greetingText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1E293B',
+    textAlign: 'center',
   },
   loadingContainer: {
     flex: 1,
