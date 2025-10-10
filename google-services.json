@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "1056852421529",
+    "project_id": "canhiring-ca",
+    "storage_bucket": "canhiring-ca.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1056852421529:android:da6a32762cfc14f684c108",
+        "android_client_info": {
+          "package_name": "com.canhiring.App"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1056852421529-s320qng7jrhuk7m6knhkdllu93e8bfru.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDsvWgBZAvF-bmoxqJm_79htZGPYpK1GAM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1056852421529-s320qng7jrhuk7m6knhkdllu93e8bfru.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
