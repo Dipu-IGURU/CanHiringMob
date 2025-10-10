@@ -718,4 +718,148 @@ router.get('/:id', auth, async (req, res) => {
   }
 });
 
+// Track API job application
+router.post('/track-api-job', auth, [
+  body('jobId').notEmpty().withMessage('Job ID is required'),
+  body('jobTitle').trim().notEmpty().withMessage('Job title is required'),
+  body('company').trim().notEmpty().withMessage('Company name is required'),
+  body('location').trim().notEmpty().withMessage('Location is required'),
+  body('applyUrl').isURL().withMessage('Valid apply URL is required'),
+  body('source').equals('api').withMessage('Source must be api')
+], async (req, res) => {
+  try {
+    // Check validation errors
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation failed',
+        errors: errors.array()
+      });
+    }
+
+    const { jobId, jobTitle, company, location, jobType, applyUrl, source } = req.body;
+    const userId = req.user._id;
+
+    console.log('🔍 Tracking API job application:', { jobId, jobTitle, company, userId });
+
+    // Check if user has reached application limit
+    const userApplications = await Application.countDocuments({ applicantId: userId });
+    const maxApplications = 5; // Free plan limit
+
+    if (userApplications >= maxApplications) {
+      return res.status(403).json({
+        success: false,
+        message: 'Application limit reached. Please upgrade to Professional plan.',
+        limitReached: true,
+        current: userApplications,
+        max: maxApplications
+      });
+    }
+
+    // Create application record for API job
+    const applicationData = {
+      jobId: jobId,
+      applicantId: userId,
+      status: 'pending',
+      appliedAt: new Date(),
+      fullName: req.user.firstName + ' ' + req.user.lastName,
+      email: req.user.email,
+      phone: req.user.profile?.phone || '',
+      currentLocation: req.user.profile?.location || '',
+      experience: req.user.profile?.experience || '',
+      education: req.user.profile?.education || '',
+      currentCompany: req.user.profile?.currentCompany || '',
+      currentPosition: req.user.profile?.currentPosition || '',
+      expectedSalary: req.user.profile?.expectedSalary || '',
+      noticePeriod: req.user.profile?.noticePeriod || '',
+      linkedinProfile: req.user.profile?.linkedinProfile || '',
+      portfolio: req.user.profile?.portfolio || '',
+      resume: req.user.profile?.resume || '',
+      coverLetter: `Applied to ${jobTitle} at ${company} via external link`,
+      // API job specific fields
+      isApiJob: true,
+      apiJobTitle: jobTitle,
+      apiCompany: company,
+      apiLocation: location,
+      apiJobType: jobType || 'Full-time',
+      apiApplyUrl: applyUrl,
+      source: source
+    };
+
+    const application = new Application(applicationData);
+    await application.save();
+
+    // Update user's applied jobs
+    await User.findByIdAndUpdate(userId, {
+      $push: {
+        appliedJobs: {
+          job: null, // No job document for API jobs
+          application: application._id,
+          status: 'pending',
+          appliedAt: new Date()
+        }
+      }
+    });
+
+    console.log('✅ API job application tracked successfully:', application._id);
+
+    res.json({
+      success: true,
+      message: 'API job application tracked successfully',
+      application: {
+        id: application._id,
+        jobTitle,
+        company,
+        location,
+        appliedAt: application.appliedAt,
+        status: application.status
+      }
+    });
+
+  } catch (error) {
+    console.error('Error tracking API job application:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while tracking API job application'
+    });
+  }
+});
+
+// Get application limits
+router.get('/limits', auth, async (req, res) => {
+  try {
+    const userId = req.user._id;
+    
+    // Get current application count
+    const currentApplications = await Application.countDocuments({ applicantId: userId });
+    
+    // Free plan limits
+    const maxApplications = 5;
+    const remaining = Math.max(0, maxApplications - currentApplications);
+    const percentage = Math.round((currentApplications / maxApplications) * 100);
+    const isLimitReached = currentApplications >= maxApplications;
+
+    res.json({
+      success: true,
+      data: {
+        current: currentApplications,
+        max: maxApplications,
+        remaining: remaining,
+        percentage: percentage,
+        plan: 'free',
+        planName: 'Free Plan',
+        isLimitReached: isLimitReached
+      }
+    });
+
+  } catch (error) {
+    console.error('Error fetching application limits:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while fetching application limits'
+    });
+  }
+});
+
 module.exports = router;

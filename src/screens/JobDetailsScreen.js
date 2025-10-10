@@ -15,13 +15,18 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import AppHeader from '../components/AppHeader';
 import CompanyLogo from '../components/CompanyLogo';
+import ProfessionalPlanModal from '../components/ProfessionalPlanModal';
 import { getJobDetails } from '../services/jobSearchService';
+import { trackApiJobApplication, checkApplicationLimits } from '../services/apiJobTrackingService';
+import { useAuth } from '../contexts/AuthContext';
 
 const JobDetailsScreen = ({ navigation, route }) => {
   const { jobData } = route.params || {};
   const [job, setJob] = useState(jobData);
   const [loading, setLoading] = useState(!jobData);
   const [applying, setApplying] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const { user, token } = useAuth();
 
   useEffect(() => {
     if (!jobData && route.params?.jobId) {
@@ -54,8 +59,24 @@ const JobDetailsScreen = ({ navigation, route }) => {
       return;
     }
 
+    // Check if user is logged in
+    if (!user || !token) {
+      Alert.alert('Login Required', 'Please login to apply for jobs');
+      return;
+    }
+
     try {
       setApplying(true);
+      
+      // Check application limits first
+      console.log('🔍 Checking application limits...');
+      const limitsResponse = await checkApplicationLimits(token);
+      
+      if (limitsResponse.success && limitsResponse.data.isLimitReached) {
+        console.log('❌ Application limit reached, showing upgrade modal');
+        setShowUpgradeModal(true);
+        return;
+      }
       
       // Check if the URL can be opened
       const canOpen = await Linking.canOpenURL(job.applyUrl);
@@ -63,17 +84,41 @@ const JobDetailsScreen = ({ navigation, route }) => {
       if (canOpen) {
         Alert.alert(
           'Apply for Job',
-          `You are about to leave the app to apply for "${job.title}" at ${job.company}. Continue?`,
+          `You are about to leave the app to apply for "${job.title}" at ${job.company}. This will be tracked in your applications. Continue?`,
           [
             { text: 'Cancel', style: 'cancel' },
             {
               text: 'Apply Now',
               onPress: async () => {
                 try {
-                  await Linking.openURL(job.applyUrl);
+                  // Track the API job application
+                  console.log('🔍 Tracking API job application...');
+                  const trackResponse = await trackApiJobApplication(token, job);
+                  
+                  if (trackResponse.success) {
+                    console.log('✅ API job application tracked successfully');
+                    Alert.alert(
+                      'Application Tracked!',
+                      'Your application has been tracked. You can view it in your dashboard.',
+                      [
+                        {
+                          text: 'OK',
+                          onPress: () => {
+                            // Open the external application URL
+                            Linking.openURL(job.applyUrl);
+                          }
+                        }
+                      ]
+                    );
+                  } else {
+                    console.log('⚠️ Failed to track application, but proceeding with external link');
+                    // Still open the external URL even if tracking fails
+                    await Linking.openURL(job.applyUrl);
+                  }
                 } catch (error) {
-                  console.error('Error opening URL:', error);
-                  Alert.alert('Error', 'Failed to open application page');
+                  console.error('Error tracking application:', error);
+                  // Still open the external URL even if tracking fails
+                  await Linking.openURL(job.applyUrl);
                 }
               }
             }
@@ -406,6 +451,16 @@ const JobDetailsScreen = ({ navigation, route }) => {
           )}
         </View>
       </ScrollView>
+
+      {/* Professional Plan Upgrade Modal */}
+      <ProfessionalPlanModal
+        visible={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        onUpgrade={() => {
+          setShowUpgradeModal(false);
+          // Handle upgrade logic here
+        }}
+      />
     </SafeAreaView>
   );
 };

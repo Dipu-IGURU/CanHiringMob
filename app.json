@@ -39,6 +39,22 @@
       "blockedPermissions": [
         "android.permission.ACCESS_FINE_LOCATION",
         "android.permission.ACCESS_COARSE_LOCATION"
+      ],
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "canhiringmob.onrender.com"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        }
       ]
     },
     "web": {
@@ -53,6 +69,10 @@
       "eas": {
         "projectId": "d2a35955-1a49-46e8-8538-478d76340742"
       }
+    },
+    "scheme": "canhiring",
+    "runtimeVersion": {
+      "policy": "sdkVersion"
     },
     "owner": "i-guru"
   }

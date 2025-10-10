@@ -128,6 +128,21 @@ const applicationSchema = new mongoose.Schema({
     startDate: Date,
     benefits: [String],
     notes: String
+  },
+  // API job specific fields
+  isApiJob: {
+    type: Boolean,
+    default: false
+  },
+  apiJobTitle: String,
+  apiCompany: String,
+  apiLocation: String,
+  apiJobType: String,
+  apiApplyUrl: String,
+  source: {
+    type: String,
+    enum: ['internal', 'api'],
+    default: 'internal'
   }
 });
 
