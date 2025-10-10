@@ -60,26 +60,20 @@ const LoginScreen = ({ navigation }) => {
     }
   };
 
-  // COMMENTED OUT: Google Login Handler
-  // const handleGoogleLogin = async () => {
-  //   try {
-  //     const result = await loginWithGoogle();
-      
-  //     if (result.success) {
-  //       // Navigate to main app after successful login
-  //       navigation.navigate('MainTabs');
-  //     } else {
-  //       Alert.alert('Google Sign-In Failed', result.message || 'Failed to sign in with Google');
-  //     }
-  //   } catch (error) {
-  //     console.error('Google login error:', error);
-  //     Alert.alert('Error', 'Google Sign-In failed. Please try again.');
-  //   }
-  // };
-
-  // Placeholder method to prevent errors
   const handleGoogleLogin = async () => {
-    Alert.alert('Google Sign-In Disabled', 'Google authentication is currently disabled.');
+    try {
+      const result = await loginWithGoogle();
+      
+      if (result.success) {
+        // Navigate to main app after successful login
+        navigation.navigate('MainTabs');
+      } else {
+        Alert.alert('Google Sign-In Failed', result.message || 'Failed to sign in with Google');
+      }
+    } catch (error) {
+      console.error('Google login error:', error);
+      Alert.alert('Error', 'Google Sign-In failed. Please try again.');
+    }
   };
 
   return (

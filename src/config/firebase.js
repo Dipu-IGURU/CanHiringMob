@@ -20,16 +20,12 @@ if (!firebase.apps.length) {
 // Initialize Firebase Auth
 export const auth = firebase.auth();
 
-// COMMENTED OUT: Google Auth Provider
 // Initialize Google Auth Provider
-// export const googleProvider = new firebase.auth.GoogleAuthProvider();
+export const googleProvider = new firebase.auth.GoogleAuthProvider();
 
 // Configure Google Auth Provider
-// googleProvider.setCustomParameters({
-//   prompt: 'select_account'
-// });
-
-// Placeholder export to prevent import errors
-export const googleProvider = null;
+googleProvider.setCustomParameters({
+  prompt: 'select_account'
+});
 
 export default firebase;

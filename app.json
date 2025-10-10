@@ -44,6 +44,7 @@
     "web": {
       "favicon": "./assets/canhirngfavicon.png"
     },
+    "scheme": "canhiring",
     "plugins": [
       "expo-font",
       "@react-native-google-signin/google-signin"

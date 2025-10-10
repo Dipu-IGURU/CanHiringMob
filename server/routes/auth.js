@@ -303,104 +303,96 @@ router.put('/profile', auth, [
   }
 });
 
-// COMMENTED OUT: Google Login/Register endpoint
-// router.post('/google', async (req, res) => {
-//   try {
-//     const { googleToken, user: googleUser } = req.body;
-
-//     if (!googleToken || !googleUser) {
-//       return res.status(400).json({
-//         success: false,
-//         message: 'Google token and user data are required.'
-//       });
-//     }
-
-//     const { uid, email, displayName, photoURL, emailVerified, provider } = googleUser;
-
-//     if (!email || !displayName) {
-//       return res.status(400).json({
-//         success: false,
-//         message: 'Email and display name are required for Google Sign-In.'
-//       });
-//     }
-
-//     // Check if user already exists
-//     let user = await User.findOne({ email });
-
-//     if (!user) {
-//       // If user doesn't exist, create a new one
-//       const nameParts = displayName.split(' ');
-//       const firstName = nameParts[0];
-//       const lastName = nameParts.slice(1).join(' ') || firstName;
-
-//       const userData = {
-//         email,
-//         firstName,
-//         lastName,
-//         photoURL,
-//         role: 'user', // Default role for Google users
-//         isVerified: emailVerified || true,
-//         provider: provider || 'google',
-//         googleId: uid
-//       };
-
-//       user = new User(userData);
-//       // We need to bypass password validation since it's not required for Google users
-//       await user.save({ validateBeforeSave: false });
-      
-//       console.log('✅ New Google user created:', email);
-//     } else {
-//       // Update existing user with Google info if needed
-//       if (!user.googleId) {
-//         user.googleId = uid;
-//         user.photoURL = photoURL || user.photoURL;
-//         user.isVerified = emailVerified || user.isVerified;
-//         user.provider = provider || 'google';
-//         await user.save();
-//       }
-      
-//       console.log('✅ Existing Google user logged in:', email);
-//     }
-
-//     // Update last login
-//     user.lastLogin = new Date();
-//     await user.save();
-
-//     // Generate token
-//     const token = generateToken(user._id);
-
-//     res.json({
-//       success: true,
-//       message: 'Google authentication successful',
-//       token,
-//       user: {
-//         id: user._id,
-//         firstName: user.firstName,
-//         lastName: user.lastName,
-//         email: user.email,
-//         role: user.role,
-//         company: user.company,
-//         photoURL: user.photoURL,
-//         isVerified: user.isVerified,
-//         provider: user.provider
-//       }
-//     });
-
-//   } catch (error) {
-//     console.error('Google authentication error:', error);
-//     res.status(500).json({
-//       success: false,
-//       message: 'Server error during Google authentication'
-//     });
-//   }
-// });
-
-// Placeholder endpoint to prevent errors
+// Google Login/Register endpoint
 router.post('/google', async (req, res) => {
-  res.status(503).json({
-    success: false,
-    message: 'Google authentication is currently disabled'
-  });
+  try {
+    const { googleToken, user: googleUser } = req.body;
+
+    if (!googleToken || !googleUser) {
+      return res.status(400).json({
+        success: false,
+        message: 'Google token and user data are required.'
+      });
+    }
+
+    const { uid, email, displayName, photoURL, emailVerified, provider } = googleUser;
+
+    if (!email || !displayName) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email and display name are required for Google Sign-In.'
+      });
+    }
+
+    // Check if user already exists
+    let user = await User.findOne({ email });
+
+    if (!user) {
+      // If user doesn't exist, create a new one
+      const nameParts = displayName.split(' ');
+      const firstName = nameParts[0];
+      const lastName = nameParts.slice(1).join(' ') || firstName;
+
+      const userData = {
+        email,
+        firstName,
+        lastName,
+        photoURL,
+        role: 'user', // Default role for Google users
+        isVerified: emailVerified || true,
+        provider: provider || 'google',
+        googleId: uid
+      };
+
+      user = new User(userData);
+      // We need to bypass password validation since it's not required for Google users
+      await user.save({ validateBeforeSave: false });
+      
+      console.log('✅ New Google user created:', email);
+    } else {
+      // Update existing user with Google info if needed
+      if (!user.googleId) {
+        user.googleId = uid;
+        user.photoURL = photoURL || user.photoURL;
+        user.isVerified = emailVerified || user.isVerified;
+        user.provider = provider || 'google';
+        await user.save();
+      }
+      
+      console.log('✅ Existing Google user logged in:', email);
+    }
+
+    // Update last login
+    user.lastLogin = new Date();
+    await user.save();
+
+    // Generate token
+    const token = generateToken(user._id);
+
+    res.json({
+      success: true,
+      message: 'Google authentication successful',
+      token,
+      user: {
+        id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        role: user.role,
+        company: user.company,
+        photoURL: user.photoURL,
+        isVerified: user.isVerified,
+        provider: user.provider
+      }
+    });
+
+  } catch (error) {
+    console.error('Google authentication error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error during Google authentication'
+    });
+  }
 });
 
 // Get current user endpoint (for AuthContext)

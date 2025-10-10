@@ -161,116 +161,104 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // COMMENTED OUT: Google Login Method
-  // const loginWithGoogle = async () => {
-  //   try {
-  //     setLoading(true);
-  //     console.log('🔐 AuthContext: Starting Google login...');
-      
-  //     const result = await googleAuthService.signInWithGoogle();
-      
-  //     if (result.success) {
-  //       console.log('🔐 AuthContext: Google login successful, syncing with backend...');
-        
-  //       // Sync with backend - create or update user
-  //       const backendResult = await syncGoogleUserWithBackend(result.user, result.token);
-        
-  //       if (backendResult.success) {
-  //         // Store auth data
-  //         await AsyncStorage.setItem('token', backendResult.token);
-  //         await AsyncStorage.setItem('user', JSON.stringify(backendResult.user));
-          
-  //         setToken(backendResult.token);
-  //         setUser(backendResult.user);
-  //         setIsAuthenticated(true);
-          
-  //         console.log('✅ AuthContext: Google authentication completed successfully');
-  //         return { success: true, user: backendResult.user };
-  //       } else {
-  //         console.log('❌ AuthContext: Backend sync failed:', backendResult.message);
-  //         return { success: false, message: backendResult.message };
-  //       }
-  //     } else {
-  //       console.log('❌ AuthContext: Google login failed:', result.message);
-  //       return { success: false, message: result.message };
-  //     }
-  //   } catch (error) {
-  //     console.error('❌ AuthContext: Google login error:', error);
-  //     return { success: false, message: 'Google sign-in failed. Please try again.' };
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-
-  // Placeholder method to prevent errors
   const loginWithGoogle = async () => {
-    return { success: false, message: 'Google authentication is disabled' };
+    try {
+      setLoading(true);
+      console.log('🔐 AuthContext: Starting Google login...');
+      
+      const result = await googleAuthService.signInWithGoogle();
+      
+      if (result.success) {
+        console.log('🔐 AuthContext: Google login successful, syncing with backend...');
+        
+        // Sync with backend - create or update user
+        const backendResult = await syncGoogleUserWithBackend(result.user, result.token, result.idToken);
+        
+        if (backendResult.success) {
+          // Store auth data
+          await AsyncStorage.setItem('token', backendResult.token);
+          await AsyncStorage.setItem('user', JSON.stringify(backendResult.user));
+          
+          setToken(backendResult.token);
+          setUser(backendResult.user);
+          setIsAuthenticated(true);
+          
+          console.log('✅ AuthContext: Google authentication completed successfully');
+          return { success: true, user: backendResult.user };
+        } else {
+          console.log('❌ AuthContext: Backend sync failed:', backendResult.message);
+          return { success: false, message: backendResult.message };
+        }
+      } else {
+        console.log('❌ AuthContext: Google login failed:', result.message);
+        return { success: false, message: result.message };
+      }
+    } catch (error) {
+      console.error('❌ AuthContext: Google login error:', error);
+      return { success: false, message: 'Google sign-in failed. Please try again.' };
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // COMMENTED OUT: Google User Sync Method
-  // const syncGoogleUserWithBackend = async (googleUser, googleToken) => {
-  //   try {
-  //     console.log('🔄 AuthContext: Syncing Google user with backend...');
+  const syncGoogleUserWithBackend = async (googleUser, googleToken, idToken) => {
+    try {
+      console.log('🔄 AuthContext: Syncing Google user with backend...');
       
-  //     const response = await fetch(`${API_BASE_URL}/api/auth/google`, {
-  //       method: 'POST',
-  //       headers: {
-  //         'Content-Type': 'application/json'
-  //       },
-  //       body: JSON.stringify({
-  //         googleToken,
-  //         user: {
-  //           uid: googleUser.uid,
-  //           email: googleUser.email,
-  //           displayName: googleUser.displayName,
-  //           photoURL: googleUser.photoURL,
-  //           emailVerified: googleUser.emailVerified,
-  //           provider: 'google'
-  //         }
-  //       })
-  //     });
+      const response = await fetch(`${API_BASE_URL}/api/auth/google`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          googleToken,
+          idToken,
+          user: {
+            uid: googleUser.uid,
+            email: googleUser.email,
+            displayName: googleUser.displayName,
+            photoURL: googleUser.photoURL,
+            emailVerified: googleUser.emailVerified,
+            provider: 'google'
+          }
+        })
+      });
 
-  //     const data = await response.json();
+      const data = await response.json();
       
-  //     if (data.success) {
-  //       console.log('✅ AuthContext: Backend sync successful');
-  //       return {
-  //         success: true,
-  //         token: data.token,
-  //         user: data.user
-  //       };
-  //     } else {
-  //       console.log('❌ AuthContext: Backend sync failed:', data.message);
-  //       return {
-  //         success: false,
-  //         message: data.message
-  //       };
-  //     }
-  //   } catch (error) {
-  //     console.error('❌ AuthContext: Backend sync error:', error);
-  //     return {
-  //       success: false,
-  //       message: 'Failed to sync with server. Please try again.'
-  //     };
-  //   }
-  // };
-
-  // Placeholder method to prevent errors
-  const syncGoogleUserWithBackend = async (googleUser, googleToken) => {
-    return { success: false, message: 'Google authentication is disabled' };
+      if (data.success) {
+        console.log('✅ AuthContext: Backend sync successful');
+        return {
+          success: true,
+          token: data.token,
+          user: data.user
+        };
+      } else {
+        console.log('❌ AuthContext: Backend sync failed:', data.message);
+        return {
+          success: false,
+          message: data.message
+        };
+      }
+    } catch (error) {
+      console.error('❌ AuthContext: Backend sync error:', error);
+      return {
+        success: false,
+        message: 'Failed to sync with server. Please try again.'
+      };
+    }
   };
 
   const logout = async () => {
     try {
       console.log('AuthContext: Starting logout process...');
       
-      // COMMENTED OUT: Google Sign-out Check
       // Check if user is signed in with Google
-      // const isGoogleSignedIn = await googleAuthService.isSignedIn();
-      // if (isGoogleSignedIn) {
-      //   console.log('AuthContext: Signing out from Google...');
-      //   await googleAuthService.signOut();
-      // }
+      const isGoogleSignedIn = await googleAuthService.isSignedIn();
+      if (isGoogleSignedIn) {
+        console.log('AuthContext: Signing out from Google...');
+        await googleAuthService.signOut();
+      }
       
       console.log('AuthContext: About to clear AsyncStorage...');
       // Clear all auth data from AsyncStorage
