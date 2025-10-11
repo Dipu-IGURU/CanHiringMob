@@ -15,15 +15,12 @@ WebBrowser.maybeCompleteAuthSession();
 //    - For development: http://localhost:19006
 //    - For Expo: canhiring://auth
 //    - For web: https://yourdomain.com/auth
-// Use the client ID from the new project (CanHiringMob Ca)
-const GOOGLE_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID || '645343269585-3ahuroc07mb32kelnqvfd0vhma6stkav.apps.googleusercontent.com';
-const GOOGLE_CLIENT_SECRET = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_SECRET || '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';
+// Use the Android client ID for both development and APK builds
+const GOOGLE_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID || '645343269585-6up0bko2ib0rl3att1m5q6chhej8sk3h.apps.googleusercontent.com';
 
-// Use a specific redirect URI that works with web clients
+// Use a redirect URI that works with Android client IDs
 const GOOGLE_REDIRECT_URI = AuthSession.makeRedirectUri({
-  scheme: 'https',
-  hostname: 'localhost',
-  port: 19006,
+  useProxy: true,
 });
 
 // Debug: Log the redirect URI
@@ -71,7 +68,6 @@ export const googleAuthService = {
         const tokenResult = await AuthSession.exchangeCodeAsync(
           {
             clientId: GOOGLE_CLIENT_ID,
-            clientSecret: GOOGLE_CLIENT_SECRET,
             code: result.params.code,
             redirectUri: GOOGLE_REDIRECT_URI,
             extraParams: {
