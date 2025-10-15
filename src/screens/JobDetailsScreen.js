@@ -15,7 +15,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import AppHeader from '../components/AppHeader';
 import CompanyLogo from '../components/CompanyLogo';
-import ProfessionalPlanModal from '../components/ProfessionalPlanModal';
 import { getJobDetails } from '../services/jobSearchService';
 import { trackApiJobApplication, checkApplicationLimits } from '../services/apiJobTrackingService';
 import { useAuth } from '../contexts/AuthContext';
@@ -25,7 +24,6 @@ const JobDetailsScreen = ({ navigation, route }) => {
   const [job, setJob] = useState(jobData);
   const [loading, setLoading] = useState(!jobData);
   const [applying, setApplying] = useState(false);
-  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const { user, token } = useAuth();
 
   useEffect(() => {
@@ -76,8 +74,21 @@ const JobDetailsScreen = ({ navigation, route }) => {
       const limitsResponse = await checkApplicationLimits(token);
       
       if (limitsResponse.success && limitsResponse.data.isLimitReached) {
-        console.log('❌ Application limit reached, showing upgrade modal');
-        setShowUpgradeModal(true);
+        console.log('❌ Application limit reached, showing upgrade popup');
+        Alert.alert(
+          'Application Limit Reached',
+          'You have reached the 5 job application limit. Please visit our website to upgrade your plan for unlimited applications.',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            { 
+              text: 'Visit Website', 
+              onPress: () => {
+                // Open the CanHiring website for plan upgrade
+                Linking.openURL('https://www.canhiring.com/');
+              }
+            }
+          ]
+        );
         return;
       }
       
@@ -458,15 +469,6 @@ const JobDetailsScreen = ({ navigation, route }) => {
         </View>
       </ScrollView>
 
-      {/* Professional Plan Upgrade Modal */}
-      <ProfessionalPlanModal
-        visible={showUpgradeModal}
-        onClose={() => setShowUpgradeModal(false)}
-        onUpgrade={() => {
-          setShowUpgradeModal(false);
-          // Handle upgrade logic here
-        }}
-      />
     </SafeAreaView>
   );
 };
