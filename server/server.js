@@ -39,7 +39,10 @@ const corsOptions = {
       'http://127.0.0.1:5001',  // Local API server on localhost
       'http://192.168.1.28:19006', // Expo dev server on local IP
       'http://192.168.1.28:19000', // Expo web dev server on local IP
-      'http://192.168.1.28:5001'   // Local API server on local IP
+      'http://192.168.1.28:5001',   // Local API server on local IP
+      'http://192.168.1.44:19006', // Expo dev server on current IP
+      'http://192.168.1.44:19000', // Expo web dev server on current IP
+      'http://192.168.1.44:5001'   // Local API server on current IP
     ];
     
     // Allow requests with no origin (mobile apps, Postman, curl, etc.)

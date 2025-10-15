@@ -7,13 +7,17 @@ export const trackApiJobApplication = async (token, jobData) => {
     console.log('🔍 trackApiJobApplication: Starting request...');
     console.log('🔍 trackApiJobApplication: Job data:', jobData);
     
+    // Extract apply URL from various possible fields
+    const applyUrl = jobData.apply_url || jobData.job_apply_link || jobData.applyUrl || jobData.job_apply_url;
+    console.log('🔍 trackApiJobApplication: Extracted applyUrl:', applyUrl);
+    
     const applicationData = {
       jobId: jobData.job_id || jobData.id || `api_${Date.now()}`, // Generate unique ID for API jobs
       jobTitle: jobData.title,
       company: jobData.company,
       location: jobData.location,
       jobType: jobData.type || 'Full-time',
-      applyUrl: jobData.apply_url || jobData.job_apply_link,
+      applyUrl: applyUrl, // Can be null if not available
       source: 'api', // Mark as API job
       appliedAt: new Date().toISOString(),
       status: 'pending'

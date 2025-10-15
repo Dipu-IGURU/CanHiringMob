@@ -724,7 +724,7 @@ router.post('/track-api-job', auth, [
   body('jobTitle').trim().notEmpty().withMessage('Job title is required'),
   body('company').trim().notEmpty().withMessage('Company name is required'),
   body('location').trim().notEmpty().withMessage('Location is required'),
-  body('applyUrl').isURL().withMessage('Valid apply URL is required'),
+  body('applyUrl').optional().isURL().withMessage('Apply URL must be a valid URL if provided'),
   body('source').equals('api').withMessage('Source must be api')
 ], async (req, res) => {
   try {
@@ -741,7 +741,13 @@ router.post('/track-api-job', auth, [
     const { jobId, jobTitle, company, location, jobType, applyUrl, source } = req.body;
     const userId = req.user._id;
 
-    console.log('🔍 Tracking API job application:', { jobId, jobTitle, company, userId });
+    console.log('🔍 Tracking API job application:', { jobId, jobTitle, company, userId, applyUrl });
+    console.log('🔍 User data:', { 
+      firstName: req.user.firstName, 
+      lastName: req.user.lastName, 
+      email: req.user.email,
+      profile: req.user.profile 
+    });
 
     // Check if user has reached application limit
     const userApplications = await Application.countDocuments({ applicantId: userId });
@@ -763,17 +769,17 @@ router.post('/track-api-job', auth, [
       applicantId: userId,
       status: 'pending',
       appliedAt: new Date(),
-      fullName: req.user.firstName + ' ' + req.user.lastName,
-      email: req.user.email,
-      phone: req.user.profile?.phone || '',
-      currentLocation: req.user.profile?.location || '',
-      experience: req.user.profile?.experience || '',
-      education: req.user.profile?.education || '',
+      fullName: (req.user.firstName || '') + ' ' + (req.user.lastName || ''),
+      email: req.user.email || '',
+      phone: req.user.profile?.phone || req.user.phone || 'Not provided',
+      currentLocation: req.user.profile?.location || req.user.profile?.city || 'Not provided',
+      experience: req.user.profile?.experience || 'Not provided',
+      education: req.user.profile?.education || 'Not provided',
       currentCompany: req.user.profile?.currentCompany || '',
       currentPosition: req.user.profile?.currentPosition || '',
       expectedSalary: req.user.profile?.expectedSalary || '',
       noticePeriod: req.user.profile?.noticePeriod || '',
-      linkedinProfile: req.user.profile?.linkedinProfile || '',
+      linkedinProfile: req.user.profile?.linkedinProfile || req.user.profile?.linkedin || '',
       portfolio: req.user.profile?.portfolio || '',
       resume: req.user.profile?.resume || '',
       coverLetter: `Applied to ${jobTitle} at ${company} via external link`,
@@ -783,24 +789,52 @@ router.post('/track-api-job', auth, [
       apiCompany: company,
       apiLocation: location,
       apiJobType: jobType || 'Full-time',
-      apiApplyUrl: applyUrl,
+      apiApplyUrl: applyUrl || `https://example.com/apply/${jobId}`, // Fallback URL if not provided
       source: source
     };
 
-    const application = new Application(applicationData);
-    await application.save();
+    console.log('🔍 Creating application with data:', JSON.stringify(applicationData, null, 2));
+    
+    let application;
+    try {
+      application = new Application(applicationData);
+      console.log('🔍 Application object created, attempting to save...');
+      await application.save();
+      console.log('✅ Application saved successfully:', application._id);
+    } catch (saveError) {
+      console.error('❌ Error saving application:', saveError);
+      console.error('❌ Save error details:', {
+        message: saveError.message,
+        name: saveError.name,
+        code: saveError.code,
+        errors: saveError.errors
+      });
+      throw saveError;
+    }
 
     // Update user's applied jobs
-    await User.findByIdAndUpdate(userId, {
-      $push: {
-        appliedJobs: {
-          job: null, // No job document for API jobs
-          application: application._id,
-          status: 'pending',
-          appliedAt: new Date()
+    try {
+      console.log('🔍 Updating user applied jobs for user:', userId);
+      const userUpdateResult = await User.findByIdAndUpdate(userId, {
+        $push: {
+          appliedJobs: {
+            job: null, // No job document for API jobs
+            application: application._id,
+            status: 'pending',
+            appliedAt: new Date()
+          }
         }
+      }, { new: true });
+      
+      if (userUpdateResult) {
+        console.log('✅ User applied jobs updated successfully');
+      } else {
+        console.log('⚠️ User not found for ID:', userId);
       }
-    });
+    } catch (userUpdateError) {
+      console.error('⚠️ Failed to update user applied jobs:', userUpdateError);
+      // Don't fail the entire request if user update fails
+    }
 
     console.log('✅ API job application tracked successfully:', application._id);
 
@@ -818,10 +852,16 @@ router.post('/track-api-job', auth, [
     });
 
   } catch (error) {
-    console.error('Error tracking API job application:', error);
+    console.error('❌ Error tracking API job application:', error);
+    console.error('❌ Error details:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    });
     res.status(500).json({
       success: false,
-      message: 'Server error while tracking API job application'
+      message: 'Server error while tracking API job application',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 });

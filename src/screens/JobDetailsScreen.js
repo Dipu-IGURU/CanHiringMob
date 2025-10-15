@@ -54,7 +54,10 @@ const JobDetailsScreen = ({ navigation, route }) => {
   };
 
   const handleApply = async () => {
-    if (!job?.applyUrl) {
+    // Check if we have an apply URL or if this is an API job that can be tracked
+    const hasApplyUrl = job?.applyUrl || job?.apply_url || job?.job_apply_link;
+    
+    if (!hasApplyUrl) {
       Alert.alert('Error', 'No application URL available for this job');
       return;
     }
@@ -78,8 +81,11 @@ const JobDetailsScreen = ({ navigation, route }) => {
         return;
       }
       
+      // Get the actual apply URL
+      const actualApplyUrl = job.applyUrl || job.apply_url || job.job_apply_link;
+      
       // Check if the URL can be opened
-      const canOpen = await Linking.canOpenURL(job.applyUrl);
+      const canOpen = await Linking.canOpenURL(actualApplyUrl);
       
       if (canOpen) {
         Alert.alert(
@@ -105,7 +111,7 @@ const JobDetailsScreen = ({ navigation, route }) => {
                           text: 'OK',
                           onPress: () => {
                             // Open the external application URL
-                            Linking.openURL(job.applyUrl);
+                            Linking.openURL(actualApplyUrl);
                           }
                         }
                       ]
@@ -113,12 +119,12 @@ const JobDetailsScreen = ({ navigation, route }) => {
                   } else {
                     console.log('⚠️ Failed to track application, but proceeding with external link');
                     // Still open the external URL even if tracking fails
-                    await Linking.openURL(job.applyUrl);
+                    await Linking.openURL(actualApplyUrl);
                   }
                 } catch (error) {
                   console.error('Error tracking application:', error);
                   // Still open the external URL even if tracking fails
-                  await Linking.openURL(job.applyUrl);
+                  await Linking.openURL(actualApplyUrl);
                 }
               }
             }
@@ -427,7 +433,7 @@ const JobDetailsScreen = ({ navigation, route }) => {
           <TouchableOpacity
             style={[styles.applyButton, applying && styles.applyButtonDisabled]}
             onPress={handleApply}
-            disabled={applying || !job.applyUrl}
+            disabled={applying || !(job?.applyUrl || job?.apply_url || job?.job_apply_link)}
           >
             <LinearGradient
               colors={['#3B82F6', '#1D4ED8']}
@@ -444,7 +450,7 @@ const JobDetailsScreen = ({ navigation, route }) => {
             </LinearGradient>
           </TouchableOpacity>
           
-          {!job.applyUrl && (
+          {!(job?.applyUrl || job?.apply_url || job?.job_apply_link) && (
             <Text style={styles.noApplyText}>
               Application URL not available for this job
             </Text>

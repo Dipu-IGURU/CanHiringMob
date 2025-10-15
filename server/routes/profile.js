@@ -103,8 +103,7 @@ router.get('/applied-jobs', auth, async (req, res) => {
         { applicantId: req.user._id }
       ]
     })
-      .populate('jobId', 'title company location type category createdAt')
-      .sort({ createdAt: -1 })
+      .sort({ appliedAt: -1, createdAt: -1 })
       .skip(skip)
       .limit(parseInt(limit))
       .lean();
@@ -117,20 +116,73 @@ router.get('/applied-jobs', auth, async (req, res) => {
     });
 
     // Transform to match expected format
-    const appliedJobs = applications.map(app => ({
-      id: app._id,
-      _id: app._id,
-      jobId: app.jobId?._id,
-      title: app.jobId?.title || 'Job Title Not Available',
-      company: app.jobId?.company || 'Company Not Available',
-      location: app.jobId?.location || 'Location Not Available',
-      type: app.jobId?.type || 'Full-time',
-      category: app.jobId?.category || 'General',
-      status: app.status || 'pending',
-      appliedAt: app.appliedAt || app.createdAt,
-      jobPostedAt: app.jobId?.createdAt,
-      salary: app.jobId?.salaryRange || 'Salary Not Specified'
-    }));
+    const appliedJobs = applications.map(app => {
+      // Handle API jobs (isApiJob: true) vs internal jobs
+      if (app.isApiJob) {
+        return {
+          id: app._id,
+          _id: app._id,
+          jobId: app.jobId, // This is a string for API jobs
+          title: app.apiJobTitle || 'Job Title Not Available',
+          company: app.apiCompany || 'Company Not Available',
+          location: app.apiLocation || 'Location Not Available',
+          type: app.apiJobType || 'Full-time',
+          category: 'API Job',
+          status: app.status || 'pending',
+          appliedAt: app.appliedAt || app.createdAt,
+          jobPostedAt: app.appliedAt, // For API jobs, use applied date
+          salary: 'Salary Not Specified',
+          isApiJob: true,
+          applyUrl: app.apiApplyUrl,
+          source: app.source || 'api'
+        };
+      } else {
+        // Handle internal jobs - need to populate jobId
+        return {
+          id: app._id,
+          _id: app._id,
+          jobId: app.jobId,
+          title: 'Job Title Not Available', // Will be populated separately
+          company: 'Company Not Available',
+          location: 'Location Not Available',
+          type: 'Full-time',
+          category: 'Internal Job',
+          status: app.status || 'pending',
+          appliedAt: app.appliedAt || app.createdAt,
+          jobPostedAt: app.appliedAt,
+          salary: 'Salary Not Specified',
+          isApiJob: false,
+          source: app.source || 'internal'
+        };
+      }
+    });
+
+    // For internal jobs, we need to populate the jobId field separately
+    const internalJobIds = appliedJobs
+      .filter(job => !job.isApiJob && job.jobId)
+      .map(job => job.jobId);
+
+    if (internalJobIds.length > 0) {
+      const internalJobs = await Job.find({ _id: { $in: internalJobIds } })
+        .select('title company location type category createdAt salaryRange')
+        .lean();
+
+      // Update internal jobs with actual job data
+      appliedJobs.forEach(job => {
+        if (!job.isApiJob && job.jobId) {
+          const jobData = internalJobs.find(j => j._id.toString() === job.jobId.toString());
+          if (jobData) {
+            job.title = jobData.title || 'Job Title Not Available';
+            job.company = jobData.company || 'Company Not Available';
+            job.location = jobData.location || 'Location Not Available';
+            job.type = jobData.type || 'Full-time';
+            job.category = jobData.category || 'General';
+            job.jobPostedAt = jobData.createdAt;
+            job.salary = jobData.salaryRange || 'Salary Not Specified';
+          }
+        }
+      });
+    }
 
     res.json({
       success: true,

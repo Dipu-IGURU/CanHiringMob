@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 const applicationSchema = new mongoose.Schema({
   jobId: {
-    type: mongoose.Schema.Types.ObjectId,
+    type: mongoose.Schema.Types.Mixed, // Allow both ObjectId and String for API jobs
     ref: 'Job',
     required: true
   },
