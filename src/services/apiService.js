@@ -505,7 +505,7 @@ export const getInterviewStats = async (token) => {
   try {
     console.log('🔍 getInterviewStats: Starting request...');
     
-    const response = await fetch(`${API_BASE_URL}/api/applications/interview-stats`, {
+    const response = await fetch(`${API_BASE_URL}/api/profile/interview-stats`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -545,7 +545,7 @@ export const getProfileStats = async (token) => {
   try {
     console.log('🔍 getProfileStats: Starting request...');
     
-    const response = await fetch(`${API_BASE_URL}/api/auth/profile/stats`, {
+    const response = await fetch(`${API_BASE_URL}/api/profile/view-stats`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -643,6 +643,8 @@ export const getRecentActivities = async (token, limit = 10) => {
 // Get current user profile
 export const getCurrentUserProfile = async (token) => {
   try {
+    console.log('🔍 getCurrentUserProfile: Starting request...');
+    
     const response = await fetch(`${API_BASE_URL}/api/profile/`, {
       method: 'GET',
       headers: {
@@ -651,14 +653,19 @@ export const getCurrentUserProfile = async (token) => {
       },
     });
 
+    console.log('🔍 getCurrentUserProfile: Response status:', response.status);
+
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const errorText = await response.text();
+      console.error('🔍 getCurrentUserProfile: Error response:', errorText);
+      throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
     }
 
     const data = await response.json();
+    console.log('🔍 getCurrentUserProfile: Success response:', JSON.stringify(data, null, 2));
     return data;
   } catch (error) {
-    console.error('Error fetching user profile:', error);
+    console.error('❌ getCurrentUserProfile: Error fetching user profile:', error);
     return {
       success: false,
       message: 'Failed to fetch user profile'

@@ -16,7 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import LogoImage from '../components/LogoImage';
 import AppHeader from '../components/AppHeader';
 import { useAuth } from '../contexts/AuthContext';
-import { getUserApplications, getApplicationStats, getInterviewStats } from '../services/apiService';
+import { getUserApplications, getApplicationStats, getInterviewStats, getCurrentUserProfile, getProfileStats } from '../services/apiService';
 
 const ProfileScreen = ({ navigation }) => {
   const { user, token, logout } = useAuth();
@@ -25,28 +25,39 @@ const ProfileScreen = ({ navigation }) => {
   const [stats, setStats] = useState({
     applications: 0,
     savedJobs: 0,
-    interviews: 0
+    interviews: 0,
+    profileViews: 0
   });
   const [loading, setLoading] = useState(true);
+  const [userProfile, setUserProfile] = useState(null);
 
 
   useEffect(() => {
-    fetchUserStats();
+    fetchUserData();
   }, []);
 
-  const fetchUserStats = async () => {
+  const fetchUserData = async () => {
     if (!token) {
-      console.log('No token available for fetching user stats');
+      console.log('No token available for fetching user data');
+      setLoading(false);
       return;
     }
     
     try {
       setLoading(true);
-      console.log('Fetching user stats with token:', token.substring(0, 20) + '...');
+      console.log('🔍 ProfileScreen: Fetching user data with token:', token.substring(0, 20) + '...');
+      
+      // Fetch complete user profile data
+      const profileResponse = await getCurrentUserProfile(token);
+      console.log('🔍 ProfileScreen: Profile response:', profileResponse);
+      if (profileResponse.success) {
+        setUserProfile(profileResponse.data);
+        console.log('✅ ProfileScreen: User profile loaded:', profileResponse.data);
+      }
       
       // Fetch application stats
       const appStatsResponse = await getApplicationStats(token);
-      console.log('Application stats response:', appStatsResponse);
+      console.log('🔍 ProfileScreen: Application stats response:', appStatsResponse);
       if (appStatsResponse.success) {
         setStats(prev => ({
           ...prev,
@@ -56,7 +67,7 @@ const ProfileScreen = ({ navigation }) => {
 
       // Fetch interview stats
       const interviewStatsResponse = await getInterviewStats(token);
-      console.log('Interview stats response:', interviewStatsResponse);
+      console.log('🔍 ProfileScreen: Interview stats response:', interviewStatsResponse);
       if (interviewStatsResponse.success) {
         setStats(prev => ({
           ...prev,
@@ -64,15 +75,24 @@ const ProfileScreen = ({ navigation }) => {
         }));
       }
 
+      // Fetch profile view stats
+      const profileStatsResponse = await getProfileStats(token);
+      console.log('🔍 ProfileScreen: Profile stats response:', profileStatsResponse);
+      if (profileStatsResponse.success) {
+        setStats(prev => ({
+          ...prev,
+          profileViews: profileStatsResponse.stats.totalViews || 0
+        }));
+      }
+
       // For saved jobs, we'll use a placeholder for now
-      // You can implement a saved jobs API endpoint later
       setStats(prev => ({
         ...prev,
         savedJobs: 0 // Placeholder - implement saved jobs API
       }));
 
     } catch (error) {
-      console.error('Error fetching user stats:', error);
+      console.error('❌ ProfileScreen: Error fetching user data:', error);
     } finally {
       setLoading(false);
     }
@@ -167,15 +187,25 @@ const ProfileScreen = ({ navigation }) => {
               </TouchableOpacity>
             </View>
             <Text style={styles.userName}>
-              {user ? `${user.firstName} ${user.lastName}` : 'User'}
+              {userProfile ? `${userProfile.firstName} ${userProfile.lastName}` : (user ? `${user.firstName} ${user.lastName}` : 'User')}
             </Text>
             <Text style={styles.userEmail}>
-              {user?.email || 'user@example.com'}
+              {userProfile?.email || user?.email || 'user@example.com'}
             </Text>
             <Text style={styles.userRole}>
-              {user?.role === 'recruiter' ? 'Recruiter' : 'Job Seeker'}
-              {user?.company && ` at ${user.company}`}
+              {userProfile?.role === 'recruiter' ? 'Recruiter' : 'Job Seeker'}
+              {userProfile?.company && ` at ${userProfile.company}`}
             </Text>
+            {userProfile?.profile?.jobTitle && (
+              <Text style={styles.userTitle}>
+                {userProfile.profile.jobTitle}
+              </Text>
+            )}
+            {userProfile?.profile?.location && (
+              <Text style={styles.userLocation}>
+                📍 {userProfile.profile.location}
+              </Text>
+            )}
           </View>
         </LinearGradient>
 
@@ -194,20 +224,59 @@ const ProfileScreen = ({ navigation }) => {
             {loading ? (
               <ActivityIndicator size="small" color="#3B82F6" />
             ) : (
-              <Text style={styles.statNumber}>{stats.savedJobs}</Text>
+              <Text style={styles.statNumber}>{stats.interviews}</Text>
             )}
-            <Text style={styles.statLabel}>Saved Jobs</Text>
+            <Text style={styles.statLabel}>Interviews</Text>
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
             {loading ? (
               <ActivityIndicator size="small" color="#3B82F6" />
             ) : (
-              <Text style={styles.statNumber}>{stats.interviews}</Text>
+              <Text style={styles.statNumber}>{stats.profileViews}</Text>
             )}
-            <Text style={styles.statLabel}>Interviews</Text>
+            <Text style={styles.statLabel}>Profile Views</Text>
           </View>
         </View>
+
+        {/* Profile Information */}
+        {userProfile && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Profile Information</Text>
+            {userProfile.profile?.phone && (
+              <View style={styles.infoItem}>
+                <Ionicons name="call-outline" size={20} color="#3B82F6" />
+                <Text style={styles.infoText}>{userProfile.profile.phone}</Text>
+              </View>
+            )}
+            {userProfile.profile?.bio && (
+              <View style={styles.infoItem}>
+                <Ionicons name="person-outline" size={20} color="#3B82F6" />
+                <Text style={styles.infoText}>{userProfile.profile.bio}</Text>
+              </View>
+            )}
+            {userProfile.profile?.skills && userProfile.profile.skills.length > 0 && (
+              <View style={styles.infoItem}>
+                <Ionicons name="star-outline" size={20} color="#3B82F6" />
+                <Text style={styles.infoText}>
+                  Skills: {userProfile.profile.skills.join(', ')}
+                </Text>
+              </View>
+            )}
+            {userProfile.profile?.experience && (
+              <View style={styles.infoItem}>
+                <Ionicons name="briefcase-outline" size={20} color="#3B82F6" />
+                <Text style={styles.infoText}>{userProfile.profile.experience}</Text>
+              </View>
+            )}
+            {userProfile.profile?.education && (
+              <View style={styles.infoItem}>
+                <Ionicons name="school-outline" size={20} color="#3B82F6" />
+                <Text style={styles.infoText}>{userProfile.profile.education}</Text>
+              </View>
+            )}
+          </View>
+        )}
 
         {/* Notification Settings */}
         <View style={styles.section}>
@@ -339,6 +408,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 12,
+    alignSelf: 'flex-start',
+    marginTop: 4,
+  },
+  userTitle: {
+    fontSize: 16,
+    color: 'rgba(255, 255, 255, 0.9)',
+    marginTop: 8,
+    fontWeight: '500',
+  },
+  userLocation: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.8)',
+    marginTop: 4,
   },
   statsContainer: {
     flexDirection: 'row',
@@ -440,6 +522,20 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#1E293B',
     marginLeft: 12,
+  },
+  infoItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+  },
+  infoText: {
+    fontSize: 14,
+    color: '#64748B',
+    marginLeft: 12,
+    flex: 1,
   },
   logoutSection: {
     marginHorizontal: 20,

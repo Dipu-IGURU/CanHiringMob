@@ -66,7 +66,7 @@ const UserDashboardScreen = ({ navigation }) => {
   // Alternative emoji options for variety
   const getPersonalizedEmoji = () => {
     const emojis = ['👋', '🎯', '💼', '🚀', '⭐', '💪', '🎉', '🔥'];
-    const userIndex = user ? user.firstName.charCodeAt(0) % emojis.length : 0;
+    const userIndex = authUser && authUser.firstName ? authUser.firstName.charCodeAt(0) % emojis.length : 0;
     return emojis[userIndex];
   };
 
@@ -96,7 +96,7 @@ const UserDashboardScreen = ({ navigation }) => {
     }
     
     // Use user's name to pick a consistent message
-    const userIndex = user ? user.firstName.charCodeAt(0) % messageList.length : 0;
+    const userIndex = authUser && authUser.firstName ? authUser.firstName.charCodeAt(0) % messageList.length : 0;
     return messageList[userIndex];
   };
 
@@ -123,7 +123,13 @@ const UserDashboardScreen = ({ navigation }) => {
 
   const checkAuthAndFetchData = async () => {
     try {
+      console.log('🔍 UserDashboard: checkAuthAndFetchData called');
+      console.log('🔍 UserDashboard: authUser:', JSON.stringify(authUser, null, 2));
+      console.log('🔍 UserDashboard: token exists:', !!token);
+      
       if (authUser) {
+        console.log('🔍 UserDashboard: authUser.firstName:', authUser.firstName);
+        console.log('🔍 UserDashboard: authUser.email:', authUser.email);
         setUser(authUser);
         await fetchAllData();
       } else {
@@ -176,78 +182,86 @@ const UserDashboardScreen = ({ navigation }) => {
       console.log('🔍 UserDashboard: User ID:', authUser?._id || 'No user ID');
       
       setApplicationsLoading(true);
-      const response = await getAppliedJobs(token);
-      console.log('🔍 UserDashboard: Applied jobs response:', JSON.stringify(response, null, 2));
       
-      if (response.success && response.jobs && response.jobs.length > 0) {
-        console.log('✅ UserDashboard: Found', response.jobs.length, 'applied jobs');
-        const jobs = response.jobs.map(item => {
-          console.log('🔍 UserDashboard: Processing job item:', JSON.stringify(item, null, 2));
-          
-          // Handle different data structures from API
-          const jobData = item.jobId || item;
-          const title = jobData.title || item.title || 'Job Application';
-          const company = jobData.company || item.company || 'Company';
-          const location = jobData.location || item.location || 'Location';
-          const type = jobData.type || item.type || 'Full-time';
-          
-          return {
-            id: item._id || item.id,
-            title: title,
-            company: company,
-            location: location,
-            type: type,
-            status: item.status || 'applied',
-            date: item.appliedAt || item.createdAt || new Date().toISOString(),
-            applicationId: item._id || item.id,
-            jobId: item.jobId || item._id
-          };
-        });
-        console.log('✅ UserDashboard: Mapped applied jobs:', jobs);
-        setAppliedJobs(jobs);
-      } else {
-        console.log('⚠️ UserDashboard: No applied jobs found or API error:', response.message);
-        // Try fallback to getUserApplications
-        console.log('🔄 UserDashboard: Trying fallback to getUserApplications...');
-        try {
-          const fallbackResponse = await getUserApplications(token, 1, 10);
-          console.log('🔍 UserDashboard: Fallback response:', JSON.stringify(fallbackResponse, null, 2));
-          
-          if (fallbackResponse.success && fallbackResponse.data && fallbackResponse.data.length > 0) {
-            console.log('✅ UserDashboard: Fallback found', fallbackResponse.data.length, 'applications');
-            const fallbackJobs = fallbackResponse.data.map(item => {
-              console.log('🔍 UserDashboard: Processing fallback job item:', JSON.stringify(item, null, 2));
-              
-              // Handle different data structures from fallback API
-              const jobData = item.jobId || item;
-              const title = jobData?.title || item.title || 'Job Application';
-              const company = jobData?.company || item.company || 'Company';
-              const location = jobData?.location || item.location || 'Location';
-              const type = jobData?.type || item.type || 'Full-time';
-              
-              return {
-                id: item._id,
-                title: title,
-                company: company,
-                location: location,
-                type: type,
-                status: item.status || 'applied',
-                date: item.appliedAt || item.createdAt || new Date().toISOString(),
-                applicationId: item._id,
-                jobId: item.jobId?._id || item._id
-              };
-            });
-            console.log('✅ UserDashboard: Fallback mapped jobs:', fallbackJobs);
-            setAppliedJobs(fallbackJobs);
-          } else {
-            console.log('⚠️ UserDashboard: No applied jobs found for this user');
-            setAppliedJobs([]);
-          }
-        } catch (fallbackError) {
-          console.error('❌ UserDashboard: Fallback also failed:', fallbackError);
-          setAppliedJobs([]);
+      // Try getAppliedJobs first
+      try {
+        const response = await getAppliedJobs(token);
+        console.log('🔍 UserDashboard: Applied jobs response:', JSON.stringify(response, null, 2));
+        
+        if (response.success && response.jobs && response.jobs.length > 0) {
+          console.log('✅ UserDashboard: Found', response.jobs.length, 'applied jobs');
+          const jobs = response.jobs.map(item => {
+            console.log('🔍 UserDashboard: Processing job item:', JSON.stringify(item, null, 2));
+            
+            // Handle different data structures from API
+            const jobData = item.jobId || item;
+            const title = jobData.title || item.title || 'Job Application';
+            const company = jobData.company || item.company || 'Company';
+            const location = jobData.location || item.location || 'Location';
+            const type = jobData.type || item.type || 'Full-time';
+            
+            return {
+              id: item._id || item.id,
+              title: title,
+              company: company,
+              location: location,
+              type: type,
+              status: item.status || 'applied',
+              date: item.appliedAt || item.createdAt || new Date().toISOString(),
+              applicationId: item._id || item.id,
+              jobId: item.jobId || item._id
+            };
+          });
+          console.log('✅ UserDashboard: Mapped applied jobs:', jobs);
+          setAppliedJobs(jobs);
+          return;
         }
+      } catch (appliedJobsError) {
+        console.log('⚠️ UserDashboard: getAppliedJobs failed, trying fallback:', appliedJobsError.message);
       }
+      
+      // Try fallback to getUserApplications
+      console.log('🔄 UserDashboard: Trying fallback to getUserApplications...');
+      try {
+        const fallbackResponse = await getUserApplications(token, 1, 10);
+        console.log('🔍 UserDashboard: Fallback response:', JSON.stringify(fallbackResponse, null, 2));
+        
+        if (fallbackResponse.success && fallbackResponse.data && fallbackResponse.data.length > 0) {
+          console.log('✅ UserDashboard: Fallback found', fallbackResponse.data.length, 'applications');
+          const fallbackJobs = fallbackResponse.data.map(item => {
+            console.log('🔍 UserDashboard: Processing fallback job item:', JSON.stringify(item, null, 2));
+            
+            // Handle different data structures from fallback API
+            const jobData = item.jobId || item;
+            const title = jobData?.title || item.title || 'Job Application';
+            const company = jobData?.company || item.company || 'Company';
+            const location = jobData?.location || item.location || 'Location';
+            const type = jobData?.type || item.type || 'Full-time';
+            
+            return {
+              id: item._id,
+              title: title,
+              company: company,
+              location: location,
+              type: type,
+              status: item.status || 'applied',
+              date: item.appliedAt || item.createdAt || new Date().toISOString(),
+              applicationId: item._id,
+              jobId: item.jobId?._id || item._id
+            };
+          });
+          console.log('✅ UserDashboard: Fallback mapped jobs:', fallbackJobs);
+          setAppliedJobs(fallbackJobs);
+          return;
+        }
+      } catch (fallbackError) {
+        console.error('❌ UserDashboard: Fallback also failed:', fallbackError);
+      }
+      
+      // If both fail, show empty state
+      console.log('⚠️ UserDashboard: No applied jobs found');
+      setAppliedJobs([]);
+      
     } catch (error) {
       console.error('❌ UserDashboard: Error fetching applied jobs:', error);
       console.error('❌ UserDashboard: Error details:', {
@@ -265,6 +279,11 @@ const UserDashboardScreen = ({ navigation }) => {
     try {
       if (!token) {
         console.log('❌ UserDashboard: No token for application stats');
+        // Use zero when no token
+        setAppStats({
+          total: 0,
+          changeFromLastWeek: 0
+        });
         return;
       }
       
@@ -280,18 +299,18 @@ const UserDashboardScreen = ({ navigation }) => {
         });
       } else {
         console.log('⚠️ UserDashboard: Application stats failed:', response.message);
-        // Use mock data for testing
+        // Use zero for demo
         setAppStats({
-          total: 5,
-          changeFromLastWeek: 2
+          total: 0,
+          changeFromLastWeek: 0
         });
       }
     } catch (error) {
       console.error('❌ UserDashboard: Error fetching application stats:', error);
-      // Use mock data for testing
+      // Use zero for demo
       setAppStats({
-        total: 5,
-        changeFromLastWeek: 2
+        total: 0,
+        changeFromLastWeek: 0
       });
     }
   };
@@ -300,6 +319,11 @@ const UserDashboardScreen = ({ navigation }) => {
     try {
       if (!token) {
         console.log('❌ UserDashboard: No token for interview stats');
+        // Use zero when no token
+        setInterviewStats({
+          total: 0,
+          thisWeek: 0
+        });
         return;
       }
       
@@ -315,7 +339,7 @@ const UserDashboardScreen = ({ navigation }) => {
         });
       } else {
         console.log('⚠️ UserDashboard: Interview stats failed:', response.message);
-        // Show zero instead of mock data
+        // Use zero for demo
         setInterviewStats({
           total: 0,
           thisWeek: 0
@@ -323,7 +347,7 @@ const UserDashboardScreen = ({ navigation }) => {
       }
     } catch (error) {
       console.error('❌ UserDashboard: Error fetching interview stats:', error);
-      // Show zero instead of mock data
+      // Use zero for demo
       setInterviewStats({
         total: 0,
         thisWeek: 0
@@ -335,6 +359,11 @@ const UserDashboardScreen = ({ navigation }) => {
     try {
       if (!token) {
         console.log('❌ UserDashboard: No token for profile stats');
+        // Use zero when no token
+        setProfileStats({
+          totalViews: 0,
+          percentageChange: 0
+        });
         return;
       }
       
@@ -350,7 +379,7 @@ const UserDashboardScreen = ({ navigation }) => {
         });
       } else {
         console.log('⚠️ UserDashboard: Profile stats failed:', response.message);
-        // Show zero instead of mock data
+        // Use zero for demo
         setProfileStats({
           totalViews: 0,
           percentageChange: 0
@@ -358,7 +387,7 @@ const UserDashboardScreen = ({ navigation }) => {
       }
     } catch (error) {
       console.error('❌ UserDashboard: Error fetching profile stats:', error);
-      // Show zero instead of mock data
+      // Use zero for demo
       setProfileStats({
         totalViews: 0,
         percentageChange: 0
@@ -370,6 +399,11 @@ const UserDashboardScreen = ({ navigation }) => {
     try {
       if (!token) {
         console.log('❌ UserDashboard: No token for offers stats');
+        // Use zero when no token
+        setOffersStats({
+          totalOffers: 0,
+          lastMonthOffers: 0
+        });
         return;
       }
       
@@ -385,7 +419,7 @@ const UserDashboardScreen = ({ navigation }) => {
         });
       } else {
         console.log('⚠️ UserDashboard: Offers stats failed:', response.message);
-        // Show zero instead of mock data
+        // Use zero for demo
         setOffersStats({
           totalOffers: 0,
           lastMonthOffers: 0
@@ -393,7 +427,7 @@ const UserDashboardScreen = ({ navigation }) => {
       }
     } catch (error) {
       console.error('❌ UserDashboard: Error fetching offers stats:', error);
-      // Show zero instead of mock data
+      // Use zero for demo
       setOffersStats({
         totalOffers: 0,
         lastMonthOffers: 0
@@ -574,13 +608,19 @@ const UserDashboardScreen = ({ navigation }) => {
     );
   }
 
-  if (!user) {
+  if (!authUser) {
     return (
       <View style={styles.errorContainer}>
         <AppHeader title="Dashboard" showBackButton={false} />
         <View style={styles.errorContent}>
           <Ionicons name="alert-circle" size={48} color="#EF4444" />
-          <Text style={styles.errorText}>No user data available</Text>
+          <Text style={styles.errorText}>Please log in to view your dashboard</Text>
+          <TouchableOpacity 
+            style={styles.loginButton}
+            onPress={() => navigation.navigate('LoginScreen')}
+          >
+            <Text style={styles.loginButtonText}>Log In</Text>
+          </TouchableOpacity>
         </View>
       </View>
     );
@@ -600,7 +640,21 @@ const UserDashboardScreen = ({ navigation }) => {
       {/* Greeting Section */}
       <View style={styles.greetingSection}>
         <Text style={styles.greetingText}>
-          {user ? `${getPersonalizedEmoji()} ${getWelcomeMessage()}, ${user.firstName}!` : `${getPersonalizedEmoji()} ${getWelcomeMessage()}, User!`}
+          {(() => {
+            console.log('🔍 Greeting: authUser:', authUser);
+            console.log('🔍 Greeting: authUser.firstName:', authUser?.firstName);
+            console.log('🔍 Greeting: authUser.email:', authUser?.email);
+            
+            if (authUser && authUser.firstName) {
+              return `${getPersonalizedEmoji()} ${getWelcomeMessage()}, ${authUser.firstName}!`;
+            } else if (authUser && authUser.email) {
+              // Fallback to email if firstName is not available
+              const emailName = authUser.email.split('@')[0];
+              return `${getPersonalizedEmoji()} ${getWelcomeMessage()}, ${emailName}!`;
+            } else {
+              return `${getPersonalizedEmoji()} ${getWelcomeMessage()}, User!`;
+            }
+          })()}
         </Text>
       </View>
       
@@ -800,6 +854,21 @@ const styles = StyleSheet.create({
     marginTop: 16,
     fontSize: 16,
     color: '#6B7280',
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  loginButton: {
+    backgroundColor: '#3B82F6',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+    marginTop: 8,
+  },
+  loginButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+    textAlign: 'center',
   },
   scrollView: {
     flex: 1,
