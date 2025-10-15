@@ -21,7 +21,7 @@ import { useAuth } from '../contexts/AuthContext';
 
 const { width, height } = Dimensions.get('window');
 
-const SignupScreen = ({ navigation }) => {
+const SignupScreen = ({ navigation, route }) => {
   const { register, loginWithGoogle } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -34,6 +34,9 @@ const SignupScreen = ({ navigation }) => {
     password: '',
     confirmPassword: '',
   });
+
+  // Check if user came from Google login button
+  const fromGoogleLogin = route?.params?.fromGoogleLogin || false;
 
   const handleInputChange = (field, value) => {
     setFormData({
@@ -157,7 +160,13 @@ const SignupScreen = ({ navigation }) => {
 
   // Placeholder method to prevent errors
   const handleGoogleSignup = async () => {
-    Alert.alert('Google Sign-Up Disabled', 'Google authentication is currently disabled.');
+    // For now, show a message that Google signup is coming soon
+    // In the future, this can be connected to actual Google authentication
+    Alert.alert(
+      'Google Sign-Up', 
+      'Google authentication is coming soon! For now, please use the regular signup form below.',
+      [{ text: 'OK' }]
+    );
   };
 
   return (
@@ -202,7 +211,10 @@ const SignupScreen = ({ navigation }) => {
             {/* Welcome Message */}
             <View style={styles.welcomeContainer}>
               <Text style={styles.welcomeText}>
-                Join thousands of job seekers who found their dream careers with CanHiring!
+                {fromGoogleLogin 
+                  ? "Great choice! Complete your registration below to get started with CanHiring."
+                  : "Join thousands of job seekers who found their dream careers with CanHiring!"
+                }
               </Text>
             </View>
 

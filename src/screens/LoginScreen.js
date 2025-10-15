@@ -77,9 +77,10 @@ const LoginScreen = ({ navigation }) => {
   //   }
   // };
 
-  // Placeholder method to prevent errors
+  // Handle Google login button click - redirect to signup page
   const handleGoogleLogin = async () => {
-    Alert.alert('Google Sign-In Disabled', 'Google authentication is currently disabled.');
+    // Navigate to signup page when Google login button is clicked
+    navigation.navigate('SignupScreen', { fromGoogleLogin: true });
   };
 
   return (
@@ -202,6 +203,7 @@ const LoginScreen = ({ navigation }) => {
                 onPress={handleGoogleLogin}
                 loading={loading}
                 disabled={loading}
+                text="Sign up with Google"
               />
             </View>
 
