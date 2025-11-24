@@ -61,8 +61,7 @@
       "favicon": "./assets/canhirngfavicon.png"
     },
     "plugins": [
-      "expo-font",
-      "@react-native-google-signin/google-signin"
+      "expo-font"
     ],
     "privacy": "public",
     "extra": {

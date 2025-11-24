@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_BASE_URL } from '../config/environment';
-import { googleAuthService } from '../services/googleAuthService';
 
 const AuthContext = createContext();
 
@@ -202,9 +201,9 @@ export const AuthProvider = ({ children }) => {
   //   }
   // };
 
-  // Placeholder method to prevent errors
+  // Google authentication removed - method kept as stub for compatibility
   const loginWithGoogle = async () => {
-    return { success: false, message: 'Google authentication is disabled' };
+    return { success: false, message: 'Google authentication is not available' };
   };
 
   // COMMENTED OUT: Google User Sync Method
@@ -367,7 +366,6 @@ export const AuthProvider = ({ children }) => {
     isAuthenticated,
     login,
     register,
-    loginWithGoogle,
     logout,
     updateUser,
     refreshUserData,

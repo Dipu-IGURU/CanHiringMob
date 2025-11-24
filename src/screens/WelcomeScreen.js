@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,8 @@ import {
   TouchableOpacity,
   Dimensions,
   ScrollView,
+  Modal,
+  Pressable,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -15,6 +17,8 @@ import LogoImage from '../components/LogoImage';
 const { width, height } = Dimensions.get('window');
 
 const WelcomeScreen = ({ navigation }) => {
+  const [showLearnMoreModal, setShowLearnMoreModal] = useState(false);
+
   return (
     <SafeAreaView style={styles.container}>
       <LinearGradient
@@ -107,7 +111,7 @@ const WelcomeScreen = ({ navigation }) => {
               
               <TouchableOpacity
                 style={styles.learnMoreButton}
-                onPress={() => {/* Add learn more functionality */}}
+                onPress={() => setShowLearnMoreModal(true)}
               >
                 <Text style={styles.learnMoreText}>Learn More</Text>
                 <Ionicons name="information-circle-outline" size={16} color="#6B7280" />
@@ -116,6 +120,144 @@ const WelcomeScreen = ({ navigation }) => {
           </View>
         </ScrollView>
       </LinearGradient>
+
+      {/* Learn More Modal */}
+      <Modal
+        visible={showLearnMoreModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowLearnMoreModal(false)}
+      >
+        <Pressable 
+          style={styles.modalOverlay}
+          onPress={() => setShowLearnMoreModal(false)}
+        >
+          <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
+            <View style={styles.modalHeader}>
+              <View style={styles.modalLogoContainer}>
+                <LogoImage size="medium" />
+              </View>
+              <Text style={styles.modalTitle}>About CanHiring</Text>
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={() => setShowLearnMoreModal(false)}
+              >
+                <Ionicons name="close" size={24} color="#6B7280" />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView 
+              style={styles.modalBody}
+              showsVerticalScrollIndicator={false}
+            >
+              <Text style={styles.modalDescription}>
+                CanHiring Solutions is your comprehensive job platform that connects talented professionals 
+                with top companies worldwide. Our mission is to make the hiring process more efficient, 
+                transparent, and successful for both job seekers and employers.
+              </Text>
+
+              <View style={styles.featuresSection}>
+                <Text style={styles.sectionTitle}>Key Features</Text>
+                
+                <View style={styles.featureRow}>
+                  <View style={styles.featureIconContainer}>
+                    <Ionicons name="search" size={20} color="#3B82F6" />
+                  </View>
+                  <View style={styles.featureTextContainer}>
+                    <Text style={styles.featureTitle}>Smart Job Search</Text>
+                    <Text style={styles.featureDescription}>
+                      Discover opportunities that match your skills and career goals
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={styles.featureRow}>
+                  <View style={styles.featureIconContainer}>
+                    <Ionicons name="people" size={20} color="#10B981" />
+                  </View>
+                  <View style={styles.featureTextContainer}>
+                    <Text style={styles.featureTitle}>Talent Matching</Text>
+                    <Text style={styles.featureDescription}>
+                      Connect with top professionals and build your dream team
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={styles.featureRow}>
+                  <View style={styles.featureIconContainer}>
+                    <Ionicons name="notifications" size={20} color="#F59E0B" />
+                  </View>
+                  <View style={styles.featureTextContainer}>
+                    <Text style={styles.featureTitle}>Job Alerts</Text>
+                    <Text style={styles.featureDescription}>
+                      Get notified about new opportunities matching your preferences
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={styles.featureRow}>
+                  <View style={styles.featureIconContainer}>
+                    <Ionicons name="analytics" size={20} color="#8B5CF6" />
+                  </View>
+                  <View style={styles.featureTextContainer}>
+                    <Text style={styles.featureTitle}>Career Analytics</Text>
+                    <Text style={styles.featureDescription}>
+                      Track your applications and get insights into your job search
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={styles.featureRow}>
+                  <View style={styles.featureIconContainer}>
+                    <Ionicons name="shield-checkmark" size={20} color="#EF4444" />
+                  </View>
+                  <View style={styles.featureTextContainer}>
+                    <Text style={styles.featureTitle}>Secure Platform</Text>
+                    <Text style={styles.featureDescription}>
+                      Your data is protected with industry-standard security measures
+                    </Text>
+                  </View>
+                </View>
+              </View>
+
+              <View style={styles.statsSection}>
+                <Text style={styles.sectionTitle}>Our Impact</Text>
+                <View style={styles.statsGrid}>
+                  <View style={styles.statBox}>
+                    <Text style={styles.statNumber}>10K+</Text>
+                    <Text style={styles.statLabel}>Active Jobs</Text>
+                  </View>
+                  <View style={styles.statBox}>
+                    <Text style={styles.statNumber}>5K+</Text>
+                    <Text style={styles.statLabel}>Companies</Text>
+                  </View>
+                  <View style={styles.statBox}>
+                    <Text style={styles.statNumber}>50K+</Text>
+                    <Text style={styles.statLabel}>Candidates</Text>
+                  </View>
+                </View>
+              </View>
+            </ScrollView>
+
+            <View style={styles.modalFooter}>
+              <TouchableOpacity
+                style={styles.getStartedModalButton}
+                onPress={() => {
+                  setShowLearnMoreModal(false);
+                  navigation.navigate('UserTypeSelection');
+                }}
+              >
+                <LinearGradient
+                  colors={['#3B82F6', '#1D4ED8']}
+                  style={styles.modalButtonGradient}
+                >
+                  <Text style={styles.modalButtonText}>Get Started</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -289,6 +431,136 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     fontSize: 16,
     fontWeight: '500',
+  },
+  // Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    width: '100%',
+    maxWidth: 400,
+    maxHeight: '85%',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 10,
+  },
+  modalHeader: {
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  modalLogoContainer: {
+    marginBottom: 12,
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#1F2937',
+    textAlign: 'center',
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    padding: 4,
+  },
+  modalBody: {
+    padding: 20,
+    maxHeight: height * 0.5,
+  },
+  modalDescription: {
+    fontSize: 15,
+    color: '#6B7280',
+    lineHeight: 22,
+    marginBottom: 24,
+    textAlign: 'center',
+  },
+  featuresSection: {
+    marginBottom: 24,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1F2937',
+    marginBottom: 16,
+  },
+  featureRow: {
+    flexDirection: 'row',
+    marginBottom: 16,
+    alignItems: 'flex-start',
+  },
+  featureIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#F1F5F9',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  featureTextContainer: {
+    flex: 1,
+  },
+  featureTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1F2937',
+    marginBottom: 4,
+  },
+  featureDescription: {
+    fontSize: 14,
+    color: '#6B7280',
+    lineHeight: 20,
+  },
+  statsSection: {
+    marginBottom: 16,
+  },
+  statsGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    gap: 12,
+  },
+  statBox: {
+    flex: 1,
+    backgroundColor: '#F8FAFC',
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  modalFooter: {
+    padding: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#F1F5F9',
+  },
+  getStartedModalButton: {
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  modalButtonGradient: {
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
 

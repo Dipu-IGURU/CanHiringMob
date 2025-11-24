@@ -16,13 +16,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import LogoImage from '../components/LogoImage';
-import GoogleSignInButton from '../components/GoogleSignInButton';
 import { useAuth } from '../contexts/AuthContext';
 
 const { width, height } = Dimensions.get('window');
 
 const LoginScreen = ({ navigation }) => {
-  const { login, loginWithGoogle } = useAuth();
+  const { login } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -60,27 +59,6 @@ const LoginScreen = ({ navigation }) => {
     }
   };
 
-  // COMMENTED OUT: Google Login Handler
-  // const handleGoogleLogin = async () => {
-  //   try {
-  //     const result = await loginWithGoogle();
-      
-  //     if (result.success) {
-  //       // Navigate to main app after successful login
-  //       navigation.navigate('MainTabs');
-  //     } else {
-  //       Alert.alert('Google Sign-In Failed', result.message || 'Failed to sign in with Google');
-  //     }
-  //   } catch (error) {
-  //     console.error('Google login error:', error);
-  //     Alert.alert('Error', 'Google Sign-In failed. Please try again.');
-  //   }
-  // };
-
-  // Placeholder method to prevent errors
-  const handleGoogleLogin = async () => {
-    Alert.alert('Google Sign-In Disabled', 'Google authentication is currently disabled.');
-  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -143,6 +121,7 @@ const LoginScreen = ({ navigation }) => {
                     keyboardType="email-address"
                     autoCapitalize="none"
                     autoCorrect={false}
+                    underlineColorAndroid="transparent"
                   />
                 </View>
               </View>
@@ -160,6 +139,7 @@ const LoginScreen = ({ navigation }) => {
                     secureTextEntry={!showPassword}
                     autoCapitalize="none"
                     autoCorrect={false}
+                    underlineColorAndroid="transparent"
                   />
                   <TouchableOpacity
                     onPress={() => setShowPassword(!showPassword)}
@@ -174,11 +154,6 @@ const LoginScreen = ({ navigation }) => {
                 </View>
               </View>
 
-              {/* Forgot Password */}
-              <TouchableOpacity style={styles.forgotPassword}>
-                <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-              </TouchableOpacity>
-
               {/* Login Button */}
               <TouchableOpacity
                 style={[styles.loginButton, loading && styles.loginButtonDisabled]}
@@ -190,29 +165,10 @@ const LoginScreen = ({ navigation }) => {
                 </Text>
               </TouchableOpacity>
 
-              {/* Divider */}
-              <View style={styles.divider}>
-                <View style={styles.dividerLine} />
-                <Text style={styles.dividerText}>or</Text>
-                <View style={styles.dividerLine} />
-              </View>
-
-              {/* Google Sign In */}
-              <GoogleSignInButton
-                onPress={handleGoogleLogin}
-                loading={loading}
-                disabled={loading}
-              />
             </View>
 
             {/* Auth Options */}
             <View style={styles.authOptionsContainer}>
-              <View style={styles.divider}>
-                <View style={styles.dividerLine} />
-                <Text style={styles.dividerText}>or</Text>
-                <View style={styles.dividerLine} />
-              </View>
-              
               <View style={styles.authButtonsContainer}>
                 <TouchableOpacity
                   style={[styles.authButton, styles.signupButton]}
@@ -221,14 +177,6 @@ const LoginScreen = ({ navigation }) => {
                   <Text style={[styles.authButtonText, styles.signupButtonText]}>Create Account</Text>
                 </TouchableOpacity>
               </View>
-              
-              {/* Skip Login Button */}
-              <TouchableOpacity
-                style={styles.skipLoginButton}
-                onPress={() => navigation.navigate('MainTabs')}
-              >
-                <Text style={styles.skipLoginText}>Continue as Guest</Text>
-              </TouchableOpacity>
             </View>
           </ScrollView>
         </KeyboardAvoidingView>
@@ -318,7 +266,7 @@ const styles = StyleSheet.create({
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'transparent',
     borderRadius: 12,
     borderWidth: 1,
     borderColor: '#E2E8F0',
@@ -332,18 +280,10 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     color: '#1E293B',
+    outlineStyle: 'none',
   },
   eyeIcon: {
     padding: 4,
-  },
-  forgotPassword: {
-    alignSelf: 'flex-end',
-    marginBottom: 24,
-  },
-  forgotPasswordText: {
-    fontSize: 14,
-    color: '#3B82F6',
-    fontWeight: '500',
   },
   loginButton: {
     backgroundColor: '#3B82F6',
@@ -373,7 +313,7 @@ const styles = StyleSheet.create({
   divider: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 5,
   },
   dividerLine: {
     flex: 1,
@@ -403,7 +343,7 @@ const styles = StyleSheet.create({
     marginLeft: 12,
   },
   authOptionsContainer: {
-    marginTop: 20,
+    marginTop: 5,
     paddingBottom: 30,
   },
   authButtonsContainer: {
@@ -430,17 +370,6 @@ const styles = StyleSheet.create({
   },
   signupButtonText: {
     color: '#FFFFFF',
-  },
-  skipLoginButton: {
-    marginTop: 20,
-    alignItems: 'center',
-    paddingVertical: 12,
-  },
-  skipLoginText: {
-    fontSize: 16,
-    color: '#64748B',
-    fontWeight: '500',
-    textDecorationLine: 'underline',
   },
 });
 

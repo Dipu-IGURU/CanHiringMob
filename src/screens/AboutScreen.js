@@ -189,21 +189,21 @@ const AboutScreen = ({ navigation }) => {
               <Text style={styles.sectionTitle}>Legal</Text>
               <TouchableOpacity
                 style={styles.legalLink}
-                onPress={() => console.log('Privacy Policy')}
+                onPress={() => handleLinkPress('https://canhiring.com/privacy')}
               >
                 <Text style={styles.legalText}>Privacy Policy</Text>
                 <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.legalLink}
-                onPress={() => console.log('Terms of Service')}
+                onPress={() => handleLinkPress('https://canhiring.com/terms')}
               >
                 <Text style={styles.legalText}>Terms of Service</Text>
                 <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.legalLink}
-                onPress={() => console.log('Cookie Policy')}
+                onPress={() => handleLinkPress('https://canhiring.com/cookies')}
               >
                 <Text style={styles.legalText}>Cookie Policy</Text>
                 <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />

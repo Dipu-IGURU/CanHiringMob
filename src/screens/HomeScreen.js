@@ -229,7 +229,7 @@ const HomeScreen = ({ navigation }) => {
     <View style={styles.testimonialCard}>
       {/* Quote Icon */}
       <View style={styles.quoteIcon}>
-        <Ionicons name="quote" size={24} color="#3B82F6" />
+        <Ionicons name="chatbubble-outline" size={24} color="#3B82F6" />
       </View>
       
       <View style={styles.testimonialHeader}>

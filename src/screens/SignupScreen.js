@@ -11,18 +11,18 @@ import {
   ScrollView,
   Dimensions,
   ActivityIndicator,
+  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import LogoImage from '../components/LogoImage';
-import GoogleSignInButton from '../components/GoogleSignInButton';
 import { useAuth } from '../contexts/AuthContext';
 
 const { width, height } = Dimensions.get('window');
 
 const SignupScreen = ({ navigation }) => {
-  const { register, loginWithGoogle } = useAuth();
+  const { register } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -138,27 +138,6 @@ const SignupScreen = ({ navigation }) => {
     }
   };
 
-  // COMMENTED OUT: Google Signup Handler
-  // const handleGoogleSignup = async () => {
-  //   try {
-  //     const result = await loginWithGoogle();
-      
-  //     if (result.success) {
-  //       // Navigate to main app after successful signup
-  //       navigation.navigate('MainTabs');
-  //     } else {
-  //       Alert.alert('Google Sign-Up Failed', result.message || 'Failed to sign up with Google');
-  //     }
-  //   } catch (error) {
-  //     console.error('Google signup error:', error);
-  //     Alert.alert('Error', 'Google Sign-Up failed. Please try again.');
-  //   }
-  // };
-
-  // Placeholder method to prevent errors
-  const handleGoogleSignup = async () => {
-    Alert.alert('Google Sign-Up Disabled', 'Google authentication is currently disabled.');
-  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -222,6 +201,7 @@ const SignupScreen = ({ navigation }) => {
                       onChangeText={(value) => handleInputChange('firstName', value)}
                       autoCapitalize="words"
                       autoCorrect={false}
+                      underlineColorAndroid="transparent"
                     />
                   </View>
                 </View>
@@ -237,6 +217,7 @@ const SignupScreen = ({ navigation }) => {
                       onChangeText={(value) => handleInputChange('lastName', value)}
                       autoCapitalize="words"
                       autoCorrect={false}
+                      underlineColorAndroid="transparent"
                     />
                   </View>
                 </View>
@@ -256,6 +237,7 @@ const SignupScreen = ({ navigation }) => {
                     keyboardType="email-address"
                     autoCapitalize="none"
                     autoCorrect={false}
+                    underlineColorAndroid="transparent"
                   />
                 </View>
               </View>
@@ -275,6 +257,7 @@ const SignupScreen = ({ navigation }) => {
                     secureTextEntry={!showPassword}
                     autoCapitalize="none"
                     autoCorrect={false}
+                    underlineColorAndroid="transparent"
                   />
                   <TouchableOpacity
                     onPress={() => setShowPassword(!showPassword)}
@@ -303,6 +286,7 @@ const SignupScreen = ({ navigation }) => {
                     secureTextEntry={!showConfirmPassword}
                     autoCapitalize="none"
                     autoCorrect={false}
+                    underlineColorAndroid="transparent"
                   />
                   <TouchableOpacity
                     onPress={() => setShowConfirmPassword(!showConfirmPassword)}
@@ -330,9 +314,25 @@ const SignupScreen = ({ navigation }) => {
                 </View>
                 <Text style={styles.termsText}>
                   I agree to the{' '}
-                  <Text style={styles.termsLink}>Terms and Conditions</Text>
+                  <Text 
+                    style={styles.termsLink}
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      Linking.openURL('https://canhiring.com/terms');
+                    }}
+                  >
+                    Terms and Conditions
+                  </Text>
                   {' '}and{' '}
-                  <Text style={styles.termsLink}>Privacy Policy</Text>
+                  <Text 
+                    style={styles.termsLink}
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      Linking.openURL('https://canhiring.com/privacy');
+                    }}
+                  >
+                    Privacy Policy
+                  </Text>
                 </Text>
               </TouchableOpacity>
 
@@ -354,20 +354,6 @@ const SignupScreen = ({ navigation }) => {
                 )}
               </TouchableOpacity>
 
-              {/* Divider */}
-              <View style={styles.divider}>
-                <View style={styles.dividerLine} />
-                <Text style={styles.dividerText}>or</Text>
-                <View style={styles.dividerLine} />
-              </View>
-
-              {/* Google Sign Up */}
-              <GoogleSignInButton
-                onPress={handleGoogleSignup}
-                loading={loading}
-                disabled={loading}
-                text="Continue with Google"
-              />
             </View>
 
             {/* Sign In Link */}
@@ -469,7 +455,7 @@ const styles = StyleSheet.create({
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'transparent',
     borderRadius: 12,
     borderWidth: 1,
     borderColor: '#E2E8F0',
@@ -483,6 +469,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     color: '#1E293B',
+    outlineStyle: 'none',
   },
   eyeIcon: {
     padding: 4,
