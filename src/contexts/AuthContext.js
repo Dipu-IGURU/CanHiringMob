@@ -17,6 +17,7 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isGuest, setIsGuest] = useState(false);
 
   useEffect(() => {
     checkAuthState();
@@ -27,9 +28,28 @@ export const AuthProvider = ({ children }) => {
       console.log('🔍 AuthContext: Checking authentication state...');
       const storedToken = await AsyncStorage.getItem('token');
       const storedUser = await AsyncStorage.getItem('user');
+      const storedGuestMode = await AsyncStorage.getItem('isGuest');
 
       console.log('🔍 AuthContext: Stored token exists:', !!storedToken);
       console.log('🔍 AuthContext: Stored user exists:', !!storedUser);
+      console.log('🔍 AuthContext: Guest mode:', storedGuestMode === 'true');
+
+      // Check if user is in guest mode
+      if (storedGuestMode === 'true') {
+        setIsGuest(true);
+        setIsAuthenticated(true);
+        setUser({
+          id: 'guest',
+          firstName: 'Guest',
+          lastName: 'User',
+          email: 'guest@canhiring.com',
+          role: 'user',
+          isGuest: true
+        });
+        setLoading(false);
+        console.log('✅ AuthContext: Guest mode enabled');
+        return;
+      }
 
       if (storedToken && storedUser) {
         console.log('🔍 AuthContext: Verifying token with server...');
@@ -41,6 +61,7 @@ export const AuthProvider = ({ children }) => {
           setToken(storedToken);
           setUser(JSON.parse(storedUser));
           setIsAuthenticated(true);
+          setIsGuest(false);
           console.log('✅ AuthContext: User authenticated successfully');
         } else {
           console.log('❌ AuthContext: Token invalid, clearing auth data');
@@ -97,6 +118,9 @@ export const AuthProvider = ({ children }) => {
       if (data.success) {
         const { token: newToken, user: userData } = data;
         
+        // Clear guest mode when logging in
+        await AsyncStorage.removeItem('isGuest');
+        
         // Store token and user data
         await AsyncStorage.setItem('token', newToken);
         await AsyncStorage.setItem('user', JSON.stringify(userData));
@@ -104,6 +128,7 @@ export const AuthProvider = ({ children }) => {
         setToken(newToken);
         setUser(userData);
         setIsAuthenticated(true);
+        setIsGuest(false);
         
         return { success: true, user: userData };
       } else {
@@ -137,6 +162,9 @@ export const AuthProvider = ({ children }) => {
         
         console.log('Registration successful, storing auth data...');
         
+        // Clear guest mode when registering
+        await AsyncStorage.removeItem('isGuest');
+        
         // Store token and user data
         await AsyncStorage.setItem('token', newToken);
         await AsyncStorage.setItem('user', JSON.stringify(newUser));
@@ -144,6 +172,7 @@ export const AuthProvider = ({ children }) => {
         setToken(newToken);
         setUser(newUser);
         setIsAuthenticated(true);
+        setIsGuest(false);
         
         console.log('Auth state updated:', { token: !!newToken, user: !!newUser, isAuthenticated: true });
         
@@ -259,6 +288,36 @@ export const AuthProvider = ({ children }) => {
     return { success: false, message: 'Google authentication is disabled' };
   };
 
+  const loginAsGuest = async () => {
+    try {
+      console.log('AuthContext: Enabling guest mode...');
+      
+      const guestUser = {
+        id: 'guest',
+        firstName: 'Guest',
+        lastName: 'User',
+        email: 'guest@canhiring.com',
+        role: 'user',
+        isGuest: true
+      };
+
+      // Store guest mode flag
+      await AsyncStorage.setItem('isGuest', 'true');
+      await AsyncStorage.setItem('user', JSON.stringify(guestUser));
+      
+      setUser(guestUser);
+      setIsGuest(true);
+      setIsAuthenticated(true);
+      setToken(null);
+      
+      console.log('✅ AuthContext: Guest mode enabled successfully');
+      return { success: true, user: guestUser };
+    } catch (error) {
+      console.error('AuthContext: Guest login error:', error);
+      return { success: false, message: 'Failed to enable guest mode' };
+    }
+  };
+
   const logout = async () => {
     try {
       console.log('AuthContext: Starting logout process...');
@@ -281,6 +340,7 @@ export const AuthProvider = ({ children }) => {
       setUser(null);
       setToken(null);
       setIsAuthenticated(false);
+      setIsGuest(false);
       setLoading(false);
       
       console.log('AuthContext: Auth state reset successfully');
@@ -306,9 +366,13 @@ export const AuthProvider = ({ children }) => {
       await AsyncStorage.removeItem('user');
       console.log('clearAuthData: User removed');
       
+      console.log('clearAuthData: Removing guest mode...');
+      await AsyncStorage.removeItem('isGuest');
+      console.log('clearAuthData: Guest mode removed');
+      
       console.log('clearAuthData: Running multiRemove...');
       // Also try to clear any other potential auth data
-      await AsyncStorage.multiRemove(['token', 'user']);
+      await AsyncStorage.multiRemove(['token', 'user', 'isGuest']);
       console.log('clearAuthData: MultiRemove completed');
       
       console.log('clearAuthData: All auth data cleared from AsyncStorage successfully');
@@ -364,8 +428,10 @@ export const AuthProvider = ({ children }) => {
     token,
     loading,
     isAuthenticated,
+    isGuest,
     login,
     register,
+    loginAsGuest,
     logout,
     updateUser,
     refreshUserData,

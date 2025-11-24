@@ -13,6 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import AppHeader from '../components/AppHeader';
 import CompanyLogo from '../components/CompanyLogo';
 import ProfessionalPlanModal from '../components/ProfessionalPlanModal';
@@ -26,13 +27,53 @@ const JobDetailsScreen = ({ navigation, route }) => {
   const [loading, setLoading] = useState(!jobData);
   const [applying, setApplying] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
   const { user, token } = useAuth();
 
   useEffect(() => {
     if (!jobData && route.params?.jobId) {
       fetchJobDetails();
     }
-  }, []);
+    checkIfSaved();
+  }, [job]);
+
+  const checkIfSaved = async () => {
+    if (!job) return;
+    try {
+      const saved = await AsyncStorage.getItem('savedJobs');
+      if (saved) {
+        const savedJobs = new Set(JSON.parse(saved));
+        const jobId = job.id || job._id || `${job.title}-${job.company}`;
+        setIsSaved(savedJobs.has(jobId));
+      }
+    } catch (error) {
+      console.error('Error checking saved job:', error);
+    }
+  };
+
+  const handleSaveJob = async () => {
+    if (!job) return;
+    try {
+      const jobId = job.id || job._id || `${job.title}-${job.company}`;
+      const saved = await AsyncStorage.getItem('savedJobs');
+      const savedJobs = saved ? new Set(JSON.parse(saved)) : new Set();
+      
+      if (savedJobs.has(jobId)) {
+        savedJobs.delete(jobId);
+        setIsSaved(false);
+        Alert.alert('Job Removed', 'Job has been removed from your saved jobs');
+      } else {
+        savedJobs.add(jobId);
+        setIsSaved(true);
+        Alert.alert('Job Saved', 'Job has been saved to your saved jobs');
+      }
+      
+      await AsyncStorage.setItem('savedJobs', JSON.stringify(Array.from(savedJobs)));
+    } catch (error) {
+      console.error('Error saving job:', error);
+      Alert.alert('Error', 'Failed to save job. Please try again.');
+    }
+  };
 
   const fetchJobDetails = async () => {
     try {
@@ -196,7 +237,10 @@ const JobDetailsScreen = ({ navigation, route }) => {
         showBackButton={true}
         onBackPress={() => navigation.goBack()}
         rightActions={[
-          { icon: 'bookmark-outline', onPress: () => console.log('Save job') }
+          { 
+            icon: isSaved ? 'bookmark' : 'bookmark-outline', 
+            onPress: handleSaveJob 
+          }
         ]}
       />
 

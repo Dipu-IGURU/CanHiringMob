@@ -21,7 +21,7 @@ import { useAuth } from '../contexts/AuthContext';
 const { width, height } = Dimensions.get('window');
 
 const LoginScreen = ({ navigation }) => {
-  const { login } = useAuth();
+  const { login, loginAsGuest } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -177,6 +177,20 @@ const LoginScreen = ({ navigation }) => {
                   <Text style={[styles.authButtonText, styles.signupButtonText]}>Create Account</Text>
                 </TouchableOpacity>
               </View>
+              
+              {/* Guest Login Option */}
+              <TouchableOpacity
+                style={styles.guestButton}
+                onPress={async () => {
+                  const result = await loginAsGuest();
+                  if (result.success) {
+                    navigation.navigate('MainTabs');
+                  }
+                }}
+              >
+                <Text style={styles.guestButtonText}>Continue as Guest</Text>
+                <Ionicons name="person-outline" size={16} color="#64748B" />
+              </TouchableOpacity>
             </View>
           </ScrollView>
         </KeyboardAvoidingView>
@@ -370,6 +384,24 @@ const styles = StyleSheet.create({
   },
   signupButtonText: {
     color: '#FFFFFF',
+  },
+  guestButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    marginTop: 16,
+    borderRadius: 8,
+    backgroundColor: '#F1F5F9',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  guestButtonText: {
+    color: '#64748B',
+    fontSize: 14,
+    fontWeight: '500',
   },
 });
 

@@ -13,11 +13,20 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import LogoImage from '../components/LogoImage';
+import { useAuth } from '../contexts/AuthContext';
 
 const { width, height } = Dimensions.get('window');
 
 const WelcomeScreen = ({ navigation }) => {
   const [showLearnMoreModal, setShowLearnMoreModal] = useState(false);
+  const { loginAsGuest } = useAuth();
+
+  const handleGuestLogin = async () => {
+    const result = await loginAsGuest();
+    if (result.success) {
+      navigation.navigate('MainTabs');
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -107,6 +116,14 @@ const WelcomeScreen = ({ navigation }) => {
                   <Text style={styles.buttonText}>Get Started</Text>
                   <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
                 </LinearGradient>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={styles.guestButton}
+                onPress={handleGuestLogin}
+              >
+                <Text style={styles.guestButtonText}>Continue as Guest</Text>
+                <Ionicons name="person-outline" size={16} color="#64748B" />
               </TouchableOpacity>
               
               <TouchableOpacity
@@ -429,6 +446,32 @@ const styles = StyleSheet.create({
   },
   learnMoreText: {
     color: '#6B7280',
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  guestButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    marginTop: 8,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  guestButtonText: {
+    color: '#64748B',
     fontSize: 16,
     fontWeight: '500',
   },

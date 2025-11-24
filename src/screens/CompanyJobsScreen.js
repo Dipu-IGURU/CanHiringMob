@@ -16,6 +16,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import AppHeader from '../components/AppHeader';
 import CompanyLogo from '../components/CompanyLogo';
 import { API_BASE_URL, fetchJobsByCompany } from '../services/apiService';
@@ -31,11 +32,13 @@ const CompanyJobsScreen = ({ navigation, route }) => {
   const [refreshing, setRefreshing] = useState(false);
   const [fadeAnim] = useState(new Animated.Value(0));
   const [slideAnim] = useState(new Animated.Value(50));
+  const [savedJobs, setSavedJobs] = useState(new Set());
 
   console.log('CompanyJobsScreen mounted with companyName:', companyName);
 
   useEffect(() => {
     fetchCompanyJobs();
+    loadSavedJobs();
     // Start animations
     Animated.parallel([
       Animated.timing(fadeAnim, {
@@ -50,6 +53,40 @@ const CompanyJobsScreen = ({ navigation, route }) => {
       }),
     ]).start();
   }, [companyName]);
+
+  // Load saved jobs from AsyncStorage
+  const loadSavedJobs = async () => {
+    try {
+      const saved = await AsyncStorage.getItem('savedJobs');
+      if (saved) {
+        setSavedJobs(new Set(JSON.parse(saved)));
+      }
+    } catch (error) {
+      console.error('Error loading saved jobs:', error);
+    }
+  };
+
+  // Handle save/unsave job
+  const handleSaveJob = async (job) => {
+    try {
+      const jobId = job.id || job._id || `${job.title}-${job.company}`;
+      const newSavedJobs = new Set(savedJobs);
+      
+      if (newSavedJobs.has(jobId)) {
+        newSavedJobs.delete(jobId);
+        Alert.alert('Job Removed', 'Job has been removed from your saved jobs');
+      } else {
+        newSavedJobs.add(jobId);
+        Alert.alert('Job Saved', 'Job has been saved to your saved jobs');
+      }
+      
+      setSavedJobs(newSavedJobs);
+      await AsyncStorage.setItem('savedJobs', JSON.stringify(Array.from(newSavedJobs)));
+    } catch (error) {
+      console.error('Error saving job:', error);
+      Alert.alert('Error', 'Failed to save job. Please try again.');
+    }
+  };
 
   const fetchCompanyJobs = async () => {
     try {
@@ -352,8 +389,16 @@ const CompanyJobsScreen = ({ navigation, route }) => {
             <Ionicons name="arrow-forward" size={16} color={Colors.textInverse} />
           </TouchableOpacity>
           
-          <TouchableOpacity style={styles.saveButton}>
-            <Ionicons name="bookmark-outline" size={20} color={Colors.primary} />
+          <TouchableOpacity 
+            style={styles.saveButton}
+            onPress={() => handleSaveJob(item)}
+            activeOpacity={0.7}
+          >
+            <Ionicons 
+              name={savedJobs.has(item.id || item._id || `${item.title}-${item.company}`) ? "bookmark" : "bookmark-outline"} 
+              size={20} 
+              color={savedJobs.has(item.id || item._id || `${item.title}-${item.company}`) ? "#F59E0B" : Colors.primary} 
+            />
           </TouchableOpacity>
         </View>
           </View>

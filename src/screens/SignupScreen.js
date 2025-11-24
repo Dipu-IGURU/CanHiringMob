@@ -124,7 +124,7 @@ const SignupScreen = ({ navigation }) => {
             'An account with this email already exists. Please use a different email or try logging in instead.',
             [
               { text: 'Try Different Email', style: 'default' },
-              { text: 'Go to Login', onPress: () => navigation.navigate('Login') }
+              { text: 'Go to Login', onPress: () => navigation.navigate('LoginScreen') }
             ]
           );
         } else {

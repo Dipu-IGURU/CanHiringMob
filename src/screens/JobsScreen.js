@@ -8,10 +8,12 @@ import {
   FlatList,
   Dimensions,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import LogoImage from '../components/LogoImage';
 import AppHeader from '../components/AppHeader';
 import JobSearchForm from '../components/JobSearchForm';
@@ -27,6 +29,7 @@ const JobsScreen = ({ navigation, route }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [isSearchMode, setIsSearchMode] = useState(false);
+  const [savedJobs, setSavedJobs] = useState(new Set());
 
   // Get navigation parameters
   const { category, searchQuery: initialSearchQuery, location: initialLocation, autoSearch } = route.params || {};
@@ -61,7 +64,42 @@ const JobsScreen = ({ navigation, route }) => {
   // Load jobs when component mounts
   useEffect(() => {
     loadJobs();
+    loadSavedJobs();
   }, []);
+
+  // Load saved jobs from AsyncStorage
+  const loadSavedJobs = async () => {
+    try {
+      const saved = await AsyncStorage.getItem('savedJobs');
+      if (saved) {
+        setSavedJobs(new Set(JSON.parse(saved)));
+      }
+    } catch (error) {
+      console.error('Error loading saved jobs:', error);
+    }
+  };
+
+  // Handle save/unsave job
+  const handleSaveJob = async (job) => {
+    try {
+      const jobId = job.id || job._id || `${job.title}-${job.company}`;
+      const newSavedJobs = new Set(savedJobs);
+      
+      if (newSavedJobs.has(jobId)) {
+        newSavedJobs.delete(jobId);
+        Alert.alert('Job Removed', 'Job has been removed from your saved jobs');
+      } else {
+        newSavedJobs.add(jobId);
+        Alert.alert('Job Saved', 'Job has been saved to your saved jobs');
+      }
+      
+      setSavedJobs(newSavedJobs);
+      await AsyncStorage.setItem('savedJobs', JSON.stringify(Array.from(newSavedJobs)));
+    } catch (error) {
+      console.error('Error saving job:', error);
+      Alert.alert('Error', 'Failed to save job. Please try again.');
+    }
+  };
 
   // Load jobs when filters change (only if not in search mode)
   useEffect(() => {
@@ -262,6 +300,14 @@ const JobsScreen = ({ navigation, route }) => {
       navigation.navigate('JobDetailsScreen', { jobData: item });
     };
 
+    const handleSavePress = (e) => {
+      e.stopPropagation(); // Prevent triggering the parent TouchableOpacity
+      handleSaveJob(item);
+    };
+
+    const jobId = item.id || item._id || `${item.title}-${item.company}`;
+    const isSaved = savedJobs.has(jobId);
+
     return (
       <TouchableOpacity style={styles.jobCard} onPress={handleJobPress}>
         <View style={styles.jobHeader}>
@@ -269,8 +315,16 @@ const JobsScreen = ({ navigation, route }) => {
             <Text style={styles.jobTitle}>{item.title || 'No Title'}</Text>
             <Text style={styles.companyName}>{item.company || 'No Company'}</Text>
           </View>
-          <TouchableOpacity style={styles.saveButton}>
-            <Ionicons name="bookmark-outline" size={20} color="#64748B" />
+          <TouchableOpacity 
+            style={styles.saveButton}
+            onPress={handleSavePress}
+            activeOpacity={0.7}
+          >
+            <Ionicons 
+              name={isSaved ? "bookmark" : "bookmark-outline"} 
+              size={20} 
+              color={isSaved ? "#F59E0B" : "#64748B"} 
+            />
           </TouchableOpacity>
         </View>
         
