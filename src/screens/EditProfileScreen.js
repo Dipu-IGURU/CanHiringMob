@@ -14,6 +14,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 import AppHeader from '../components/AppHeader';
 import { useAuth } from '../contexts/AuthContext';
 import { API_BASE_URL } from '../services/apiService';
@@ -31,6 +32,7 @@ const EditProfileScreen = ({ navigation }) => {
     title: '',
     bio: '',
   });
+  const [profileImageUri, setProfileImageUri] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -46,8 +48,40 @@ const EditProfileScreen = ({ navigation }) => {
         title: user.profile?.jobTitle || '',
         bio: user.profile?.description || '',
       });
+      setProfileImageUri(user.photoURL || null);
     }
   }, [user]);
+
+  const handleImagePicker = async () => {
+    try {
+      // Request permission (expo-image-picker handles this internally with Photo Picker)
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      
+      if (status !== 'granted') {
+        Alert.alert(
+          'Permission Required',
+          'We need access to your photos to set a profile picture. You can change this in your device settings.'
+        );
+        return;
+      }
+
+      // Launch image picker (uses Android Photo Picker on Android 13+, fallback on older versions)
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const selectedImage = result.assets[0];
+        setProfileImageUri(selectedImage.uri);
+      }
+    } catch (error) {
+      console.error('Error picking image:', error);
+      Alert.alert('Error', 'Failed to pick image. Please try again.');
+    }
+  };
 
   const handleSave = async () => {
     if (!token) {
@@ -58,22 +92,64 @@ const EditProfileScreen = ({ navigation }) => {
     try {
       setIsSaving(true);
 
+      // Prepare form data
+      const profileData = {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        profile: {
+          phone: formData.phone,
+          location: formData.location,
+          jobTitle: formData.title,
+          description: formData.bio,
+        }
+      };
+
+      // If a new profile image was selected, upload it
+      if (profileImageUri && profileImageUri !== user?.photoURL) {
+        // Create FormData for file upload
+        const formDataToSend = new FormData();
+        formDataToSend.append('photo', {
+          uri: profileImageUri,
+          type: 'image/jpeg',
+          name: 'profile-photo.jpg',
+        } as any);
+        formDataToSend.append('firstName', formData.firstName);
+        formDataToSend.append('lastName', formData.lastName);
+        formDataToSend.append('phone', formData.phone);
+        formDataToSend.append('location', formData.location);
+        formDataToSend.append('jobTitle', formData.title);
+        formDataToSend.append('description', formData.bio);
+
+        const uploadResponse = await fetch(`${API_BASE_URL}/api/auth/profile`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data',
+          },
+          body: formDataToSend,
+        });
+
+        const uploadData = await uploadResponse.json();
+
+        if (uploadData.success) {
+          await refreshUserData();
+          Alert.alert('Success', 'Profile updated successfully!');
+          navigation.goBack();
+          return;
+        } else {
+          Alert.alert('Error', uploadData.message || 'Failed to update profile');
+          return;
+        }
+      }
+
+      // If no image upload, just update text fields
       const response = await fetch(`${API_BASE_URL}/api/auth/profile`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          profile: {
-            phone: formData.phone,
-            location: formData.location,
-            jobTitle: formData.title,
-            description: formData.bio,
-          }
-        })
+        body: JSON.stringify(profileData)
       });
 
       const data = await response.json();
@@ -133,9 +209,9 @@ const EditProfileScreen = ({ navigation }) => {
             {/* Profile Picture Section */}
             <View style={styles.profilePictureSection}>
               <View style={styles.profileImageContainer}>
-                {user?.photoURL ? (
+                {profileImageUri ? (
                   <Image 
-                    source={{ uri: user.photoURL }} 
+                    source={{ uri: profileImageUri }} 
                     style={styles.profileImage}
                     resizeMode="cover"
                   />
@@ -143,7 +219,10 @@ const EditProfileScreen = ({ navigation }) => {
                   <Text style={styles.profileInitials}>{getUserInitials()}</Text>
                 )}
               </View>
-              <TouchableOpacity style={styles.changePhotoButton}>
+              <TouchableOpacity 
+                style={styles.changePhotoButton}
+                onPress={handleImagePicker}
+              >
                 <Text style={styles.changePhotoText}>Change Photo</Text>
               </TouchableOpacity>
             </View>

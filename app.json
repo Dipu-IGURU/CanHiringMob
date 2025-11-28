@@ -31,10 +31,7 @@
       "permissions": [
         "INTERNET",
         "ACCESS_NETWORK_STATE",
-        "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE",
-        "CAMERA",
-        "READ_MEDIA_IMAGES"
+        "CAMERA"
       ],
       "blockedPermissions": [
         "android.permission.ACCESS_FINE_LOCATION",
@@ -61,7 +58,14 @@
       "favicon": "./assets/canhirngfavicon.png"
     },
     "plugins": [
-      "expo-font"
+      "expo-font",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "The app accesses your photos to let you set your profile picture.",
+          "cameraPermission": "The app accesses your camera to let you take photos for your profile picture."
+        }
+      ]
     ],
     "privacy": "public",
     "extra": {
