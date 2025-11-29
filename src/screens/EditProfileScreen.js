@@ -112,7 +112,7 @@ const EditProfileScreen = ({ navigation }) => {
           uri: profileImageUri,
           type: 'image/jpeg',
           name: 'profile-photo.jpg',
-        } as any);
+        });
         formDataToSend.append('firstName', formData.firstName);
         formDataToSend.append('lastName', formData.lastName);
         formDataToSend.append('phone', formData.phone);
