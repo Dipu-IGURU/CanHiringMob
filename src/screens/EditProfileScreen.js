@@ -54,18 +54,8 @@ const EditProfileScreen = ({ navigation }) => {
 
   const handleImagePicker = async () => {
     try {
-      // Request permission (expo-image-picker handles this internally with Photo Picker)
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      
-      if (status !== 'granted') {
-        Alert.alert(
-          'Permission Required',
-          'We need access to your photos to set a profile picture. You can change this in your device settings.'
-        );
-        return;
-      }
-
-      // Launch image picker (uses Android Photo Picker on Android 13+, fallback on older versions)
+      // Launch image picker (uses Android Photo Picker on Android 13+ - no permissions needed)
+      // On older Android versions, expo-image-picker handles permissions automatically
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,

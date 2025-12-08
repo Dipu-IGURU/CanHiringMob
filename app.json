@@ -27,7 +27,7 @@
         "backgroundColor": "#2563EB"
       },
       "package": "com.iguru.canhiringsolutions",
-      "versionCode": 1,
+      "versionCode": 21,
       "permissions": [
         "INTERNET",
         "ACCESS_NETWORK_STATE",
@@ -35,7 +35,11 @@
       ],
       "blockedPermissions": [
         "android.permission.ACCESS_FINE_LOCATION",
-        "android.permission.ACCESS_COARSE_LOCATION"
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.READ_MEDIA_VIDEO",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE"
       ],
       "intentFilters": [
         {
@@ -62,7 +66,7 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "The app accesses your photos to let you set your profile picture.",
+          "photosPermission": false,
           "cameraPermission": "The app accesses your camera to let you take photos for your profile picture."
         }
       ]
