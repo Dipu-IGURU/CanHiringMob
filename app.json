@@ -26,8 +26,8 @@
         "foregroundImage": "./assets/512.jpg",
         "backgroundColor": "#2563EB"
       },
-      "package": "com.iguru.canhiringsolutions",
-      "versionCode": 21,
+      "package": "com.can.canhiring",
+      "versionCode": 1,
       "permissions": [
         "INTERNET",
         "ACCESS_NETWORK_STATE",

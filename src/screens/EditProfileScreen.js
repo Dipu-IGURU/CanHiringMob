@@ -19,7 +19,7 @@ import AppHeader from '../components/AppHeader';
 import { useAuth } from '../contexts/AuthContext';
 import { API_BASE_URL } from '../services/apiService';
 
-const { width, height } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');   
 
 const EditProfileScreen = ({ navigation }) => {
   const { user, token, refreshUserData } = useAuth();

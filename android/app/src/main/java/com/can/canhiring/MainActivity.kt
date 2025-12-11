@@ -1,4 +1,4 @@
-package com.iguru.canhiringsolutions
+package com.can.canhiring
 import expo.modules.splashscreen.SplashScreenManager
 
 import android.os.Build

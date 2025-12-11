@@ -1,4 +1,4 @@
-package com.iguru.canhiringsolutions
+package com.can.canhiring
 
 import android.app.Application
 import android.content.res.Configuration
