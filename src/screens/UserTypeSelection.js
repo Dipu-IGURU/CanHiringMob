@@ -21,15 +21,7 @@ const UserTypeSelection = ({ navigation }) => {
       icon: 'person',
       color: '#4CAF50',
       screen: 'UserOnboarding',
-    },
-    {
-      id: 'recruiter',
-      title: 'Recruiter',
-      subtitle: 'Hire the best talent',
-      icon: 'business',
-      color: '#2196F3',
-      screen: 'RecruiterOnboarding',
-    },
+    }
   ];
 
   const handleUserTypeSelect = (screen) => {
