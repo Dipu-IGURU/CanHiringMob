@@ -474,10 +474,11 @@ router.get('/public', async (req, res) => {
       page = 1,
       limit = 20,
       category,
-      company
+      company,
+      search
     } = req.query;
 
-    console.log('🔍 Fetching public jobs:', { page, limit, category, company });
+    console.log('🔍 Fetching public jobs:', { page, limit, category, company, search });
 
     // Build filter object
     const filter = { $or: [{ isActive: true }, { isActive: { $exists: false } }] };
@@ -488,6 +489,23 @@ router.get('/public', async (req, res) => {
 
     if (company) {
       filter.company = new RegExp(company, 'i');
+    }
+
+    // Add search filter if provided
+    if (search && search.trim() && search.toLowerCase() !== 'all jobs') {
+      const searchRegex = new RegExp(search.trim(), 'i');
+      filter.$and = [
+        { $or: [{ isActive: true }, { isActive: { $exists: false } }] },
+        {
+          $or: [
+            { title: searchRegex },
+            { company: searchRegex },
+            { description: searchRegex }
+          ]
+        }
+      ];
+      // Remove the original $or since we're using $and now
+      delete filter.$or;
     }
 
     // Calculate pagination
