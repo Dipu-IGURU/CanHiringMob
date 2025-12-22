@@ -3,8 +3,6 @@ import { searchJobsFromAPI } from './jobSearchService.js';
 import { API_CONFIG } from '../config/apiConfig.js';
 import { API_BASE_URL } from '../config/environment.js';
 
-const RAPIDAPI_KEY = API_CONFIG.RAPIDAPI_KEY;
-
 // Debug logging
 console.log('🌐 API Configuration:');
 console.log('   __DEV__:', __DEV__);
@@ -178,58 +176,91 @@ export const fetchJobCategories = async () => {
   }
 };
 
-// Fetch jobs by category - use JSearch API as primary source
+// Helper function to normalize database job format to match API format
+const normalizeDatabaseJob = (job) => {
+  return {
+    _id: job._id || job.id,
+    title: job.title || job.jobTitle || 'No Title',
+    company: job.company || job.companyName || 'No Company',
+    location: job.location || (job.city && job.state ? `${job.city}, ${job.state}` : 'Location not specified'),
+    type: job.type || job.jobType || job.employmentType || 'Full-time',
+    salary: job.salary || job.salaryRange || 'Salary not specified',
+    description: job.description || job.jobDescription || 'No description available',
+    postedDate: job.createdAt || job.postedDate || job.postedAt || new Date().toISOString(),
+    category: job.category || 'General',
+    applyUrl: job.applyUrl || job.applicationUrl || null,
+    companyLogo: job.companyLogo || job.logo || null,
+    remote: job.remote || job.isRemote || false,
+    source: 'database' // Mark as database job
+  };
+};
+
+// Fetch jobs by category - fetch from both API and database, then combine
 export const fetchJobsByCategory = async (category, page = 1, limit = 10) => {
   try {
-    console.log('🔍 Fetching jobs by category from JSearch API:', { category, page, limit });
+    console.log('🔍 Fetching jobs by category from both API and database:', { category, page, limit });
     
-    // Use JSearch API as primary source
-    const categoryQueries = {
-      'all': 'software developer OR programmer OR IT specialist OR engineer OR data scientist OR nurse OR doctor OR teacher OR sales OR marketing OR designer OR product manager',
-      'technology': 'software developer OR programmer OR IT specialist OR engineer OR data scientist OR frontend developer OR backend developer OR full stack developer',
-      'healthcare': 'nurse OR doctor OR healthcare worker OR medical assistant OR healthcare professional OR physician OR pharmacist OR therapist',
-      'finance': 'financial analyst OR banker OR accountant OR financial advisor OR finance manager OR investment analyst OR risk analyst',
-      'education': 'teacher OR instructor OR trainer OR education coordinator OR professor OR academic advisor OR curriculum developer',
-      'marketing': 'sales representative OR marketing specialist OR digital marketing OR social media manager OR marketing coordinator OR brand manager',
-      'engineering': 'engineer OR engineering technician OR software engineer OR mechanical engineer OR civil engineer OR electrical engineer',
-      'design': 'UX designer OR UI designer OR graphic designer OR web designer OR product designer OR visual designer OR creative director',
-      'product': 'product manager OR product owner OR product analyst OR product coordinator OR product strategist',
-      'data-science': 'data scientist OR data analyst OR data engineer OR machine learning engineer OR business intelligence analyst',
-      'sales': 'sales representative OR sales manager OR account executive OR business development OR sales coordinator',
-      'business': 'business analyst OR business development OR operations manager OR project manager OR consultant',
-      'customer service': 'customer service representative OR support agent OR call center OR customer success OR help desk',
-      'human resources': 'HR specialist OR recruiter OR human resources manager OR talent acquisition OR HR coordinator',
-      'administrative': 'administrative assistant OR office manager OR executive assistant OR coordinator OR receptionist',
-      'construction': 'construction worker OR contractor OR builder OR project manager OR site supervisor OR architect',
-      'manufacturing': 'manufacturing worker OR production operator OR quality control OR production manager OR assembly worker',
-      'retail': 'retail sales OR store manager OR cashier OR sales associate OR retail manager OR merchandiser'
-    };
+    const allJobs = [];
+    
+    // Fetch from JSearch API
+    try {
+      const categoryQueries = {
+        'all': 'software developer OR programmer OR IT specialist OR engineer OR data scientist OR nurse OR doctor OR teacher OR sales OR marketing OR designer OR product manager',
+        'technology': 'software developer OR programmer OR IT specialist OR engineer OR data scientist OR frontend developer OR backend developer OR full stack developer',
+        'healthcare': 'nurse OR doctor OR healthcare worker OR medical assistant OR healthcare professional OR physician OR pharmacist OR therapist',
+        'finance': 'financial analyst OR banker OR accountant OR financial advisor OR finance manager OR investment analyst OR risk analyst',
+        'education': 'teacher OR instructor OR trainer OR education coordinator OR professor OR academic advisor OR curriculum developer',
+        'marketing': 'sales representative OR marketing specialist OR digital marketing OR social media manager OR marketing coordinator OR brand manager',
+        'engineering': 'engineer OR engineering technician OR software engineer OR mechanical engineer OR civil engineer OR electrical engineer',
+        'design': 'UX designer OR UI designer OR graphic designer OR web designer OR product designer OR visual designer OR creative director',
+        'product': 'product manager OR product owner OR product analyst OR product coordinator OR product strategist',
+        'data-science': 'data scientist OR data analyst OR data engineer OR machine learning engineer OR business intelligence analyst',
+        'sales': 'sales representative OR sales manager OR account executive OR business development OR sales coordinator',
+        'business': 'business analyst OR business development OR operations manager OR project manager OR consultant',
+        'customer service': 'customer service representative OR support agent OR call center OR customer success OR help desk',
+        'human resources': 'HR specialist OR recruiter OR human resources manager OR talent acquisition OR HR coordinator',
+        'administrative': 'administrative assistant OR office manager OR executive assistant OR coordinator OR receptionist',
+        'construction': 'construction worker OR contractor OR builder OR project manager OR site supervisor OR architect',
+        'manufacturing': 'manufacturing worker OR production operator OR quality control OR production manager OR assembly worker',
+        'retail': 'retail sales OR store manager OR cashier OR sales associate OR retail manager OR merchandiser'
+      };
 
-    const searchQuery = categoryQueries[category.toLowerCase()] || category;
-    console.log('🔍 JSearch API query for category', category, ':', searchQuery);
-    
-    const jsearchParams = {
-      query: searchQuery,
-      page: page,
-      num_pages: 3, // Get more pages for better results
-      country: 'US',
-      date_posted: 'week', // Get recent jobs
-      job_type: 'fulltime',
-      remote_jobs_only: false
-    };
-    
-    console.log('🔍 Calling JSearch API with params:', jsearchParams);
-    const jsearchResult = await searchJobsFromAPI(jsearchParams);
-    
-    if (jsearchResult.success && jsearchResult.jobs && jsearchResult.jobs.length > 0) {
-      console.log('✅ JSearch API returned', jsearchResult.jobs.length, 'jobs for category:', category);
-      return jsearchResult.jobs.slice(0, limit);
-    } else {
-      console.log('⚠️ No jobs from JSearch API for category:', category, 'result:', jsearchResult);
+      const searchQuery = categoryQueries[category.toLowerCase()] || category;
+      console.log('🔍 JSearch API query for category', category, ':', searchQuery);
       
-      // Fallback to database if JSearch API fails
-      console.log('🔄 Trying database fallback...');
-      const response = await fetch(`${API_BASE_URL}/api/jobs/category/${encodeURIComponent(category)}?page=${page}&limit=${limit}`, {
+      const jsearchParams = {
+        query: searchQuery,
+        page: page,
+        num_pages: 3,
+        country: 'US',
+        date_posted: 'week',
+        job_type: 'fulltime',
+        remote_jobs_only: false
+      };
+      
+      const jsearchResult = await searchJobsFromAPI(jsearchParams);
+      
+      if (jsearchResult.success && jsearchResult.jobs && jsearchResult.jobs.length > 0) {
+        console.log('✅ JSearch API returned', jsearchResult.jobs.length, 'jobs for category:', category);
+        // Mark API jobs
+        const apiJobs = jsearchResult.jobs.map(job => ({ ...job, source: 'api' }));
+        allJobs.push(...apiJobs);
+      } else {
+        console.log('⚠️ No jobs from JSearch API for category:', category);
+      }
+    } catch (apiError) {
+      console.error('❌ Error fetching from JSearch API:', apiError);
+    }
+    
+    // Fetch from database
+    try {
+      console.log('🔄 Fetching database jobs for category:', category);
+      const categoryParam = category === 'all' ? '' : category;
+      const dbUrl = categoryParam 
+        ? `${API_BASE_URL}/api/jobs/category/${encodeURIComponent(categoryParam)}?page=${page}&limit=${limit}`
+        : `${API_BASE_URL}/api/jobs/public?page=${page}&limit=${limit}`;
+      
+      const response = await fetch(dbUrl, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -238,45 +269,86 @@ export const fetchJobsByCategory = async (category, page = 1, limit = 10) => {
 
       if (response.ok) {
         const data = await response.json();
-        console.log('✅ Database fallback returned', data.data?.length || 0, 'jobs for category:', category);
-        return data.data || [];
+        const dbJobs = data.data || data.jobs || [];
+        console.log('✅ Database returned', dbJobs.length, 'jobs for category:', category);
+        
+        // Normalize database jobs and add to array
+        const normalizedDbJobs = dbJobs.map(normalizeDatabaseJob);
+        allJobs.push(...normalizedDbJobs);
       } else {
-        console.log('❌ Both JSearch API and database failed for category:', category);
-        return [];
+        console.log('⚠️ Database request failed for category:', category, 'Status:', response.status);
+      }
+    } catch (dbError) {
+      console.error('❌ Error fetching from database:', dbError);
+    }
+    
+    // Remove duplicates based on title and company
+    const uniqueJobs = [];
+    const seenJobs = new Set();
+    
+    for (const job of allJobs) {
+      const key = `${job.title?.toLowerCase()}_${job.company?.toLowerCase()}`;
+      if (!seenJobs.has(key)) {
+        seenJobs.add(key);
+        uniqueJobs.push(job);
       }
     }
+    
+    // Sort by date (newest first) and limit
+    uniqueJobs.sort((a, b) => {
+      const dateA = new Date(a.postedDate || 0);
+      const dateB = new Date(b.postedDate || 0);
+      return dateB - dateA;
+    });
+    
+    const finalJobs = uniqueJobs.slice(0, limit);
+    console.log('✅ Combined jobs:', finalJobs.length, 'total (', 
+      finalJobs.filter(j => j.source === 'api').length, 'from API,',
+      finalJobs.filter(j => j.source === 'database').length, 'from database)');
+    
+    return finalJobs;
   } catch (error) {
     console.error('❌ Error fetching jobs by category:', error);
     return [];
   }
 };
 
-// Fetch all public jobs - use JSearch API as primary source
+// Fetch all public jobs - fetch from both API and database, then combine
 export const fetchAllJobs = async (page = 1, limit = 20) => {
   try {
-    console.log('🔍 Fetching all jobs from JSearch API:', { page, limit });
+    console.log('🔍 Fetching all jobs from both API and database:', { page, limit });
     
-    // Use JSearch API as primary source
-    const jsearchParams = {
-      query: 'software developer OR programmer OR IT specialist OR engineer OR data scientist OR nurse OR doctor OR teacher OR sales OR marketing OR designer OR product manager OR business analyst',
-      page: page,
-      num_pages: 3,
-      country: 'US',
-      date_posted: 'week',
-      job_type: 'fulltime',
-      remote_jobs_only: false
-    };
+    const allJobs = [];
     
-    console.log('🔍 Calling JSearch API for all jobs with params:', jsearchParams);
-    const jsearchResult = await searchJobsFromAPI(jsearchParams);
-    
-    if (jsearchResult.success && jsearchResult.jobs && jsearchResult.jobs.length > 0) {
-      console.log('✅ JSearch API returned', jsearchResult.jobs.length, 'jobs');
-      return jsearchResult.jobs.slice(0, limit);
-    } else {
-      console.log('⚠️ No jobs from JSearch API, trying database fallback');
+    // Fetch from JSearch API
+    try {
+      const jsearchParams = {
+        query: 'software developer OR programmer OR IT specialist OR engineer OR data scientist OR nurse OR doctor OR teacher OR sales OR marketing OR designer OR product manager OR business analyst',
+        page: page,
+        num_pages: 3,
+        country: 'US',
+        date_posted: 'week',
+        job_type: 'fulltime',
+        remote_jobs_only: false
+      };
       
-      // Fallback to database if JSearch API fails
+      console.log('🔍 Calling JSearch API for all jobs with params:', jsearchParams);
+      const jsearchResult = await searchJobsFromAPI(jsearchParams);
+      
+      if (jsearchResult.success && jsearchResult.jobs && jsearchResult.jobs.length > 0) {
+        console.log('✅ JSearch API returned', jsearchResult.jobs.length, 'jobs');
+        const apiJobs = jsearchResult.jobs.map(job => ({ ...job, source: 'api' }));
+        allJobs.push(...apiJobs);
+      } else {
+        console.log('⚠️ No jobs from JSearch API');
+      }
+    } catch (apiError) {
+      console.error('❌ Error fetching from JSearch API:', apiError);
+    }
+    
+    // Fetch from database
+    try {
+      console.log('🔄 Fetching database jobs');
       const response = await fetch(`${API_BASE_URL}/api/jobs/public?page=${page}&limit=${limit}`, {
         method: 'GET',
         headers: {
@@ -286,56 +358,139 @@ export const fetchAllJobs = async (page = 1, limit = 20) => {
 
       if (response.ok) {
         const data = await response.json();
-        console.log('✅ Database fallback returned', data.jobs?.length || 0, 'jobs');
-        return data.jobs || data.data || [];
+        const dbJobs = data.jobs || data.data || [];
+        console.log('✅ Database returned', dbJobs.length, 'jobs');
+        
+        const normalizedDbJobs = dbJobs.map(normalizeDatabaseJob);
+        allJobs.push(...normalizedDbJobs);
       } else {
-        console.log('❌ Both JSearch API and database failed');
-        return [];
+        console.log('⚠️ Database request failed. Status:', response.status);
+      }
+    } catch (dbError) {
+      console.error('❌ Error fetching from database:', dbError);
+    }
+    
+    // Remove duplicates based on title and company
+    const uniqueJobs = [];
+    const seenJobs = new Set();
+    
+    for (const job of allJobs) {
+      const key = `${job.title?.toLowerCase()}_${job.company?.toLowerCase()}`;
+      if (!seenJobs.has(key)) {
+        seenJobs.add(key);
+        uniqueJobs.push(job);
       }
     }
+    
+    // Sort by date (newest first) and limit
+    uniqueJobs.sort((a, b) => {
+      const dateA = new Date(a.postedDate || 0);
+      const dateB = new Date(b.postedDate || 0);
+      return dateB - dateA;
+    });
+    
+    const finalJobs = uniqueJobs.slice(0, limit);
+    console.log('✅ Combined jobs:', finalJobs.length, 'total (', 
+      finalJobs.filter(j => j.source === 'api').length, 'from API,',
+      finalJobs.filter(j => j.source === 'database').length, 'from database)');
+    
+    return finalJobs;
   } catch (error) {
     console.error('❌ Error fetching all jobs:', error);
     return [];
   }
 };
 
-// Search jobs using JSearch API
+// Search jobs - fetch from both API and database, then combine
 export const searchJobs = async (query, location = '', page = 1, limit = 20) => {
   try {
     console.log('🔍 searchJobs called with:', { query, location, page, limit });
     
-    const jsearchParams = {
-      query: query,
-      page: page,
-      num_pages: 3, // Fetch 3 pages to get 15-25 jobs
-      country: 'US',
-      date_posted: 'week',
-      job_type: 'fulltime',
-      remote_jobs_only: false
-    };
-
-    // Add location to query if provided
-    if (location) {
-      jsearchParams.query = `${query} ${location}`;
-    }
-
-    const jsearchResult = await searchJobsFromAPI(jsearchParams);
+    const allJobs = [];
     
-    if (jsearchResult.success && jsearchResult.jobs && jsearchResult.jobs.length > 0) {
-      console.log('✅ JSearch API returned', jsearchResult.jobs.length, 'jobs');
-      // Ensure we return at least 15 jobs, up to 25
-      const minJobs = 15;
-      const maxJobs = Math.min(25, limit);
-      const jobsToReturn = Math.max(minJobs, Math.min(maxJobs, jsearchResult.jobs.length));
-      return jsearchResult.jobs.slice(0, jobsToReturn);
-    } else {
-      console.log('⚠️ No jobs from jSearch API, returning available jobs');
-      return jsearchResult.jobs || [];
+    // Fetch from JSearch API
+    try {
+      const jsearchParams = {
+        query: query,
+        page: page,
+        num_pages: 3,
+        country: 'US',
+        date_posted: 'week',
+        job_type: 'fulltime',
+        remote_jobs_only: false
+      };
+
+      // Add location to query if provided
+      if (location) {
+        jsearchParams.query = `${query} ${location}`;
+      }
+
+      const jsearchResult = await searchJobsFromAPI(jsearchParams);
+      
+      if (jsearchResult.success && jsearchResult.jobs && jsearchResult.jobs.length > 0) {
+        console.log('✅ JSearch API returned', jsearchResult.jobs.length, 'jobs');
+        const apiJobs = jsearchResult.jobs.map(job => ({ ...job, source: 'api' }));
+        allJobs.push(...apiJobs);
+      } else {
+        console.log('⚠️ No jobs from JSearch API');
+      }
+    } catch (apiError) {
+      console.error('❌ Error fetching from JSearch API:', apiError);
     }
     
+    // Fetch from database with search query
+    try {
+      console.log('🔄 Fetching database jobs with query:', query);
+      const searchUrl = `${API_BASE_URL}/api/jobs/public?page=${page}&limit=${limit}&search=${encodeURIComponent(query)}`;
+      const response = await fetch(searchUrl, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const dbJobs = data.jobs || data.data || [];
+        console.log('✅ Database returned', dbJobs.length, 'jobs for query:', query);
+        
+        // Normalize database jobs (backend already filters by search query)
+        const normalizedDbJobs = dbJobs.map(normalizeDatabaseJob);
+        allJobs.push(...normalizedDbJobs);
+      } else {
+        console.log('⚠️ Database request failed. Status:', response.status);
+      }
+    } catch (dbError) {
+      console.error('❌ Error fetching from database:', dbError);
+    }
+    
+    // Remove duplicates based on title and company
+    const uniqueJobs = [];
+    const seenJobs = new Set();
+    
+    for (const job of allJobs) {
+      const key = `${job.title?.toLowerCase()}_${job.company?.toLowerCase()}`;
+      if (!seenJobs.has(key)) {
+        seenJobs.add(key);
+        uniqueJobs.push(job);
+      }
+    }
+    
+    // Sort by date (newest first) and limit
+    uniqueJobs.sort((a, b) => {
+      const dateA = new Date(a.postedDate || 0);
+      const dateB = new Date(b.postedDate || 0);
+      return dateB - dateA;
+    });
+    
+    const finalJobs = uniqueJobs.slice(0, limit);
+    console.log('✅ Combined search results:', finalJobs.length, 'total (', 
+      finalJobs.filter(j => j.source === 'api').length, 'from API,',
+      finalJobs.filter(j => j.source === 'database').length, 'from database)');
+    
+    return finalJobs;
   } catch (error) {
     console.error('❌ Error in searchJobs:', error);
-    // Don't throw error, return empty array to prevent app crash
     console.log('🔄 Returning empty array due to error');
     return [];
   }

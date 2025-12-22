@@ -1,8 +1,8 @@
-// Job Search API Service using RapidAPI JSearch
+// Job Search API Service using OpenWeb Ninja JSearch
 import { API_CONFIG } from '../config/apiConfig.js';
 
-const RAPIDAPI_KEY = API_CONFIG.RAPIDAPI_KEY;
-const RAPIDAPI_HOST = API_CONFIG.RAPIDAPI_HOST;
+const OPENWEBNINJA_API_KEY = API_CONFIG.OPENWEBNINJA_API_KEY;
+const JSEARCH_BASE_URL = API_CONFIG.JSEARCH_BASE_URL;
 
 // Rate limiting variables
 let requestCount = 0;
@@ -36,15 +36,15 @@ const checkRateLimit = async () => {
   requestCount++;
 };
 
-if (!RAPIDAPI_KEY || RAPIDAPI_KEY === 'your_rapidapi_key_here') {
-  console.warn('⚠️ RAPIDAPI_KEY not configured. Fallback data will be used.');
+if (!OPENWEBNINJA_API_KEY || OPENWEBNINJA_API_KEY === 'your_secret_api_key') {
+  console.warn('⚠️ OPENWEBNINJA_API_KEY not configured. Fallback data will be used.');
 }
 
 
 export const searchJobsFromAPI = async (params) => {
   try {
-    if (!RAPIDAPI_KEY || RAPIDAPI_KEY === 'your_rapidapi_key_here') {
-      console.log('❌ RAPIDAPI_KEY not configured - returning empty results');
+    if (!OPENWEBNINJA_API_KEY || OPENWEBNINJA_API_KEY === 'your_secret_api_key') {
+      console.log('❌ OPENWEBNINJA_API_KEY not configured - returning empty results');
       return {
         success: true,
         jobs: [],
@@ -76,7 +76,7 @@ export const searchJobsFromAPI = async (params) => {
       job_requirements = ''
     } = params;
 
-    const url = new URL('https://jsearch.p.rapidapi.com/search');
+    const url = new URL(`${JSEARCH_BASE_URL}/search`);
     url.searchParams.append('query', query);
     url.searchParams.append('page', page.toString());
     url.searchParams.append('num_pages', num_pages.toString());
@@ -93,13 +93,12 @@ export const searchJobsFromAPI = async (params) => {
     }
 
     console.log('🔍 Making JSearch API request to:', url.toString());
-    console.log('🔍 Using API key:', RAPIDAPI_KEY.substring(0, 10) + '...');
+    console.log('🔍 Using API key:', OPENWEBNINJA_API_KEY.substring(0, 10) + '...');
     
     const response = await fetch(url.toString(), {
       method: 'GET',
       headers: {
-        'X-RapidAPI-Key': RAPIDAPI_KEY,
-        'X-RapidAPI-Host': RAPIDAPI_HOST,
+        'x-api-key': OPENWEBNINJA_API_KEY,
       },
     });
     
@@ -191,8 +190,8 @@ export const searchJobsFromAPI = async (params) => {
 
 export const getJobDetails = async (jobId) => {
   try {
-    if (!RAPIDAPI_KEY || RAPIDAPI_KEY === 'your_rapidapi_key_here') {
-      console.log('❌ RAPIDAPI_KEY not configured - returning empty job details');
+    if (!OPENWEBNINJA_API_KEY || OPENWEBNINJA_API_KEY === 'your_secret_api_key') {
+      console.log('❌ OPENWEBNINJA_API_KEY not configured - returning empty job details');
       return {
         success: false,
         message: 'API key not configured'
@@ -201,11 +200,10 @@ export const getJobDetails = async (jobId) => {
 
     await checkRateLimit();
 
-    const response = await fetch(`https://jsearch.p.rapidapi.com/job-details?job_id=${jobId}`, {
+    const response = await fetch(`${JSEARCH_BASE_URL}/job-details?job_id=${jobId}`, {
       method: 'GET',
       headers: {
-        'X-RapidAPI-Key': RAPIDAPI_KEY,
-        'X-RapidAPI-Host': RAPIDAPI_HOST,
+        'x-api-key': OPENWEBNINJA_API_KEY,
       },
     });
 
@@ -254,8 +252,8 @@ export const getJobDetails = async (jobId) => {
 
 export const getJobSearchSuggestions = async (query) => {
   try {
-    if (!RAPIDAPI_KEY || RAPIDAPI_KEY === 'your_rapidapi_key_here') {
-      console.log('❌ RAPIDAPI_KEY not configured - returning empty suggestions');
+    if (!OPENWEBNINJA_API_KEY || OPENWEBNINJA_API_KEY === 'your_secret_api_key') {
+      console.log('❌ OPENWEBNINJA_API_KEY not configured - returning empty suggestions');
       return {
         success: true,
         suggestions: []
@@ -264,11 +262,10 @@ export const getJobSearchSuggestions = async (query) => {
 
     await checkRateLimit();
 
-    const response = await fetch(`https://jsearch.p.rapidapi.com/search-filters?query=${encodeURIComponent(query)}`, {
+    const response = await fetch(`${JSEARCH_BASE_URL}/search-filters?query=${encodeURIComponent(query)}`, {
       method: 'GET',
       headers: {
-        'X-RapidAPI-Key': RAPIDAPI_KEY,
-        'X-RapidAPI-Host': RAPIDAPI_HOST,
+        'x-api-key': OPENWEBNINJA_API_KEY,
       },
     });
 

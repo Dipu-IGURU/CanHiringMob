@@ -19,7 +19,7 @@
       "distribution": "internal",
       "env": {
         "EXPO_PUBLIC_API_BASE_URL": "https://canhiringmob.onrender.com",
-        "EXPO_PUBLIC_RAPIDAPI_KEY": "3fe89ef3cfmsha78975fefe8bf57p1579b2jsnb1b2ec2377d9",
+        "EXPO_PUBLIC_OPENWEBNINJA_API_KEY": "ak_ylzwmqb1mwmrgdcuv56v2hw1vkjry40ci4y5ak8qpewb9cp",
         "NODE_ENV": "production"
       },
       "android": {
@@ -31,7 +31,7 @@
       "autoIncrement": true,
       "env": {
         "EXPO_PUBLIC_API_BASE_URL": "https://canhiringmob.onrender.com",
-        "EXPO_PUBLIC_RAPIDAPI_KEY": "3fe89ef3cfmsha78975fefe8bf57p1579b2jsnb1b2ec2377d9",
+        "EXPO_PUBLIC_OPENWEBNINJA_API_KEY": "ak_ylzwmqb1mwmrgdcuv56v2hw1vkjry40ci4y5ak8qpewb9cp",
         "NODE_ENV": "production"
       },
       "android": {
