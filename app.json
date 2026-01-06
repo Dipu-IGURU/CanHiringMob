@@ -28,7 +28,6 @@
       },
       "package": "com.can.canhiring",
       "versionCode": 5,
-      
       "permissions": [
         "INTERNET",
         "ACCESS_NETWORK_STATE",
