@@ -10,20 +10,19 @@ const getOpenWebNinjaApiKey = () => {
     startsWith: envKey ? envKey.substring(0, 10) + '...' : 'N/A',
     isPlaceholder: envKey === 'your_secret_api_key'
   });
-  
+
   // First, try environment variable (highest priority)
   if (envKey && envKey !== 'your_secret_api_key' && envKey.trim() !== '') {
     console.log('✅ Using OpenWeb Ninja API key from environment variable');
     return envKey;
   }
-  
-  // For development only, use fallback key
-  // In production builds, this will be empty and should be set via EAS env vars
+
+  // For development only, use fallback key provided by user
   if (__DEV__) {
-    console.warn('⚠️ OPENWEBNINJA_API_KEY not found in environment. Please set EXPO_PUBLIC_OPENWEBNINJA_API_KEY in your .env file');
-    return '';
+    console.log('✅ Using hardcoded OpenWeb Ninja API key for dev');
+    return 'ak_ylzwmqb1mwmrgdcuv56v2hw1vkjry40ci4y5ak8qpewb9cp';
   }
-  
+
   // Production: return empty if not set (will show error)
   return '';
 };
